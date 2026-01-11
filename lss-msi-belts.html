@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSS Master Suite: De White a Black Belt</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hidden-section { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        /* Belt Theme Colors */
+        .theme-white { --main-color: #475569; --accent: #94a3b8; }
+        .theme-yellow { --main-color: #ca8a04; --accent: #facc15; }
+        .theme-green { --main-color: #16a34a; --accent: #4ade80; }
+        .theme-black { --main-color: #0f172a; --accent: #334155; }
+    </style>
+
+    <!-- Application Structure Plan:
+         1. Master Navigation: A top bar to switch between Belt Levels (White, Yellow, Green, Black).
+         2. Dynamic Content Injection: JS functions to swap the "Main View" based on the selected belt.
+         3. Modules per Belt:
+            - White: Foundations, 5S, Muda (As built previously).
+            - Yellow: Data Collection, Histogram, Pareto Tool.
+            - Green: Statistical Process Control (SPC), Capability, Hypothesis Intro.
+            - Black: DOE, Advanced Stats, Change Leadership.
+         4. Interactive Labs:
+            - Pareto Lab (Yellow): Click bars to see cumulative impact.
+            - SPC Lab (Green): Add points to a control chart to trigger "Out of Control" rules.
+            - Interaction Lab (Black): Visualize variable interactions in 3D/2D space.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All visuals via FontAwesome & Chart.js -->
+</head>
+<body class="bg-slate-50 text-slate-800 transition-colors duration-500" id="body-theme">
+
+    <!-- LEVEL NAVIGATION -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur shadow-md border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center h-auto md:h-20 py-4 md:py-0">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <i class="fa-solid fa-layer-group text-2xl mr-3" id="nav-icon"></i>
+                    <div>
+                        <h1 class="font-bold text-xl tracking-tight text-slate-900">LSS Master Suite</h1>
+                        <p class="text-xs text-slate-500 uppercase tracking-widest" id="current-level-label">Nivel: White Belt</p>
+                    </div>
+                </div>
+                
+                <!-- Belt Selectors -->
+                <div class="flex space-x-2 bg-slate-100 p-1 rounded-xl overflow-x-auto w-full md:w-auto">
+                    <button onclick="switchLevel('white')" class="belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white shadow text-slate-700 border border-slate-200" data-level="white">
+                        ⚪ White
+                    </button>
+                    <button onclick="switchLevel('yellow')" class="belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-white hover:shadow transition-all" data-level="yellow">
+                        🟡 Yellow
+                    </button>
+                    <button onclick="switchLevel('green')" class="belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-white hover:shadow transition-all" data-level="green">
+                        🟢 Green
+                    </button>
+                    <button onclick="switchLevel('black')" class="belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-white hover:shadow transition-all" data-level="black">
+                        ⚫ Black
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- DYNAMIC MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 min-h-screen">
+
+        <!-- HEADER SECTION (Dynamic) -->
+        <header id="level-header" class="text-center fade-in">
+            <span id="header-badge" class="inline-block py-1 px-3 rounded-full bg-slate-200 text-slate-700 text-xs font-bold uppercase mb-4">Fundamentos</span>
+            <h2 id="header-title" class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">White Belt</h2>
+            <p id="header-desc" class="max-w-2xl mx-auto text-xl text-slate-500">
+                El punto de partida. Conciencia, vocabulario y cultura de mejora.
+            </p>
+        </header>
+
+        <!-- DASHBOARD GRID (Dynamic Modules) -->
+        <div id="content-area" class="fade-in">
+            <!-- Content injected via JS -->
+        </div>
+
+        <!-- INTERACTIVE LAB SECTION (Specific to Belt) -->
+        <section id="interactive-lab" class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden fade-in">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-900" id="lab-title">Laboratorio de Conceptos</h3>
+                    <p class="text-slate-500" id="lab-desc">Visualización interactiva.</p>
+                </div>
+                <div class="bg-white p-2 rounded-full shadow-sm border border-slate-200">
+                    <i class="fa-solid fa-flask text-slate-400 text-xl"></i>
+                </div>
+            </div>
+            
+            <div class="p-6 md:p-10 bg-white">
+                <div class="chart-container mx-auto">
+                    <canvas id="labChart"></canvas>
+                </div>
+                
+                <!-- Lab Controls -->
+                <div id="lab-controls" class="mt-8 flex flex-wrap justify-center gap-4">
+                    <!-- Dynamic Controls injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- KNOWLEDGE CHECK (Dynamic Quiz) -->
+        <section id="quiz-section" class="max-w-3xl mx-auto bg-slate-900 rounded-2xl p-8 text-white text-center shadow-2xl fade-in">
+            <i class="fa-solid fa-graduation-cap text-4xl mb-4 text-yellow-400"></i>
+            <h3 class="text-2xl font-bold mb-2">Evaluación de Nivel</h3>
+            <p class="text-slate-400 mb-6" id="quiz-intro">Pregunta rápida para validar tu conocimiento actual.</p>
+            
+            <div id="quiz-container" class="bg-slate-800 rounded-xl p-6 text-left">
+                <p id="quiz-question" class="text-lg font-bold mb-4">Cargando...</p>
+                <div id="quiz-options" class="space-y-3"></div>
+                <div id="quiz-feedback" class="mt-4 hidden p-3 rounded bg-slate-700 text-sm"></div>
+            </div>
+            
+            <button onclick="loadNextQuiz()" class="mt-6 text-sm text-slate-400 hover:text-white underline">Siguiente Pregunta</button>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-50 border-t border-slate-200 py-12 text-center text-slate-400 text-sm">
+        <p>&copy; 2026 LSS Master Suite. Herramienta educativa integral.</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STORE ---
+        const beltData = {
+            white: {
+                color: 'slate',
+                badge: 'Fundamentos',
+                title: 'White Belt',
+                desc: 'El inicio del viaje. Entiende la filosofía, elimina desperdicios (Muda) y apoya la cultura Kaizen.',
+                modules: [
+                    { title: 'Filosofía Dual', icon: 'fa-infinity', text: 'Lean (Velocidad) + Six Sigma (Calidad). El equilibrio perfecto.' },
+                    { title: 'Las 5S', icon: 'fa-broom', text: 'Clasificar, Ordenar, Limpiar, Estandarizar, Disciplina. La base del orden.' },
+                    { title: 'Los 8 Desperdicios', icon: 'fa-trash-can', text: 'Desde la sobreproducción hasta el talento no utilizado.' }
+                ],
+                lab: {
+                    title: 'Visualizador de Variabilidad',
+                    desc: 'Compara un proceso tradicional (Campana ancha) con un proceso Six Sigma (Campana estrecha).',
+                    type: 'variability'
+                },
+                quiz: [
+                    { q: "¿Qué busca Lean?", a: ["Velocidad/Flujo", "Variabilidad", "Inspección"], c: 0 },
+                    { q: "¿DPMO de Six Sigma?", a: ["Cero", "3.4", "100"], c: 1 }
+                ]
+            },
+            yellow: {
+                color: 'yellow',
+                badge: 'Participación y Herramientas',
+                title: 'Yellow Belt',
+                desc: 'El solucionador práctico. Recolecta datos, crea gráficos básicos y participa en proyectos DMAIC.',
+                modules: [
+                    { title: 'Estadística Descriptiva', icon: 'fa-calculator', text: 'Media, Mediana, Moda y Rango. Entendiendo los datos básicos.' },
+                    { title: 'Diagrama de Pareto', icon: 'fa-chart-bar', text: 'La regla 80/20. El 80% de los problemas vienen del 20% de las causas.' },
+                    { title: 'Mapeo de Procesos', icon: 'fa-project-diagram', text: 'SIPOC y Diagramas de Flujo para visualizar pasos.' }
+                ],
+                lab: {
+                    title: 'Generador de Pareto (80/20)',
+                    desc: 'Analiza los datos de defectos. Haz clic en las barras para ver cómo unos pocos tipos causan la mayoría de problemas.',
+                    type: 'pareto'
+                },
+                quiz: [
+                    { q: "¿Qué dice el principio de Pareto?", a: ["Todo importa igual", "80% efectos vienen de 20% causas", "50/50"], c: 1 },
+                    { q: "¿Qué es SIPOC?", a: ["Un software", "Suppliers, Inputs, Process, Outputs, Customers", "Una certificación"], c: 1 }
+                ]
+            },
+            green: {
+                color: 'green',
+                badge: 'Análisis y Liderazgo',
+                title: 'Green Belt',
+                desc: 'El líder de proyectos. Usa estadística inferencial y gráficos de control para estabilizar procesos.',
+                modules: [
+                    { title: 'Control Estadístico (SPC)', icon: 'fa-chart-line', text: 'Gráficos de Control (X-bar R). Distinguir causas comunes vs especiales.' },
+                    { title: 'Capacidad (Cpk)', icon: 'fa-ruler-combined', text: '¿Puede mi proceso cumplir con lo que pide el cliente?' },
+                    { title: 'Pruebas de Hipótesis', icon: 'fa-microscope', text: 'Validar estadísticamente si una mejora es real o suerte.' }
+                ],
+                lab: {
+                    title: 'Simulador SPC (Control Chart)',
+                    desc: 'Monitorea un proceso. Intenta inyectar una "Causa Especial" y mira si el gráfico la detecta.',
+                    type: 'spc'
+                },
+                quiz: [
+                    { q: "¿Qué es una causa común?", a: ["Un error humano", "Variación natural del proceso", "Una máquina rota"], c: 1 },
+                    { q: "¿Si Cpk > 1.33, el proceso es...?", a: ["Malo", "Capaz", "Inestable"], c: 1 }
+                ]
+            },
+            black: {
+                color: 'slate', // Dark theme handled via CSS classes usually
+                badge: 'Maestría y Estrategia',
+                title: 'Black Belt',
+                desc: 'El experto. Optimización avanzada, Diseño de Experimentos (DOE) y gestión del cambio organizacional.',
+                modules: [
+                    { title: 'DOE (Diseño de Experimentos)', icon: 'fa-flask-vial', text: 'Manipular múltiples variables (X) a la vez para encontrar el óptimo.' },
+                    { title: 'Gestión del Cambio', icon: 'fa-users-gear', text: 'Liderar la psicología de la transformación cultural.' },
+                    { title: 'DFSS (Design for Six Sigma)', icon: 'fa-compass-drafting', text: 'Crear procesos nuevos perfectos desde cero (DMADV).' }
+                ],
+                lab: {
+                    title: 'Visualizador de Interacciones (DOE)',
+                    desc: 'Cómo dos variables (Temperatura y Presión) interactúan para afectar el resultado.',
+                    type: 'doe'
+                },
+                quiz: [
+                    { q: "¿Qué busca un DOE?", a: ["Observar pasivamente", "Manipular variables para ver efectos", "Hacer encuestas"], c: 1 },
+                    { q: "¿Qué es DMADV?", a: ["Para procesos existentes", "Para diseñar nuevos procesos/productos", "Para recursos humanos"], c: 1 }
+                ]
+            }
+        };
+
+        let currentChart = null;
+        let currentLevel = 'white';
+        let currentQuizIndex = 0;
+
+        // --- CORE FUNCTIONS ---
+
+        function switchLevel(level) {
+            currentLevel = level;
+            const data = beltData[level];
+            
+            // 1. Update UI Styles (Buttons)
+            document.querySelectorAll('.belt-btn').forEach(btn => {
+                const isActive = btn.dataset.level === level;
+                btn.className = isActive 
+                    ? `belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all shadow border text-slate-800 bg-white border-${data.color}-500 ring-2 ring-${data.color}-100`
+                    : `belt-btn flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-white hover:shadow transition-all`;
+                
+                // Add specific text colors for active state visualization
+                if(isActive) {
+                    if(level === 'yellow') btn.classList.add('text-yellow-700');
+                    if(level === 'green') btn.classList.add('text-green-700');
+                    if(level === 'black') btn.classList.add('text-slate-900');
+                    if(level === 'white') btn.classList.add('text-slate-600');
+                }
+            });
+
+            // 2. Update Header
+            document.getElementById('current-level-label').innerText = `Nivel: ${data.title}`;
+            document.getElementById('header-badge').innerText = data.badge;
+            document.getElementById('header-badge').className = `inline-block py-1 px-3 rounded-full text-xs font-bold uppercase mb-4 bg-${data.color}-100 text-${data.color}-800`;
+            document.getElementById('header-title').innerText = data.title;
+            document.getElementById('header-desc').innerText = data.desc;
+
+            // 3. Inject Modules
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = ''; // Clear
+            const grid = document.createElement('div');
+            grid.className = 'grid md:grid-cols-3 gap-6';
+            
+            data.modules.forEach(mod => {
+                grid.innerHTML += `
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition card-anim">
+                        <div class="w-12 h-12 rounded-lg bg-${data.color}-50 flex items-center justify-center mb-4 text-${data.color}-600">
+                            <i class="fa-solid ${mod.icon} text-2xl"></i>
+                        </div>
+                        <h4 class="text-xl font-bold text-slate-900 mb-2">${mod.title}</h4>
+                        <p class="text-slate-600 text-sm">${mod.text}</p>
+                    </div>
+                `;
+            });
+            contentArea.appendChild(grid);
+
+            // 4. Update Lab
+            document.getElementById('lab-title').innerText = data.lab.title;
+            document.getElementById('lab-desc').innerText = data.lab.desc;
+            initLabChart(data.lab.type);
+
+            // 5. Reset Quiz
+            currentQuizIndex = 0;
+            loadNextQuiz();
+        }
+
+        function loadNextQuiz() {
+            const quizSet = beltData[currentLevel].quiz;
+            const qIndex = currentQuizIndex % quizSet.length;
+            const qData = quizSet[qIndex];
+
+            document.getElementById('quiz-question').innerText = qData.q;
+            const optsDiv = document.getElementById('quiz-options');
+            optsDiv.innerHTML = '';
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            qData.a.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded bg-slate-700 hover:bg-slate-600 transition text-sm";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, qData.c, btn);
+                optsDiv.appendChild(btn);
+            });
+            
+            currentQuizIndex++;
+        }
+
+        function checkAnswer(selected, correct, btn) {
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+            
+            if (selected === correct) {
+                feedback.innerHTML = '<strong class="text-green-400">¡Correcto!</strong> Muy bien hecho.';
+                feedback.className = "mt-4 p-3 rounded bg-green-900/50 border border-green-800 text-green-100 text-sm";
+                btn.classList.add('bg-green-600', 'hover:bg-green-600');
+            } else {
+                feedback.innerHTML = '<strong class="text-red-400">Incorrecto.</strong> Intenta de nuevo en la siguiente ronda.';
+                feedback.className = "mt-4 p-3 rounded bg-red-900/50 border border-red-800 text-red-100 text-sm";
+                btn.classList.add('bg-red-600', 'hover:bg-red-600');
+            }
+        }
+
+        // --- CHART LABS ---
+
+        function initLabChart(type) {
+            const ctx = document.getElementById('labChart').getContext('2d');
+            const controls = document.getElementById('lab-controls');
+            controls.innerHTML = ''; // Clear controls
+
+            if (currentChart) currentChart.destroy();
+
+            // 1. VARIABILITY CHART (White Belt)
+            if (type === 'variability') {
+                const labels = Array.from({length: 40}, (_, i) => i - 20);
+                const highVar = labels.map(x => Math.exp(-0.5 * Math.pow(x / 5, 2)));
+                const lowVar = labels.map(x => Math.exp(-0.5 * Math.pow(x / 1.5, 2)));
+
+                currentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { label: 'Proceso Actual', data: highVar, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4, pointRadius: 0 },
+                            { label: 'Six Sigma', data: lowVar, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', fill: true, tension: 0.4, pointRadius: 0, hidden: true }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: {display: false}, y: {display: false} }, plugins: { legend: {position: 'bottom'} } }
+                });
+
+                controls.innerHTML = `<button onclick="toggleVariance()" class="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition">Aplicar Six Sigma</button>`;
+            }
+
+            // 2. PARETO CHART (Yellow Belt)
+            else if (type === 'pareto') {
+                const dataRaw = [50, 30, 10, 5, 3, 2];
+                const labels = ['Retrasos', 'Errores Typo', 'Falta Info', 'Sistema Caído', 'Otros', 'N/A'];
+                
+                // Cumulative Calc
+                let sum = 0;
+                const total = dataRaw.reduce((a,b)=>a+b,0);
+                const cumulative = dataRaw.map(val => { sum += val; return (sum/total)*100; });
+
+                currentChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { type: 'line', label: '% Acumulado', data: cumulative, borderColor: '#ca8a04', borderWidth: 2, yAxisID: 'y1' },
+                            { type: 'bar', label: 'Frecuencia Defectos', data: dataRaw, backgroundColor: '#facc15', yAxisID: 'y' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, position: 'left' },
+                            y1: { beginAtZero: true, position: 'right', max: 100, grid: {drawOnChartArea: false} }
+                        }
+                    }
+                });
+                
+                controls.innerHTML = `<div class="text-sm text-yellow-800 bg-yellow-100 p-2 rounded">El principio 80/20: Las 2 primeras barras causan el 80% de los problemas.</div>`;
+            }
+
+            // 3. SPC CHART (Green Belt)
+            else if (type === 'spc') {
+                const mean = 50;
+                const ucl = 65;
+                const lcl = 35;
+                const initialData = [50, 52, 48, 55, 49, 51, 53, 47, 50, 52];
+
+                currentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 10}, (_, i) => i + 1),
+                        datasets: [
+                            { label: 'Mediciones', data: [...initialData], borderColor: '#16a34a', tension: 0 },
+                            { label: 'UCL (Límite Superior)', data: Array(10).fill(ucl), borderColor: '#ef4444', borderDash: [5,5], pointRadius: 0 },
+                            { label: 'LCL (Límite Inferior)', data: Array(10).fill(lcl), borderColor: '#ef4444', borderDash: [5,5], pointRadius: 0 },
+                            { label: 'Media', data: Array(10).fill(mean), borderColor: '#94a3b8', borderDash: [2,2], pointRadius: 0 }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                controls.innerHTML = `
+                    <button onclick="addSpcPoint('common')" class="px-4 py-2 bg-green-600 text-white rounded shadow text-sm">Añadir Causa Común (Normal)</button>
+                    <button onclick="addSpcPoint('special')" class="px-4 py-2 bg-red-600 text-white rounded shadow text-sm">Inyectar Causa Especial (Error)</button>
+                `;
+            }
+
+            // 4. DOE INTERACTION (Black Belt)
+            else if (type === 'doe') {
+                 // Simplified Interaction Plot
+                 currentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Temp Baja', 'Temp Alta'],
+                        datasets: [
+                            { label: 'Presión Baja', data: [10, 20], borderColor: '#3b82f6', tension: 0 },
+                            { label: 'Presión Alta', data: [12, 45], borderColor: '#f43f5e', tension: 0 } // Steep slope = interaction
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Gráfico de Interacción (Líneas no paralelas = Interacción)' }
+                        }
+                    }
+                });
+                controls.innerHTML = `<div class="text-sm text-slate-600 bg-slate-100 p-2 rounded">Si las líneas se cruzan o no son paralelas, existe interacción entre Temperatura y Presión.</div>`;
+            }
+        }
+
+        // --- LAB ACTIONS ---
+
+        function toggleVariance() {
+            if(!currentChart) return;
+            const meta = currentChart.getDatasetMeta(1);
+            meta.hidden = meta.hidden === null ? !currentChart.data.datasets[1].hidden : null;
+            currentChart.data.datasets[1].hidden = !currentChart.data.datasets[1].hidden;
+            currentChart.update();
+        }
+
+        function addSpcPoint(type) {
+            if(!currentChart) return;
+            const newData = currentChart.data.datasets[0].data;
+            const newLabel = currentChart.data.labels.length + 1;
+            
+            let val;
+            if(type === 'common') {
+                // Random value near mean (45-55)
+                val = Math.floor(Math.random() * (55 - 45 + 1) + 45);
+            } else {
+                // Outlier (70+)
+                val = 75;
+            }
+
+            currentChart.data.labels.push(newLabel);
+            currentChart.data.datasets.forEach(ds => {
+                if(ds.label === 'Mediciones') ds.data.push(val);
+                else ds.data.push(ds.data[0]); // Extend limits
+            });
+            currentChart.update();
+        }
+
+        // Init
+        window.onload = function() {
+            switchLevel('white');
+        };
+
+    </script>
+</body>
+</html>
