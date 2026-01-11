@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSS Master Suite | Executive Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js & Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- MathJax for Professional Formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* App 1 Design Aesthetics */
+        .card-hover:hover { transform: translateY(-2px); transition: all 0.3s ease; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .active-tab { background-color: #1e293b; color: white; border-color: #1e293b; }
+        .inactive-tab { background-color: white; color: #64748b; border-color: #e2e8f0; }
+        .inactive-tab:hover { background-color: #f8fafc; color: #334155; }
+
+        /* Chart Containers */
+        .chart-container { position: relative; width: 100%; height: 400px; }
+
+        /* Formula Box Styling (Clean) */
+        .formula-box {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+
+    <!-- 
+    Structure Strategy:
+    1. Header/Hero: Clean aesthetics from App 1.
+    2. Navigation: Centered "Pill" selector for Belts.
+    3. Content: Single Column layout (Max-width-5xl) with "Cards" for Theory and Labs.
+    4. Design System: Slate-50 background, White cards, Large Typography.
+    -->
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- NAVIGATION (App 1 Style) -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="bg-blue-600 p-1.5 rounded-lg mr-2 shadow-sm">
+                        <i class="fa-solid fa-layer-group text-white text-lg"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">LSS <span class="text-blue-600">Executive</span></span>
+                </div>
+                <div class="text-sm font-medium text-slate-500">
+                    Master Analytics Suite
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION (App 1 Style) -->
+    <header class="bg-white border-b border-slate-200 pb-12 pt-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-blue-50 text-blue-700 text-xs font-bold tracking-wide uppercase mb-4 border border-blue-100">Simulación Profesional</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
+                Dominio de <span class="text-blue-600">Calidad & Datos</span>
+            </h1>
+            <p class="text-lg text-slate-500 max-w-2xl mx-auto">
+                Plataforma avanzada para la simulación de conceptos Lean Six Sigma. Desde la variabilidad básica hasta modelos de regresión y capacidad de procesos.
+            </p>
+            
+            <!-- BELT SELECTOR (Centrado y Estilizado) -->
+            <div class="mt-10 flex justify-center">
+                <div class="inline-flex bg-slate-100 p-1.5 rounded-xl shadow-inner border border-slate-200 overflow-x-auto max-w-full">
+                    <button onclick="loadBelt('white')" id="btn-white" class="px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm active-tab whitespace-nowrap">White Belt</button>
+                    <button onclick="loadBelt('yellow')" id="btn-yellow" class="px-6 py-2.5 rounded-lg text-sm font-bold transition-all inactive-tab whitespace-nowrap">Yellow Belt</button>
+                    <button onclick="loadBelt('green')" id="btn-green" class="px-6 py-2.5 rounded-lg text-sm font-bold transition-all inactive-tab whitespace-nowrap">Green Belt</button>
+                    <button onclick="loadBelt('black')" id="btn-black" class="px-6 py-2.5 rounded-lg text-sm font-bold transition-all inactive-tab whitespace-nowrap">Black Belt</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12 min-h-screen">
+
+        <!-- DYNAMIC CONTENT CONTAINER -->
+        <div id="dynamic-content" class="space-y-10 fade-in">
+            <!-- 1. THEORY CARD -->
+            <section class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-8 md:p-10">
+                    <div class="flex items-center mb-6">
+                        <div id="theory-icon" class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mr-4">
+                            <i class="fa-solid fa-book-open text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 id="theory-title" class="text-2xl font-bold text-slate-900">Fundamentos</h2>
+                            <p id="theory-desc" class="text-slate-500">Descripción del módulo teórico.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="theory-body" class="prose prose-slate max-w-none text-slate-600">
+                        <!-- Injected Content -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. LAB CARD -->
+            <section class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden relative">
+                <!-- Header Lab -->
+                <div class="bg-slate-900 p-6 md:px-10 flex justify-between items-center text-white">
+                    <div>
+                        <h2 class="text-xl font-bold">Laboratorio de Simulación</h2>
+                        <p class="text-slate-400 text-sm" id="lab-subtitle">Entorno interactivo</p>
+                    </div>
+                    <button onclick="resetSim()" class="text-xs bg-slate-800 border border-slate-700 hover:bg-slate-700 px-3 py-1.5 rounded transition text-slate-300">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar
+                    </button>
+                </div>
+
+                <div class="p-6 md:p-10 bg-slate-50/50">
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        
+                        <!-- Chart Area -->
+                        <div class="lg:col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div class="chart-container">
+                                <canvas id="mainChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Controls & Metrics -->
+                        <div class="lg:col-span-1 space-y-6">
+                            
+                            <!-- Controls Panel -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Panel de Control</h3>
+                                <div id="lab-controls" class="space-y-5">
+                                    <!-- Dynamic Controls -->
+                                </div>
+                            </div>
+
+                            <!-- Metrics Panel -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Métricas Clave</h3>
+                                <div id="lab-metrics" class="space-y-4">
+                                    <!-- Dynamic Metrics -->
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <footer class="text-center text-slate-400 py-12 border-t border-slate-200 bg-white">
+        <p class="text-sm font-medium">LSS Executive Suite &copy; 2026. Diseño y Analítica Profesional.</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA STORE (Content from App 2) ---
+        const contentDB = {
+            white: {
+                themeColor: 'blue',
+                icon: 'fa-infinity',
+                title: 'Fundamentos y Economía de la Calidad',
+                desc: 'Comprensión profunda de la variación y el costo financiero de la no-calidad (COPQ).',
+                htmlContent: `
+                    <div class="grid md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">1. El Costo de la Pobre Calidad (COPQ)</h3>
+                            <p class="mb-4 text-justify">
+                                En un nivel ejecutivo, entendemos que la calidad no es solo "hacerlo bien", es rentabilidad. El <strong>COPQ</strong> representa el dinero perdido en retrabajos, desechos y garantías, usualmente 15-25% de las ventas.
+                            </p>
+                            <div class="formula-box">
+                                <p class="font-bold text-xs text-slate-500 mb-2 uppercase">Ecuación de Rentabilidad</p>
+                                $$ Beneficio = Ingresos - (Costo_{Fijo} + Costo_{Variable} + COPQ) $$
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">2. Determinismo: Y = f(x)</h3>
+                            <p class="mb-4">
+                                La base filosófica: No resolvemos problemas por suerte, sino controlando las variables independientes ($x$) para asegurar el resultado ($Y$).
+                            </p>
+                            <ul class="space-y-2 bg-blue-50 p-4 rounded-xl text-sm border border-blue-100">
+                                <li class="flex items-center"><span class="w-6 h-6 rounded bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold mr-2">Y</span> Variable Dependiente (Efecto)</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold mr-2">x</span> Variables Independientes (Causas)</li>
+                                <li class="flex items-center"><span class="w-6 h-6 rounded bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-bold mr-2">f</span> Función de Transformación</li>
+                            </ul>
+                        </div>
+                    </div>
+                `,
+                lab: {
+                    type: 'variation',
+                    subtitle: 'Visualización de Variabilidad (Sigma)',
+                    controls: [
+                        { label: 'Estado del Proceso', type: 'toggle', action: 'toggleSigma', textOff: 'Estándar (3σ)', textOn: 'Six Sigma (6σ)' }
+                    ],
+                    metrics: [
+                        { label: 'Nivel Sigma', id: 'm-sigma', val: '2.0' },
+                        { label: 'DPMO (Defectos)', id: 'm-dpmo', val: '308,537' }
+                    ]
+                }
+            },
+            yellow: {
+                themeColor: 'yellow',
+                icon: 'fa-chart-pie',
+                title: 'Estadística Descriptiva y Pareto',
+                desc: 'El poder de los datos: Medidas de tendencia central y la ley de los pocos vitales.',
+                htmlContent: `
+                    <div class="grid md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">1. Medidas Estadísticas</h3>
+                            <p class="mb-4">
+                                Describimos la realidad con dos números: ¿Dónde está el centro? ($\\mu$) y ¿Qué tanto varía? ($s$).
+                            </p>
+                            <div class="formula-box">
+                                <p class="font-bold text-xs text-slate-500 mb-1">Desviación Estándar Muestral ($s$):</p>
+                                $$ s = \\sqrt{\\frac{\\sum_{i=1}^{n} (x_i - \\bar{x})^2}{n - 1}} $$
+                            </div>
+                            <p class="text-xs text-slate-400 italic">Usamos $n-1$ (Bessel) para corregir el sesgo en muestras.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">2. Principio de Pareto</h3>
+                            <p class="mb-4">
+                                La ley de potencias: El 80% de los efectos provienen del 20% de las causas. Es la herramienta principal para priorizar esfuerzos.
+                            </p>
+                            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                                <p class="text-yellow-800 text-sm font-medium">"No arregles todo. Arregla lo vital."</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                lab: {
+                    type: 'pareto',
+                    subtitle: 'Generador Dinámico de Pareto',
+                    controls: [
+                        { label: 'Muestreo', type: 'button', action: 'regenPareto', text: 'Generar Nueva Data' }
+                    ],
+                    metrics: [
+                        { label: 'Causa Principal', id: 'm-top-cause', val: '-' },
+                        { label: 'Impacto Acumulado', id: 'm-cum-impact', val: '-' }
+                    ]
+                }
+            },
+            green: {
+                themeColor: 'green',
+                icon: 'fa-ruler-combined',
+                title: 'Capacidad de Proceso (Cpk) e Inferencia',
+                desc: 'Determinando matemáticamente si un proceso puede cumplir con las expectativas del cliente.',
+                htmlContent: `
+                    <div class="grid md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">1. Índices de Capacidad ($C_p$ vs $C_{pk}$)</h3>
+                            <p class="mb-4">
+                                El $C_p$ es el potencial (ancho de la curva). El $C_{pk}$ es la realidad (qué tan centrada está).
+                            </p>
+                            <div class="formula-box">
+                                <p class="font-bold text-xs text-slate-500 mb-1">Índice Cpk (Real):</p>
+                                $$ C_{pk} = \\min\\left(\\frac{USL - \\mu}{3\\sigma}, \\frac{\\mu - LSL}{3\\sigma}\\right) $$
+                            </div>
+                            <div class="flex gap-2 text-xs font-mono mt-2">
+                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded">Cpk < 1.0 (Malo)</span>
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded">Cpk > 1.33 (Bueno)</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">2. Intervalos de Confianza</h3>
+                            <p class="mb-4">
+                                Nunca conocemos la media verdadera. Estimamos un rango con un nivel de confianza (usualmente 95%).
+                            </p>
+                            <div class="formula-box">
+                                $$ \\bar{x} \\pm Z_{\\alpha/2} \\left( \\frac{\\sigma}{\\sqrt{n}} \\right) $$
+                            </div>
+                        </div>
+                    </div>
+                `,
+                lab: {
+                    type: 'capability',
+                    subtitle: 'Simulador de Capacidad (Cpk)',
+                    controls: [
+                        { label: 'Centrado (Media)', type: 'range', id: 'range-mean', min: 40, max: 60, val: 50, action: 'updateCpk' },
+                        { label: 'Dispersión (Sigma)', type: 'range', id: 'range-sigma', min: 1, max: 10, val: 5, action: 'updateCpk' }
+                    ],
+                    metrics: [
+                        { label: 'Valor Cpk', id: 'm-cpk', val: '0.67', highlight: true },
+                        { label: 'Estado', id: 'm-status', val: 'INCAPAZ' },
+                        { label: 'DPMO Esperado', id: 'm-green-dpmo', val: '22,750' }
+                    ]
+                }
+            },
+            black: {
+                themeColor: 'slate',
+                icon: 'fa-chart-line',
+                title: 'Regresión Avanzada y DOE',
+                desc: 'Modelado predictivo, optimización multivariable y Diseño de Experimentos.',
+                htmlContent: `
+                    <div class="grid md:grid-cols-2 gap-8 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">1. Regresión Lineal</h3>
+                            <p class="mb-4">
+                                Creamos modelos matemáticos para predecir el futuro. La calidad del modelo se mide con $R^2$.
+                            </p>
+                            <div class="formula-box">
+                                <p class="font-bold text-xs text-slate-500 mb-1">Modelo Lineal Simple:</p>
+                                $$ Y = \\beta_0 + \\beta_1X + \\epsilon $$
+                                <br>
+                                <p class="font-bold text-xs text-slate-500 mb-1">Coeficiente $R^2$:</p>
+                                $$ R^2 = 1 - \\frac{SS_{res}}{SS_{tot}} $$
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg mb-2">2. Diseño de Experimentos (DOE)</h3>
+                            <p class="mb-4">
+                                No solo observamos, experimentamos. El DOE manipula factores deliberadamente para ver interacciones complejas que la regresión simple no ve.
+                            </p>
+                            <div class="bg-slate-100 p-4 rounded-xl border border-slate-200 text-sm">
+                                <strong>Efecto de Interacción:</strong> Cuando el efecto de un factor depende del nivel de otro factor.
+                            </div>
+                        </div>
+                    </div>
+                `,
+                lab: {
+                    type: 'regression',
+                    subtitle: 'Análisis de Regresión Interactivo',
+                    controls: [
+                        { label: 'Correlación (Ruido)', type: 'range', id: 'range-noise', min: 0, max: 50, val: 10, action: 'updateRegression' },
+                        { label: 'Pendiente (Beta 1)', type: 'range', id: 'range-slope', min: -5, max: 5, val: 2, action: 'updateRegression' }
+                    ],
+                    metrics: [
+                        { label: 'R-Cuadrado ($R^2$)', id: 'm-r2', val: '0.95', highlight: true },
+                        { label: 'Ecuación', id: 'm-equation', val: 'Y = 2.0x + 10' }
+                    ]
+                }
+            }
+        };
+
+        // --- GLOBAL VARIABLES ---
+        let currentChart = null;
+        let currentBelt = 'white';
+
+        // --- CORE FUNCTIONS ---
+
+        function loadBelt(belt) {
+            currentBelt = belt;
+            const data = contentDB[belt];
+
+            // 1. Navigation Styling (Pill Tabs)
+            ['white', 'yellow', 'green', 'black'].forEach(b => {
+                const btn = document.getElementById(`btn-${b}`);
+                if (b === belt) {
+                    btn.className = "px-6 py-2.5 rounded-lg text-sm font-bold transition-all shadow-md active-tab whitespace-nowrap transform scale-105";
+                } else {
+                    btn.className = "px-6 py-2.5 rounded-lg text-sm font-bold transition-all inactive-tab whitespace-nowrap hover:bg-slate-50";
+                }
+            });
+
+            // 2. Inject Content (Fade In Effect)
+            const container = document.getElementById('dynamic-content');
+            
+            // Remove animation class to re-trigger
+            container.classList.remove('fade-in');
+            void container.offsetWidth; // Trigger reflow
+            container.classList.add('fade-in');
+
+            // Theory Section
+            document.getElementById('theory-title').innerText = data.title;
+            document.getElementById('theory-desc').innerText = data.desc;
+            document.getElementById('theory-body').innerHTML = data.htmlContent;
+            
+            // Update Icon Color logic
+            const iconDiv = document.getElementById('theory-icon');
+            iconDiv.innerHTML = `<i class="fa-solid ${data.icon} text-xl"></i>`;
+            // Simple color map for icon bg
+            const colorMap = { white: 'blue', yellow: 'yellow', green: 'green', black: 'slate' };
+            const c = colorMap[belt];
+            iconDiv.className = `w-12 h-12 rounded-xl bg-${c}-100 flex items-center justify-center text-${c}-700 mr-4`;
+
+            // Lab Section Header
+            document.getElementById('lab-subtitle').innerText = data.lab.subtitle;
+
+            // Lab Controls Generation
+            const controlsDiv = document.getElementById('lab-controls');
+            controlsDiv.innerHTML = '';
+            
+            data.lab.controls.forEach(ctrl => {
+                let html = '';
+                if(ctrl.type === 'toggle') {
+                    html = `
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-2">${ctrl.label}</label>
+                            <button onclick="${ctrl.action}()" id="btn-toggle-sigma" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-sm border border-transparent">
+                                ${ctrl.textOff}
+                            </button>
+                        </div>
+                    `;
+                } else if(ctrl.type === 'button') {
+                    html = `
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-2">${ctrl.label}</label>
+                            <button onclick="${ctrl.action}()" class="w-full py-2.5 px-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-bold transition shadow-sm border border-transparent">
+                                ${ctrl.text}
+                            </button>
+                        </div>
+                    `;
+                } else if(ctrl.type === 'range') {
+                    html = `
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <label class="text-xs font-semibold text-slate-500">${ctrl.label}</label>
+                                <span id="${ctrl.id}-val" class="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded">${ctrl.val}</span>
+                            </div>
+                            <input type="range" id="${ctrl.id}" min="${ctrl.min}" max="${ctrl.max}" value="${ctrl.val}" step="0.5" 
+                                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                oninput="${ctrl.action}(this.value, '${ctrl.id}')">
+                        </div>
+                    `;
+                }
+                controlsDiv.innerHTML += html;
+            });
+
+            // Lab Metrics Generation
+            const metricsDiv = document.getElementById('lab-metrics');
+            metricsDiv.innerHTML = '';
+            data.lab.metrics.forEach(m => {
+                metricsDiv.innerHTML += `
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2 last:border-0">
+                        <span class="text-sm text-slate-500 font-medium">${m.label}</span>
+                        <span id="${m.id}" class="text-base font-mono font-bold ${m.highlight ? 'text-blue-600' : 'text-slate-800'}">${m.val}</span>
+                    </div>
+                `;
+            });
+
+            // Re-render MathJax
+            if(window.MathJax) {
+                MathJax.typesetPromise();
+            }
+
+            // Initialize Chart
+            initChart(data.lab.type);
+        }
+
+
+        // --- CHART LOGIC (Identical Physics/Math to Pro Version) ---
+
+        function initChart(type) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (currentChart) currentChart.destroy();
+
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#94a3b8';
+
+            if (type === 'variation') initVariationChart(ctx);
+            else if (type === 'pareto') regenPareto(ctx);
+            else if (type === 'capability') updateCpk(); // Logic handles init
+            else if (type === 'regression') updateRegression(); // Logic handles init
+        }
+
+        // 1. Variation Chart (White Belt)
+        function initVariationChart(ctx) {
+            const xValues = [];
+            const yValuesCurrent = [];
+            const yValuesSigma = [];
+            for(let x = -20; x <= 20; x += 0.5) {
+                xValues.push(x);
+                yValuesCurrent.push(normalPdf(x, 0, 5));
+                yValuesSigma.push(normalPdf(x, 0, 1.5));
+            }
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xValues,
+                    datasets: [
+                        { label: 'Proceso Actual', data: yValuesCurrent, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, pointRadius: 0, borderWidth: 3, tension: 0.4 },
+                        { label: 'Six Sigma', data: yValuesSigma, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', fill: true, pointRadius: 0, borderWidth: 3, tension: 0.4, hidden: true }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+                        annotation: { annotations: {
+                            line1: { type: 'line', xMin: 10, xMax: 10, borderColor: '#334155', borderWidth: 2, borderDash: [6,6], label: { display: true, content: 'USL', position: 'start', backgroundColor: '#334155', font: {size: 10} } },
+                            line2: { type: 'line', xMin: -10, xMax: -10, borderColor: '#334155', borderWidth: 2, borderDash: [6,6], label: { display: true, content: 'LSL', position: 'start', backgroundColor: '#334155', font: {size: 10} } }
+                        }}
+                    },
+                    scales: { y: { display: false }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        function toggleSigma() {
+            const isHidden = currentChart.data.datasets[1].hidden;
+            currentChart.data.datasets[1].hidden = !isHidden;
+            currentChart.update();
+            
+            const btn = document.getElementById('btn-toggle-sigma');
+            document.getElementById('m-sigma').innerText = isHidden ? '6.0' : '2.0';
+            document.getElementById('m-dpmo').innerText = isHidden ? '3.4' : '308,537';
+            
+            if(isHidden) {
+                btn.innerText = "Activar Six Sigma (6σ)";
+                btn.classList.replace('bg-slate-600', 'bg-blue-600');
+                btn.classList.replace('hover:bg-slate-700', 'hover:bg-blue-700');
+            } else {
+                btn.innerText = "Volver a Estándar (3σ)";
+                btn.classList.replace('bg-blue-600', 'bg-slate-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-slate-700');
+            }
+        }
+
+        // 2. Pareto (Yellow Belt)
+        function regenPareto(ctxOverride = null) {
+            const cats = ['Rayaduras', 'Manchas', 'Dimensiones', 'Empaque', 'Rotura', 'Otros'];
+            const data = cats.map(() => Math.floor(Math.random() * 100) + 10).sort((a,b) => b-a);
+            let total = data.reduce((a,b) => a+b, 0);
+            let cum = 0;
+            const cumData = data.map(v => { cum += v; return (cum/total)*100; });
+
+            const chartData = {
+                labels: cats,
+                datasets: [
+                    { type: 'line', label: '% Acumulado', data: cumData, borderColor: '#ca8a04', borderWidth: 2, yAxisID: 'y1', pointRadius: 4, tension: 0.1 },
+                    { type: 'bar', label: 'Frecuencia', data: data, backgroundColor: '#facc15', borderRadius: 4, yAxisID: 'y' }
+                ]
+            };
+
+            if(currentChart && !ctxOverride) {
+                currentChart.data = chartData;
+                currentChart.update();
+            } else {
+                const context = ctxOverride || document.getElementById('mainChart').getContext('2d');
+                if(currentChart) currentChart.destroy();
+                currentChart = new Chart(context, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { 
+                            y: { position: 'left', grid: { display: false } }, 
+                            y1: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+            document.getElementById('m-top-cause').innerText = cats[0];
+            document.getElementById('m-cum-impact').innerText = Math.round(cumData[1]) + '% (Top 2)';
+        }
+
+        // 3. Capability Cpk (Green Belt)
+        function updateCpk(val, id) {
+            if(id) document.getElementById(id + '-val').innerText = val;
+            
+            const mean = parseFloat(document.getElementById('range-mean')?.value || 50);
+            const sigma = parseFloat(document.getElementById('range-sigma')?.value || 5);
+            const USL = 75, LSL = 25;
+
+            const xVals = [], yVals = [];
+            for(let x = 0; x <= 100; x += 1) {
+                xVals.push(x);
+                yVals.push(normalPdf(x, mean, sigma));
+            }
+
+            const Cpk = Math.min((USL - mean)/(3*sigma), (mean - LSL)/(3*sigma));
+            const status = Cpk >= 1.33 ? "CAPAZ" : "INCAPAZ";
+            
+            const Z_min = Math.min((USL - mean)/sigma, (mean - LSL)/sigma);
+            let DPMO = Z_min < 6 ? Math.pow(10, 6.7 - 1.25 * Z_min) : 3.4;
+            if(DPMO > 1000000) DPMO = 1000000;
+
+            const mCpk = document.getElementById('m-cpk');
+            if(mCpk) {
+                mCpk.innerText = Cpk.toFixed(2);
+                document.getElementById('m-status').innerText = status;
+                document.getElementById('m-status').className = `text-base font-mono font-bold ${Cpk >= 1.33 ? 'text-green-600' : 'text-red-600'}`;
+                document.getElementById('m-green-dpmo').innerText = Math.round(DPMO).toLocaleString();
+            }
+
+            const chartData = {
+                labels: xVals,
+                datasets: [{ 
+                    label: 'Distribución', 
+                    data: yVals, 
+                    borderColor: '#16a34a', 
+                    backgroundColor: Cpk >= 1.33 ? 'rgba(22, 163, 74, 0.2)' : 'rgba(239, 68, 68, 0.2)', 
+                    fill: true, pointRadius: 0, borderWidth: 2, tension: 0.4 
+                }]
+            };
+
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(currentChart && currentChart.config.type === 'line' && currentBelt === 'green') {
+                currentChart.data = chartData;
+                currentChart.data.datasets[0].backgroundColor = Cpk >= 1.33 ? 'rgba(22, 163, 74, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+                currentChart.update();
+            } else {
+                if(currentChart) currentChart.destroy();
+                currentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { display: false }, x: { grid: {display:false} } },
+                        plugins: { 
+                            legend: { display: false },
+                            annotation: { annotations: {
+                                usl: { type: 'line', xMin: USL, xMax: USL, borderColor: '#ef4444', borderWidth: 2, label: { display: true, content: 'USL', position: 'start', backgroundColor:'#ef4444', color:'white' } },
+                                lsl: { type: 'line', xMin: LSL, xMax: LSL, borderColor: '#ef4444', borderWidth: 2, label: { display: true, content: 'LSL', position: 'start', backgroundColor:'#ef4444', color:'white' } },
+                            }}
+                        }
+                    }
+                });
+            }
+        }
+
+        // 4. Regression (Black Belt)
+        function updateRegression(val, id) {
+            if(id) document.getElementById(id + '-val').innerText = val;
+
+            const slope = parseFloat(document.getElementById('range-slope')?.value || 2);
+            const noise = parseFloat(document.getElementById('range-noise')?.value || 10);
+            const intercept = 10;
+            
+            const points = [], linePoints = [], xVals = [], yVals = [];
+            const n = 20;
+            let ssRes = 0, ssTot = 0, ySum = 0;
+
+            for(let i=0; i<n; i++) {
+                const x = i;
+                const randomNoise = (Math.random() - 0.5) * noise * 2;
+                const y = (slope * x) + intercept + randomNoise;
+                points.push({x: x, y: y});
+                linePoints.push({x: x, y: (slope * x) + intercept});
+                xVals.push(x); yVals.push(y); ySum += y;
+            }
+            const yMean = ySum / n;
+
+            for(let i=0; i<n; i++) {
+                const yPred = (slope * xVals[i]) + intercept;
+                ssRes += Math.pow(yVals[i] - yPred, 2);
+                ssTot += Math.pow(yVals[i] - yMean, 2);
+            }
+            let r2 = 1 - (ssRes / ssTot);
+            if(r2 < 0) r2 = 0;
+
+            const mR2 = document.getElementById('m-r2');
+            if(mR2) {
+                mR2.innerText = r2.toFixed(3);
+                document.getElementById('m-equation').innerText = `Y = ${slope}x + ${intercept}`;
+            }
+
+            const chartData = {
+                datasets: [
+                    { type: 'scatter', label: 'Datos Observados', data: points, backgroundColor: '#3b82f6', pointRadius: 4 },
+                    { type: 'line', label: 'Modelo', data: linePoints, borderColor: '#0f172a', borderWidth: 2, pointRadius: 0 }
+                ]
+            };
+
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(currentChart && currentChart.config.type === 'scatter') {
+                currentChart.data = chartData;
+                currentChart.update();
+            } else {
+                if(currentChart) currentChart.destroy();
+                currentChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: chartData,
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { x: { type: 'linear', position: 'bottom', grid: {display:false} }, y: { grid: {display:false} } }
+                    }
+                });
+            }
+        }
+
+        // --- MATH HELPERS ---
+        function normalPdf(x, mu, sigma) {
+            return (Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2))) / (sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function resetSim() { loadBelt(currentBelt); }
+
+        // --- INIT ---
+        window.onload = function() { loadBelt('white'); };
+
+    </script>
+</body>
+</html>
