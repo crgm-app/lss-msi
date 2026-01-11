@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interactiva: Lean Six Sigma White Belt</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        .hidden-content { display: none; }
+        .active-tab { border-bottom: 2px solid #2563EB; color: #2563EB; }
+        
+        /* Chart Container Styling per requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+    </style>
+
+    <!-- Chosen Palette: Slate (Neutrals) + Blue (Six Sigma) + Emerald (Lean) + Amber (Highlights) -->
+    <!-- Application Structure Plan: 
+         1. Hero Section: Introduction to the LSS White Belt concept.
+         2. The Dual Philosophy: Interactive comparison cards (Lean vs Six Sigma) to clarify the two pillars.
+         3. Interactive Concept Lab: A Chart.js visualizer for "Variability" and the Y=f(x) equation. This visualizes the core mathematical concept.
+         4. The Hierarchy (Belts): An interactive accordion/tabs section to explore roles.
+         5. The Process (DMAIC): An interactive Doughnut chart acting as a navigation wheel for the 5 phases.
+         6. Vocabulary & Wastes: A filterable grid for key terms and the 8 Wastes.
+         7. Knowledge Check: Interactive Quiz based on the source report questions.
+         Rationale: This structure breaks dense theory into digestible, interactive modules, allowing the user to "play" with the concepts (variability, process steps) rather than just reading them.
+    -->
+    <!-- Visualization & Content Choices:
+         - Concept Lab: Line Chart (Chart.js) to show Bell Curves (Standard vs Six Sigma). Goal: Visualize "Consistency".
+         - DMAIC Wheel: Doughnut Chart (Chart.js). Goal: Show the cyclical nature of the process. Interaction: Click slice to update text.
+         - NO SVG/Mermaid used. Unicode icons and FontAwesome used for visuals.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-infinity text-blue-600 text-2xl mr-2"></i>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">LSS White Belt</span>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm font-medium">
+                    <a href="#filosofia" class="text-slate-500 hover:text-blue-600 transition">Filosofía</a>
+                    <a href="#conceptos" class="text-slate-500 hover:text-blue-600 transition">Conceptos Clave</a>
+                    <a href="#roles" class="text-slate-500 hover:text-blue-600 transition">Roles</a>
+                    <a href="#dmaic" class="text-slate-500 hover:text-blue-600 transition">DMAIC</a>
+                    <a href="#quiz" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">Evaluación</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold tracking-wide uppercase mb-4">Guía de Estudio Interactiva</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
+                Fundamentos de <span class="text-blue-600">Lean Six Sigma</span>
+            </h1>
+            <p class="max-w-2xl mx-auto text-xl text-slate-500">
+                Domina el nivel White Belt. Comprende la fusión de velocidad y calidad, elimina desperdicios y apoya la cultura de mejora continua.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <button onclick="scrollToSection('filosofia')" class="px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition shadow-lg">
+                    Comenzar Estudio
+                </button>
+                <button onclick="scrollToSection('quiz')" class="px-6 py-3 bg-white text-slate-700 border border-slate-300 font-medium rounded-lg hover:bg-slate-50 transition">
+                    Ir al Quiz
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+
+        <!-- SECTION 1: DUAL PHILOSOPHY -->
+        <section id="filosofia" class="scroll-mt-24">
+            <div class="mb-8 border-l-4 border-blue-500 pl-4">
+                <h2 class="text-3xl font-bold text-slate-900">La Dualidad del Algoritmo</h2>
+                <p class="mt-2 text-lg text-slate-600">
+                    Lean Six Sigma no es una sola metodología, sino la fusión de dos poderosas filosofías. Explora los dos pilares a continuación para entender sus objetivos distintos pero complementarios.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- LEAN CARD -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 card-hover group cursor-pointer" onclick="toggleHighlight(this, 'lean')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-emerald-100 rounded-lg text-emerald-600">
+                            <i class="fa-solid fa-stopwatch text-2xl"></i>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Input A</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-2">Lean</h3>
+                    <p class="text-slate-500 mb-6">Enfoque en la eficiencia del flujo.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <i class="fa-solid fa-bullseye mt-1 mr-3 text-emerald-500"></i>
+                            <div>
+                                <span class="font-bold text-slate-800">Meta: Velocidad</span>
+                                <p class="text-sm text-slate-600">Agilizar procesos eliminando barreras.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa-solid fa-trash-can mt-1 mr-3 text-emerald-500"></i>
+                            <div>
+                                <span class="font-bold text-slate-800">Enemigo: Desperdicio (Muda)</span>
+                                <p class="text-sm text-slate-600">Actividades que no agregan valor.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIX SIGMA CARD -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 card-hover group cursor-pointer" onclick="toggleHighlight(this, 'sigma')">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-blue-100 rounded-lg text-blue-600">
+                            <i class="fa-solid fa-chart-line text-2xl"></i>
+                        </div>
+                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Input B</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-2">Six Sigma</h3>
+                    <p class="text-slate-500 mb-6">Enfoque en la calidad del resultado.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <i class="fa-solid fa-bullseye mt-1 mr-3 text-blue-500"></i>
+                            <div>
+                                <span class="font-bold text-slate-800">Meta: Consistencia</span>
+                                <p class="text-sm text-slate-600">Procesos predecibles y estables.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa-solid fa-arrow-trend-down mt-1 mr-3 text-blue-500"></i>
+                            <div>
+                                <span class="font-bold text-slate-800">Enemigo: Variabilidad</span>
+                                <p class="text-sm text-slate-600">Reducir defectos a 3.4 DPMO.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: INTERACTIVE CONCEPTS (Y=f(x) & VARIABILITY) -->
+        <section id="conceptos" class="scroll-mt-24 bg-slate-50 rounded-3xl p-6 md:p-10 border border-slate-200">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-900">Conceptos Matemáticos Clave</h2>
+                <p class="text-slate-600 mt-2">Visualiza la lógica detrás de la metodología.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Concept 1: The Equation -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-square-root-variable mr-2 text-indigo-500"></i> La Ecuación Fundamental
+                    </h3>
+                    <div class="bg-slate-900 text-white p-6 rounded-lg font-mono text-center text-2xl mb-4 shadow-inner">
+                        <span id="equation-display" class="transition-all duration-300">Y = f(x)</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-3 bg-indigo-50 rounded border border-indigo-100 cursor-pointer hover:bg-indigo-100 transition" onmouseenter="highlightEq('Y')" onmouseleave="resetEq()">
+                            <strong class="text-indigo-700">Y (Salida/Efecto):</strong> El resultado que queremos mejorar (ej. Satisfacción).
+                        </div>
+                        <div class="p-3 bg-slate-100 rounded border border-slate-200 cursor-pointer hover:bg-slate-200 transition" onmouseenter="highlightEq('x')" onmouseleave="resetEq()">
+                            <strong class="text-slate-700">x (Entradas/Causas):</strong> Variables que controlamos para cambiar Y.
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 text-center">Pasa el mouse sobre las definiciones para ver la relación.</p>
+                </div>
+
+                <!-- Concept 2: Visualizing Variability -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                            <i class="fa-solid fa-chart-area mr-2 text-blue-500"></i> Visualizando Variabilidad
+                        </h3>
+                        <button onclick="toggleVariability()" id="var-toggle-btn" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold hover:bg-blue-200 transition">
+                            Aplicar Six Sigma
+                        </button>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="variabilityChart"></canvas>
+                    </div>
+                    
+                    <div class="mt-4 text-sm text-slate-600 bg-slate-50 p-3 rounded">
+                        <p id="chart-desc">
+                            <strong class="text-red-500">Curva Roja (Proceso Actual):</strong> Alta variabilidad. Los resultados son inconsistentes y anchos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ROLES (BELTS) -->
+        <section id="roles" class="scroll-mt-24">
+            <div class="mb-8 border-l-4 border-amber-500 pl-4">
+                <h2 class="text-3xl font-bold text-slate-900">Jerarquía de Roles (Belts)</h2>
+                <p class="mt-2 text-lg text-slate-600">
+                    Como en las artes marciales, los niveles de certificación indican la profundidad del conocimiento y la responsabilidad en el liderazgo.
+                </p>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="flex overflow-x-auto border-b border-slate-200 mb-6">
+                <button onclick="showBelt('white')" class="belt-tab px-6 py-3 font-medium text-slate-500 hover:text-slate-800 focus:outline-none whitespace-nowrap active-tab" data-target="white">White Belt</button>
+                <button onclick="showBelt('yellow')" class="belt-tab px-6 py-3 font-medium text-slate-500 hover:text-slate-800 focus:outline-none whitespace-nowrap" data-target="yellow">Yellow Belt</button>
+                <button onclick="showBelt('green')" class="belt-tab px-6 py-3 font-medium text-slate-500 hover:text-slate-800 focus:outline-none whitespace-nowrap" data-target="green">Green Belt</button>
+                <button onclick="showBelt('black')" class="belt-tab px-6 py-3 font-medium text-slate-500 hover:text-slate-800 focus:outline-none whitespace-nowrap" data-target="black">Black Belt</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative min-h-[300px]">
+                
+                <!-- White Belt Content -->
+                <div id="white-content" class="belt-content p-8 md:flex gap-8 items-center animate-fade-in">
+                    <div class="md:w-1/3 flex justify-center mb-6 md:mb-0">
+                        <div class="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center border-4 border-slate-200 shadow-inner">
+                            <i class="fa-regular fa-lightbulb text-5xl text-slate-400"></i>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">White Belt (Cinturón Blanco)</h3>
+                        <p class="text-slate-500 font-medium mb-4">Nivel: Conciencia y Soporte</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Entiende la terminología básica (DMAIC, 5S).</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Ayuda a identificar problemas locales y desperdicios.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Cuestiona el status quo ("¿Por qué lo hacemos así?").</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Yellow Belt Content -->
+                <div id="yellow-content" class="belt-content hidden-content p-8 md:flex gap-8 items-center animate-fade-in">
+                    <div class="md:w-1/3 flex justify-center mb-6 md:mb-0">
+                        <div class="w-32 h-32 bg-yellow-100 rounded-full flex items-center justify-center border-4 border-yellow-400 shadow-inner">
+                            <i class="fa-solid fa-people-carry-box text-5xl text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">Yellow Belt (Cinturón Amarillo)</h3>
+                        <p class="text-slate-500 font-medium mb-4">Nivel: Participación</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Participa activamente en equipos de proyectos.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Aplica herramientas básicas (PDCA, recolección de datos).</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Resuelve problemas de complejidad baja-media.</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Green Belt Content -->
+                <div id="green-content" class="belt-content hidden-content p-8 md:flex gap-8 items-center animate-fade-in">
+                    <div class="md:w-1/3 flex justify-center mb-6 md:mb-0">
+                        <div class="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-600 shadow-inner">
+                            <i class="fa-solid fa-chart-pie text-5xl text-green-700"></i>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">Green Belt (Cinturón Verde)</h3>
+                        <p class="text-slate-500 font-medium mb-4">Nivel: Liderazgo de Proyectos (Part-time)</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Lidera proyectos departamentales.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Domina el análisis de datos intermedio.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Implementa metodología DMAIC completa.</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Black Belt Content -->
+                <div id="black-content" class="belt-content hidden-content p-8 md:flex gap-8 items-center animate-fade-in">
+                    <div class="md:w-1/3 flex justify-center mb-6 md:mb-0">
+                        <div class="w-32 h-32 bg-slate-800 rounded-full flex items-center justify-center border-4 border-black shadow-inner">
+                            <i class="fa-solid fa-user-graduate text-5xl text-white"></i>
+                        </div>
+                    </div>
+                    <div class="md:w-2/3">
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">Black Belt (Cinturón Negro)</h3>
+                        <p class="text-slate-500 font-medium mb-4">Nivel: Experto Estratégico (Full-time)</p>
+                        <ul class="space-y-3 text-slate-700">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Lidera proyectos complejos o transnacionales.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Experto en estadística avanzada (Minitab) y gestión del cambio.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-green-500 mt-1 mr-2"></i> <span>Mentora a los Green y Yellow Belts.</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: DMAIC CYCLE -->
+        <section id="dmaic" class="scroll-mt-24">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <div class="mb-6 border-l-4 border-indigo-500 pl-4">
+                        <h2 class="text-3xl font-bold text-slate-900">El Ciclo DMAIC</h2>
+                        <p class="mt-2 text-lg text-slate-600">
+                            La estructura estándar para resolver problemas en Six Sigma. Haz clic en el gráfico para explorar cada fase.
+                        </p>
+                    </div>
+                    
+                    <div id="dmaic-details" class="bg-indigo-50 p-6 rounded-xl border border-indigo-100 min-h-[200px] transition-all duration-300">
+                        <h3 class="text-xl font-bold text-indigo-800 mb-2" id="phase-title">Selecciona una fase...</h3>
+                        <p class="text-indigo-900" id="phase-desc">Interactúa con el gráfico de anillo para ver los detalles de cada etapa del proceso de mejora.</p>
+                        <div class="mt-4 pt-4 border-t border-indigo-200">
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Actividad Clave</span>
+                            <p id="phase-activity" class="text-sm font-medium text-indigo-700 mt-1">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-1 lg:order-2 flex justify-center">
+                    <div class="chart-container relative">
+                        <canvas id="dmaicChart"></canvas>
+                        <!-- Center Label -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="text-center">
+                                <span class="text-xs text-slate-400 uppercase">Ciclo</span>
+                                <div class="font-bold text-xl text-slate-700">DMAIC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: VOCABULARY & WASTE -->
+        <section id="vocab" class="scroll-mt-24">
+            <div class="mb-8 border-l-4 border-purple-500 pl-4">
+                <h2 class="text-3xl font-bold text-slate-900">Vocabulario y Desperdicios</h2>
+                <p class="mt-2 text-lg text-slate-600">
+                    Términos esenciales que todo White Belt debe conocer para hablar el idioma de la mejora.
+                </p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Vocab Cards -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-purple-300 transition group">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-purple-600">Kaizen</h4>
+                    <p class="text-sm text-slate-600">Filosofía japonesa de "Mejora Continua" (Cambio para mejor). Pequeños cambios constantes.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-purple-300 transition group">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-purple-600">5S</h4>
+                    <p class="text-sm text-slate-600">Metodología de orden: Seleccionar, Ordenar, Limpiar, Estandarizar, Disciplina.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-purple-300 transition group">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-purple-600">VSM</h4>
+                    <p class="text-sm text-slate-600">Mapa de Flujo de Valor. Herramienta visual para ver materiales e información y detectar desperdicios.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-red-300 transition group border-l-4 border-l-red-400">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-red-600">Muda (Desperdicio)</h4>
+                    <p class="text-sm text-slate-600">Cualquier actividad que consume recursos pero no crea valor para el cliente.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-red-300 transition group border-l-4 border-l-red-400">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-red-600">Sobreproducción</h4>
+                    <p class="text-sm text-slate-600">Producir más o antes de lo necesario. A menudo considerado el <strong>peor</strong> desperdicio.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-red-300 transition group border-l-4 border-l-red-400">
+                    <h4 class="font-bold text-slate-900 mb-2 group-hover:text-red-600">Talento No Utilizado</h4>
+                    <p class="text-sm text-slate-600">El 8º desperdicio. No aprovechar la inteligencia o creatividad del personal.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: QUIZ -->
+        <section id="quiz" class="scroll-mt-24 bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-900 p-8 text-center">
+                <h2 class="text-3xl font-bold text-white mb-2">Evaluación de Conocimiento</h2>
+                <p class="text-slate-300">Pon a prueba tu comprensión de los conceptos White Belt.</p>
+            </div>
+            
+            <div class="p-8 md:p-12">
+                <div id="quiz-container" class="max-w-3xl mx-auto">
+                    <!-- Question Placeholder -->
+                    <div id="question-box" class="mb-8">
+                        <span id="question-number" class="text-sm font-bold text-blue-600 uppercase tracking-widest block mb-2">Pregunta 1 de 7</span>
+                        <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-800">
+                            Cargando pregunta...
+                        </h3>
+                    </div>
+
+                    <!-- Options -->
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected by JS -->
+                    </div>
+
+                    <!-- Feedback -->
+                    <div id="feedback-box" class="hidden mt-6 p-4 rounded-lg bg-slate-50 border border-slate-200 animate-fade-in">
+                        <p id="feedback-text" class="text-slate-700"></p>
+                        <button onclick="nextQuestion()" id="next-btn" class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Siguiente</button>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="results-box" class="hidden text-center animate-fade-in">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-2">¡Evaluación Completada!</h3>
+                        <p id="score-text" class="text-xl text-blue-600 font-bold mb-6"></p>
+                        <button onclick="restartQuiz()" class="px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">Intentar de Nuevo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 py-12 border-t border-slate-200 mt-12">
+            <p>&copy; 2026 Guía Interactiva Lean Six Sigma. Basado en el material de estudio White Belt.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- DATA STORAGE ---
+        const quizQuestions = [
+            {
+                q: "¿Cuál es la diferencia principal entre el objetivo de Lean y Six Sigma?",
+                options: [
+                    "Lean busca calidad, Six Sigma busca velocidad.",
+                    "Lean busca velocidad (eliminar desperdicio), Six Sigma busca consistencia (reducir variabilidad).",
+                    "Son exactamente lo mismo con nombres diferentes.",
+                    "Lean es para manufactura, Six Sigma es para oficinas."
+                ],
+                correct: 1,
+                feedback: "Correcto. Lean acelera el flujo eliminando 'Muda', mientras Six Sigma asegura que el resultado sea siempre igual (calidad)."
+            },
+            {
+                q: "¿Qué significan las siglas DMAIC?",
+                options: [
+                    "Definir, Medir, Analizar, Mejorar, Controlar.",
+                    "Datos, Métricas, Análisis, Inteligencia, Calidad.",
+                    "Diseñar, Medir, Actuar, Inspeccionar, Corregir.",
+                    "Detectar, Mover, Analizar, Implementar, Cerrar."
+                ],
+                correct: 0,
+                feedback: "Correcto. Es el ciclo de vida estándar de un proyecto de mejora."
+            },
+            {
+                q: "En un nivel Six Sigma, ¿cuántos defectos se permiten por millón?",
+                options: [
+                    "Cero defectos.",
+                    "100 defectos.",
+                    "3.4 defectos.",
+                    "1,000 defectos."
+                ],
+                correct: 2,
+                feedback: "Correcto. 3.4 DPMO (Defectos Por Millón de Oportunidades) es el estándar de 'casi perfección'."
+            },
+            {
+                q: "¿Cómo debe reaccionar un White Belt ante 'siempre se ha hecho así'?",
+                options: [
+                    "Aceptarlo y seguir trabajando.",
+                    "Quejarse con el jefe.",
+                    "Cuestionar si agrega valor al cliente.",
+                    "Intentar cambiarlo todo inmediatamente sin permiso."
+                ],
+                correct: 2,
+                feedback: "Correcto. La mentalidad de mejora implica cuestionar el statu quo buscando valor."
+            },
+            {
+                q: "¿Cuál de estos es uno de los 8 desperdicios (Muda)?",
+                options: [
+                    "Talento No Utilizado.",
+                    "Alta Calidad.",
+                    "Capacitación excesiva.",
+                    "Mantenimiento preventivo."
+                ],
+                correct: 0,
+                feedback: "Correcto. No aprovechar las habilidades del personal es el 8º desperdicio."
+            },
+            {
+                q: "¿Cuál es la función de la fase 'Controlar' en DMAIC?",
+                options: [
+                    "Despedir a los empleados que cometen errores.",
+                    "Sostener la mejora en el tiempo y evitar volver al estado anterior.",
+                    "Medir el tiempo del proceso inicial.",
+                    "Definir el problema."
+                ],
+                correct: 1,
+                feedback: "Correcto. El control asegura que la solución sea permanente."
+            },
+            {
+                q: "¿Para qué sirve la herramienta 5S?",
+                options: [
+                    "Para calcular estadísticas avanzadas.",
+                    "Para organizar, limpiar y estandarizar el lugar de trabajo.",
+                    "Para despedir personal innecesario.",
+                    "Para crear mapas de flujo de valor."
+                ],
+                correct: 1,
+                feedback: "Correcto. 5S crea un entorno físico ordenado y eficiente."
+            }
+        ];
+
+        const dmaicData = {
+            labels: ['Definir', 'Medir', 'Analizar', 'Mejorar', 'Controlar'],
+            descriptions: [
+                "Establecer el problema, el alcance y el objetivo del proyecto.",
+                "Entender el estado actual y recolectar datos fiables.",
+                "Identificar las causas raíz (las 'x') que afectan el resultado.",
+                "Implementar soluciones para eliminar las causas raíz.",
+                "Estandarizar y monitorear para sostener la ganancia."
+            ],
+            activities: [
+                "Project Charter, Voz del Cliente.",
+                "Plan de recolección de datos, Mapeo de proceso.",
+                "Diagrama de Ishikawa, 5 Porqués.",
+                "Pruebas piloto, Brainstorming, Poka Yoke.",
+                "Planes de control, Documentación estándar."
+            ],
+            colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef'] // Blue to Purple gradient
+        };
+
+        // --- STATE MANAGEMENT ---
+        let currentQuizIndex = 0;
+        let score = 0;
+        let variabilityChartInstance = null;
+        let isSixSigmaApplied = false;
+
+        // --- CHART INITIALIZATION & LOGIC ---
+
+        // 1. Variability Chart (Concept Lab)
+        function initVariabilityChart() {
+            const ctx = document.getElementById('variabilityChart').getContext('2d');
+            
+            // Generate standard bell curve data (High variance)
+            const labels = Array.from({length: 40}, (_, i) => i - 20);
+            const highVarData = labels.map(x => (1 / (5 * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow(x / 5, 2)));
+            // Generate Six Sigma curve data (Low variance)
+            const lowVarData = labels.map(x => (1 / (1.5 * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow(x / 1.5, 2)));
+
+            variabilityChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Proceso Actual (Alta Variación)',
+                            data: highVarData,
+                            borderColor: '#ef4444', // Red
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Proceso Six Sigma (Consistente)',
+                            data: lowVarData, // Initially hidden or same? Let's prep it but hide it.
+                            borderColor: '#3b82f6', // Blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            hidden: true // Start hidden
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { enabled: false } // Concept viz, numbers don't matter much
+                    },
+                    scales: {
+                        x: { display: false }, // Hide axis for cleaner concept look
+                        y: { display: false }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        function toggleVariability() {
+            isSixSigmaApplied = !isSixSigmaApplied;
+            const btn = document.getElementById('var-toggle-btn');
+            const desc = document.getElementById('chart-desc');
+            
+            // Toggle visibility of the Blue line (Index 1)
+            variabilityChartInstance.data.datasets[1].hidden = !isSixSigmaApplied;
+            
+            if(isSixSigmaApplied) {
+                // Dim the red line
+                variabilityChartInstance.data.datasets[0].borderColor = '#fee2e2'; 
+                variabilityChartInstance.data.datasets[0].backgroundColor = 'rgba(254, 226, 226, 0.05)';
+                
+                btn.textContent = "Ver Proceso Original";
+                btn.classList.remove('bg-blue-100', 'text-blue-700');
+                btn.classList.add('bg-red-100', 'text-red-700');
+                
+                desc.innerHTML = `<strong class="text-blue-600">Curva Azul (Six Sigma):</strong> La variabilidad se ha reducido drásticamente. El proceso es predecible y cabe dentro de los límites del cliente.`;
+            } else {
+                // Restore red line
+                variabilityChartInstance.data.datasets[0].borderColor = '#ef4444';
+                variabilityChartInstance.data.datasets[0].backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                
+                btn.textContent = "Aplicar Six Sigma";
+                btn.classList.add('bg-blue-100', 'text-blue-700');
+                btn.classList.remove('bg-red-100', 'text-red-700');
+                
+                desc.innerHTML = `<strong class="text-red-500">Curva Roja (Proceso Actual):</strong> Alta variabilidad. Los resultados son inconsistentes y anchos.`;
+            }
+            
+            variabilityChartInstance.update();
+        }
+
+        // 2. DMAIC Wheel (Interactive Doughnut)
+        function initDmaicChart() {
+            const ctx = document.getElementById('dmaicChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: dmaicData.labels,
+                    datasets: [{
+                        data: [20, 20, 20, 20, 20], // Equal parts
+                        backgroundColor: dmaicData.colors,
+                        borderWidth: 0,
+                        hoverOffset: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false } // We use custom click handler
+                    },
+                    onClick: (evt, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            updateDmaicInfo(index);
+                        }
+                    }
+                }
+            });
+            
+            // Initialize with first phase
+            updateDmaicInfo(0);
+        }
+
+        function updateDmaicInfo(index) {
+            document.getElementById('phase-title').textContent = `${dmaicData.labels[index]} (${dmaicData.labels[index][0]})`;
+            document.getElementById('phase-title').style.color = dmaicData.colors[index];
+            document.getElementById('phase-desc').textContent = dmaicData.descriptions[index];
+            document.getElementById('phase-activity').textContent = dmaicData.activities[index];
+        }
+
+        // --- INTERACTION LOGIC ---
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Philosophy Card Highlight
+        function toggleHighlight(element, type) {
+            // Remove active class from all
+            document.querySelectorAll('#filosofia .card-hover').forEach(el => {
+                el.classList.remove('ring-4', 'ring-blue-100', 'ring-emerald-100');
+            });
+            // Add specific highlight
+            if(type === 'lean') element.classList.add('ring-4', 'ring-emerald-100');
+            if(type === 'sigma') element.classList.add('ring-4', 'ring-blue-100');
+        }
+
+        // Equation Interaction
+        function highlightEq(part) {
+            const display = document.getElementById('equation-display');
+            if(part === 'Y') display.innerHTML = `<span class="text-indigo-400 font-bold text-3xl">Y</span> = f(x)`;
+            if(part === 'x') display.innerHTML = `Y = f(<span class="text-slate-400 font-bold text-3xl">x</span>)`;
+        }
+        function resetEq() {
+            document.getElementById('equation-display').innerHTML = `Y = f(x)`;
+        }
+
+        // Belt Tabs Logic
+        function showBelt(belt) {
+            // Update Tabs
+            document.querySelectorAll('.belt-tab').forEach(btn => {
+                btn.classList.remove('active-tab', 'text-slate-800');
+                btn.classList.add('text-slate-500');
+                if(btn.dataset.target === belt) {
+                    btn.classList.add('active-tab', 'text-slate-800');
+                    btn.classList.remove('text-slate-500');
+                }
+            });
+
+            // Update Content
+            document.querySelectorAll('.belt-content').forEach(content => {
+                content.classList.add('hidden-content');
+            });
+            document.getElementById(belt + '-content').classList.remove('hidden-content');
+        }
+
+        // --- QUIZ LOGIC ---
+
+        function loadQuestion() {
+            const q = quizQuestions[currentQuizIndex];
+            document.getElementById('question-number').textContent = `Pregunta ${currentQuizIndex + 1} de ${quizQuestions.length}`;
+            document.getElementById('question-text').textContent = q.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-blue-300 transition text-slate-700 font-medium";
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(idx, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('feedback-box').classList.add('hidden');
+        }
+
+        function checkAnswer(selectedIdx, btnElement) {
+            const q = quizQuestions[currentQuizIndex];
+            const isCorrect = selectedIdx === q.correct;
+            
+            // Disable all buttons
+            const buttons = document.querySelectorAll('#options-container button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            // Style selected button
+            btnElement.classList.remove('opacity-50');
+            if(isCorrect) {
+                btnElement.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                btnElement.classList.remove('hover:bg-slate-50');
+                score++;
+            } else {
+                btnElement.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                btnElement.classList.remove('hover:bg-slate-50');
+                // Highlight correct one
+                buttons[q.correct].classList.remove('opacity-50');
+                buttons[q.correct].classList.add('bg-green-50', 'border-green-300', 'text-green-800');
+            }
+
+            // Show Feedback
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackText = document.getElementById('feedback-text');
+            feedbackBox.classList.remove('hidden');
+            feedbackText.innerHTML = isCorrect ? 
+                `<strong class="text-green-600">¡Correcto!</strong> ${q.feedback}` : 
+                `<strong class="text-red-600">Incorrecto.</strong> ${q.feedback}`;
+            
+            // Next Button text logic
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.textContent = (currentQuizIndex === quizQuestions.length - 1) ? "Ver Resultados" : "Siguiente";
+        }
+
+        function nextQuestion() {
+            currentQuizIndex++;
+            if(currentQuizIndex < quizQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('question-box').classList.add('hidden');
+            document.getElementById('options-container').classList.add('hidden');
+            document.getElementById('feedback-box').classList.add('hidden');
+            
+            const resultsBox = document.getElementById('results-box');
+            resultsBox.classList.remove('hidden');
+            
+            const percentage = Math.round((score / quizQuestions.length) * 100);
+            document.getElementById('score-text').textContent = `Tu Puntuación: ${score} / ${quizQuestions.length} (${percentage}%)`;
+        }
+
+        function restartQuiz() {
+            currentQuizIndex = 0;
+            score = 0;
+            document.getElementById('results-box').classList.add('hidden');
+            document.getElementById('question-box').classList.remove('hidden');
+            document.getElementById('options-container').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        // --- INIT ---
+        window.onload = function() {
+            initVariabilityChart();
+            initDmaicChart();
+            loadQuestion();
+        };
+
+    </script>
+</body>
+</html>
