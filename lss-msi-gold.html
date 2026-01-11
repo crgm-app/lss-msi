@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Suite LSS | Gold Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Palette Executive */
+            --primary: #0f172a;  /* Navy Deep */
+            --secondary: #334155; /* Slate */
+            --accent: #2563eb;   /* Tech Blue */
+            --hr: #7c3aed;       /* Purple (Talent) */
+            --lean: #f59e0b;     /* Orange (Speed) */
+            --success: #10b981;  /* Green (Good) */
+            --danger: #ef4444;   /* Red (Bad) */
+            --bg: #f1f5f9;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--secondary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--accent);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .header-title h1 { margin: 0; font-size: 1.5rem; letter-spacing: -0.5px; }
+        .header-title .subtitle { font-size: 0.85rem; opacity: 0.8; font-weight: 300; }
+        .user-badge { text-align: right; font-size: 0.8rem; }
+        .user-badge strong { color: var(--lean); }
+
+        /* --- NAVIGATION --- */
+        nav {
+            background: var(--card);
+            padding: 0 2rem;
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        
+        /* Specific Tab Colors */
+        .tab-hr.active { color: var(--hr); border-bottom-color: var(--hr); }
+        .tab-lean.active { color: var(--lean); border-bottom-color: var(--lean); }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- GRID SYSTEM --- */
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+        }
+        .card h3 { 
+            margin-top: 0; 
+            color: var(--primary); 
+            font-size: 1.1rem; 
+            border-bottom: 2px solid #f8fafc; 
+            padding-bottom: 0.8rem; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- COMPONENTS --- */
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.4rem; color: #475569; }
+        input[type="number"], input[type="text"], select { 
+            width: 100%; padding: 0.7rem; 
+            border: 1px solid #cbd5e1; border-radius: 6px; 
+            font-size: 1rem; box-sizing: border-box; 
+            transition: border 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--accent); outline: none; }
+
+        .btn-action {
+            width: 100%; padding: 0.8rem;
+            background: var(--accent); color: white;
+            border: none; border-radius: 6px;
+            font-weight: bold; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-action:hover { background: #1e40af; }
+        .btn-sm { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
+
+        /* --- TABLES (Skill Matrix & Mudas) --- */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .data-table th { background: #f8fafc; text-align: left; padding: 10px; color: #475569; font-weight: 700; }
+        .data-table td { border-bottom: 1px solid #e2e8f0; padding: 10px; vertical-align: middle; }
+        .level-badge { 
+            display: inline-block; padding: 3px 8px; border-radius: 4px; 
+            font-weight: bold; font-size: 0.8rem; color: white; background: var(--secondary);
+        }
+        
+        /* --- KPI BOXES --- */
+        .kpi-container { display: flex; justify-content: space-around; text-align: center; margin-top: 1rem; }
+        .kpi-box .val { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+        .kpi-box .lbl { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: bold; }
+
+        /* --- ALERTS & NOTICES --- */
+        .alert-box { padding: 10px; border-radius: 6px; font-size: 0.9rem; margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fcd34d; }
+        .alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* --- CANVAS WRAPPER --- */
+        .chart-wrapper { position: relative; height: 250px; width: 100%; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title">
+        <h1>Master Suite LSS <span style="color: var(--lean);">Gold</span></h1>
+        <div class="subtitle">Imprenta 10 | Gestión Integral de Planta</div>
+    </div>
+    <div class="user-badge">
+        Usuario: <strong>Robin Gregorio</strong><br>
+        Rango: Master Black Belt
+    </div>
+</header>
+
+<nav>
+    <button class="tab-btn active" onclick="switchTab('strategy')">1. Estrategia & HR</button>
+    <button class="tab-btn tab-lean" onclick="switchTab('lean')">2. Simulador Lean (12h)</button>
+    <button class="tab-btn" onclick="switchTab('sixsigma')">3. Calidad (CPK)</button>
+    <button class="tab-btn" onclick="switchTab('monthly')">4. Dashboard Mensual</button>
+    <button class="tab-btn" onclick="switchTab('academy')">5. Academia LSS</button>
+</nav>
+
+<main>
+
+    <div id="strategy" class="section active">
+        <div class="grid-2">
+            
+            <div class="card">
+                <h3>👥 Matriz de Talento (Pay for Skills)</h3>
+                <p style="font-size:0.9rem; color:#64748b;">Sistema de ascenso basado en conocimiento verificado, no en antigüedad.</p>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nivel</th>
+                            <th>Rol</th>
+                            <th>Requisito Clave</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="level-badge" style="background:#94a3b8;">Nivel 0</span></td>
+                            <td>Novato</td>
+                            <td>Aprendiz. Solo carga y limpieza.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge" style="background:#64748b;">Nivel 1</span></td>
+                            <td>Ayudante C</td>
+                            <td>Domina 1 operación (ej. Tinteros).</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge" style="background:#475569;">Nivel 2</span></td>
+                            <td>Ayudante B</td>
+                            <td>Domina 2 operaciones. Releva pausas.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge" style="background:var(--accent);">Nivel 3</span></td>
+                            <td>Operador A</td>
+                            <td>Opera máquina completa. Resuelve atascos.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge" style="background:var(--hr);">Nivel 4</span></td>
+                            <td>Maestro</td>
+                            <td><strong>Sabe Enseñar</strong>. Certifica a otros.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="level-badge" style="background:var(--lean);">Nivel 5</span></td>
+                            <td>Multi-Skill</td>
+                            <td>Opera 3 máquinas distintas (Flexibilidad total).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--hr);">
+                <h3>🏆 Ventaja Competitiva: 4 Turnos (12h)</h3>
+                <p style="margin-bottom: 1rem;">La transición de 3 a 4 turnos transforma la cultura operativa:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="alert-box alert-success">
+                        <span style="font-size:1.2rem;">🧠</span>
+                        <div><strong>Mente Fresca:</strong> Esquema 4x3 (4 días trabajo, 3 descanso). El operario regresa recuperado al 100%.</div>
+                    </div>
+                    <div class="alert-box alert-success">
+                        <span style="font-size:1.2rem;">🤝</span>
+                        <div><strong>Ownership (Pertenencia):</strong> Menos relevos diarios (solo 2) = Mayor responsabilidad sobre el estado de la máquina.</div>
+                    </div>
+                    <div class="alert-box alert-success">
+                        <span style="font-size:1.2rem;">📉</span>
+                        <div><strong>Menos Merma:</strong> La mayoría de defectos ocurren en los arranques y cambios de turno. Al reducirlos, sube la calidad.</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <strong>La Regla del Traslape (+30min):</strong>
+                    <p style="font-size: 0.9rem; margin: 5px 0;">Entrada 6:00 | Salida 6:30. Esos 30 minutos se pagan extra pero ahorran millones en errores de comunicación.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lean" class="section">
+        <div class="grid-2">
+            
+            <div>
+                <div class="card">
+                    <h3>⏱️ Configuración Operativa</h3>
+                    <div class="form-group">
+                        <label>Modelo de Turnos</label>
+                        <select id="shift_model" onchange="updateShiftModel()">
+                            <option value="4turnos" selected>4 Turnos (12 Horas - Rotativo)</option>
+                            <option value="3turnos">3 Turnos (8 Horas - Tradicional)</option>
+                            <option value="manual">Manual / Personalizado</option>
+                        </select>
+                    </div>
+
+                    <div class="grid-2" style="gap: 10px; margin-bottom: 10px;">
+                        <div class="form-group">
+                            <label>Minutos Totales (Día)</label>
+                            <input type="number" id="total_time" value="720" readonly style="background: #f1f5f9; font-weight: bold;">
+                        </div>
+                        <div class="form-group">
+                            <label>Comidas / Descansos (Min)</label>
+                            <input type="number" id="time_break" value="45" oninput="calcLean()">
+                        </div>
+                    </div>
+
+                    <div style="background: #eff6ff; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+                        <label style="display: flex; align-items: center; cursor: pointer; margin:0;">
+                            <input type="checkbox" id="meeting_overlap" onchange="calcLean()" style="width: 18px; height: 18px; margin-right: 10px;">
+                            <span>Reunión en Traslape (No para máquina)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🗑️ Gestión de Mudas (Desperdicios)</h3>
+                    
+                    <div class="grid-2" style="gap: 10px; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label>Setups (Cambios)</label>
+                            <input type="number" id="setup_count" value="4" placeholder="Cant." oninput="calcLean()">
+                        </div>
+                        <div class="form-group">
+                            <label>Min. Promedio Setup</label>
+                            <input type="number" id="setup_avg" value="35" placeholder="Minutos" oninput="calcLean()">
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid #e2e8f0; paddingTop: 1rem;">
+                        <label>Agregar Muda Específica (Fallas, Esperas)</label>
+                        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                            <input type="text" id="muda_name" placeholder="Ej: Falta Montacarga" style="flex: 2;">
+                            <input type="number" id="muda_time" placeholder="Min" style="flex: 1;">
+                            <button class="btn-action btn-sm" onclick="addMuda()">+</button>
+                        </div>
+                        
+                        <table class="data-table" id="muda_table" style="font-size: 0.85rem;">
+                            </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🚀 Rendimiento en Tiempo Real (OEE)</h3>
+                
+                <div class="chart-wrapper">
+                    <canvas id="oeeChart"></canvas>
+                </div>
+
+                <div class="kpi-container">
+                    <div class="kpi-box">
+                        <div class="val" id="res_avail">0%</div>
+                        <div class="lbl">Disponibilidad</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="val" id="res_oee" style="color: var(--lean);">0%</div>
+                        <div class="lbl">OEE Global</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="val" id="res_lost" style="color: var(--danger);">0</div>
+                        <div class="lbl">Minutos Perdidos</div>
+                    </div>
+                </div>
+
+                <div id="lean_feedback" class="alert-box" style="margin-top: 1.5rem;">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sixsigma" class="section">
+        <div class="grid-2">
+            
+            <div class="card">
+                <h3>🔢 Calculadora de Capacidad (Cpk)</h3>
+                <p style="font-size: 0.9rem;">Compara "La Voz del Cliente" vs "La Voz del Proceso".</p>
+                
+                <div class="form-group">
+                    <label>Especificación Cliente (LSL - USL)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="ss_lsl" value="2.8" placeholder="Mínimo">
+                        <input type="number" id="ss_usl" value="3.2" placeholder="Máximo">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Datos Reales Imprenta 10 (Muestreo)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="ss_mean" value="3.0" step="0.01" placeholder="Promedio">
+                        <input type="number" id="ss_std" value="0.05" step="0.001" placeholder="Desv. Std">
+                    </div>
+                </div>
+
+                <button class="btn-action" onclick="drawBellCurve()">Simular Distribución</button>
+
+                <div style="text-align: center; margin-top: 2rem;">
+                    <div style="font-size: 0.8rem; color: #64748b;">RESULTADO CPK</div>
+                    <div id="res_cpk" style="font-size: 3rem; font-weight: 800; line-height: 1;">-</div>
+                    <div id="cpk_status" style="font-weight: bold; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px;">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Curva de Distribución Normal</h3>
+                <div class="chart-wrapper">
+                    <canvas id="bellCurveCanvas"></canvas>
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.85rem; color: #64748b; text-align: center;">
+                    Área Roja = Defectos (Fuera de especificación) <br>
+                    Área Verde = Producto Conforme
+                </div>
+                
+                <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 6px;">
+                    <strong>¿Cómo interpretar?</strong>
+                    <ul style="margin: 5px 0 0 15px; font-size: 0.9rem;">
+                        <li><strong>Cpk > 1.33:</strong> Proceso Capaz (Clase Mundial).</li>
+                        <li><strong>Cpk < 1.00:</strong> Proceso Incapaz (Genera basura).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="monthly" class="section">
+        <div class="card">
+            <h3>🗓️ Proyección de Impacto Mensual</h3>
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Días Operativos al Mes</label>
+                        <input type="number" id="days_month" value="26" oninput="calcLean()">
+                    </div>
+                    <div class="form-group">
+                        <label>Velocidad Promedio (Cajas/Hora)</label>
+                        <input type="number" id="speed_avg" value="8000" oninput="calcLean()">
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="alert-box alert-danger" style="justify-content: space-between;">
+                        <span>Tiempo Muerto Total:</span>
+                        <strong style="font-size: 1.2rem;" id="month_lost_hours">0 Hrs</strong>
+                    </div>
+                    <div class="alert-box alert-warning" style="justify-content: space-between;">
+                        <span>Producción No Realizada:</span>
+                        <strong style="font-size: 1.2rem;" id="month_lost_cajas">0 Cajas</strong>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0;">*Esta proyección asume que las condiciones del simulador Lean se mantienen todo el mes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="academy" class="section">
+        <div class="grid-2">
+            <div class="card">
+                <h3>🎓 Conceptos Fundamentales</h3>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--lean);">LEAN (Velocidad)</h4>
+                    <p style="font-size: 0.9rem;">Filosofía nacida en Toyota. Se enfoca en eliminar las "Mudas" (Desperdicios) para aumentar la velocidad del flujo.</p>
+                    <small>Herramienta clave: SMED (Single Minute Exchange of Die).</small>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent);">SIX SIGMA (Calidad)</h4>
+                    <p style="font-size: 0.9rem;">Metodología nacida en Motorola. Se enfoca en reducir la Variación matemática del proceso para eliminar defectos.</p>
+                    <small>Herramienta clave: DMAIC / CPK.</small>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🥋 Estructura de Belts</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+                        <strong>White/Yellow Belt:</strong> Operarios. Entienden 5S y reportan datos básicos.
+                    </li>
+                    <li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+                        <strong>Green Belt:</strong> Supervisores. Lideran proyectos de mejora local (part-time).
+                    </li>
+                    <li style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+                        <strong>Black Belt:</strong> Ingenieros. Proyectos complejos estadísticos (full-time).
+                    </li>
+                    <li>
+                        <strong style="color: var(--primary);">Master Black Belt:</strong> Estrategia y ROI. Entrena a los demás.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    // --- VARIABLES GLOBALES ---
+    let customMudas = [];
+    let oeeChart = null;
+
+    // --- SISTEMA DE PESTAÑAS ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+
+        if (tabId === 'sixsigma') drawBellCurve();
+        calcLean(); // Recalcular al cambiar para actualizar gráficos
+    }
+
+    // --- 1. LÓGICA DE TURNOS ---
+    function updateShiftModel() {
+        const model = document.getElementById('shift_model').value;
+        const totalTimeInput = document.getElementById('total_time');
+        
+        if (model === '4turnos') {
+            totalTimeInput.value = 720; // 12 Horas
+            totalTimeInput.readOnly = true;
+            totalTimeInput.style.background = "#f1f5f9";
+        } else if (model === '3turnos') {
+            totalTimeInput.value = 480; // 8 Horas
+            totalTimeInput.readOnly = true;
+            totalTimeInput.style.background = "#f1f5f9";
+        } else {
+            totalTimeInput.readOnly = false;
+            totalTimeInput.style.background = "#fff";
+        }
+        calcLean();
+    }
+
+    // --- 2. GESTIÓN DE MUDAS ---
+    function addMuda() {
+        const name = document.getElementById('muda_name').value;
+        const time = parseFloat(document.getElementById('muda_time').value);
+
+        if (name && time > 0) {
+            customMudas.push({ name, time });
+            document.getElementById('muda_name').value = '';
+            document.getElementById('muda_time').value = '';
+            renderMudas();
+            calcLean();
+        }
+    }
+
+    function removeMuda(index) {
+        customMudas.splice(index, 1);
+        renderMudas();
+        calcLean();
+    }
+
+    function renderMudas() {
+        const tbody = document.getElementById('muda_table');
+        tbody.innerHTML = '';
+        customMudas.forEach((m, i) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${m.name}</td>
+                    <td><strong>${m.time} min</strong></td>
+                    <td style="text-align:right;"><button class="btn-action btn-sm" style="background:#ef4444; padding: 2px 8px;" onclick="removeMuda(${i})">x</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- 3. MOTOR DE CÁLCULO LEAN (OEE) ---
+    function calcLean() {
+        // Inputs Tiempo
+        const totalTime = parseFloat(document.getElementById('total_time').value) || 0;
+        const breakTime = parseFloat(document.getElementById('time_break').value) || 0;
+        
+        // Inputs Pérdidas Fijas
+        const setupCount = parseFloat(document.getElementById('setup_count').value) || 0;
+        const setupAvg = parseFloat(document.getElementById('setup_avg').value) || 0;
+        const totalSetup = setupCount * setupAvg;
+
+        // Inputs Reunión
+        const isOverlap = document.getElementById('meeting_overlap').checked;
+        const meetingLoss = isOverlap ? 0 : 30; // 30 min si no es traslape
+
+        // Inputs Mudas Dinámicas
+        let dynamicLoss = 0;
+        customMudas.forEach(m => dynamicLoss += m.time);
+
+        // Cálculos
+        const plannedTime = totalTime - breakTime;
+        const totalDowntime = totalSetup + meetingLoss + dynamicLoss;
+        const operatingTime = plannedTime - totalDowntime;
+
+        let availability = (operatingTime / plannedTime) * 100;
+        if (availability < 0) availability = 0;
+        
+        // Simulación OEE (Asumiendo Perf 90% y Qual 98% para efectos de simulador de disponibilidad)
+        const performance = 90;
+        const quality = 98;
+        const oee = (availability/100) * (performance/100) * (quality/100) * 100;
+
+        // Update UI
+        document.getElementById('res_avail').innerText = availability.toFixed(1) + "%";
+        document.getElementById('res_oee').innerText = oee.toFixed(1) + "%";
+        document.getElementById('res_lost').innerText = totalDowntime;
+
+        // Feedback Logic
+        const feedback = document.getElementById('lean_feedback');
+        if (isOverlap) {
+            feedback.className = "alert-box alert-success";
+            feedback.innerHTML = `<span>✅</span> Reunión en Traslape activa. Ahorraste 30 min de paro.`;
+        } else {
+            feedback.className = "alert-box alert-warning";
+            feedback.innerHTML = `<span>⚠️</span> La reunión detiene la máquina (-30 min). Activa el traslape para mejorar.`;
+        }
+
+        updateChart(availability);
+        calcMonthly(totalDowntime); // Trigger monthly calc
+    }
+
+    // --- 4. GRÁFICO CHART.JS ---
+    function updateChart(avail) {
+        const ctx = document.getElementById('oeeChart').getContext('2d');
+        const loss = 100 - avail;
+        
+        if (oeeChart) oeeChart.destroy();
+
+        oeeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tiempo Productivo', 'Tiempo Perdido'],
+                datasets: [{
+                    data: [avail, loss],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // --- 5. CÁLCULO MENSUAL ---
+    function calcMonthly(dailyLostMinutes) {
+        const days = parseFloat(document.getElementById('days_month').value) || 26;
+        const speed = parseFloat(document.getElementById('speed_avg').value) || 8000;
+
+        const monthlyLostHours = (dailyLostMinutes * days) / 60;
+        const monthlyLostCajas = monthlyLostHours * speed;
+
+        document.getElementById('month_lost_hours').innerText = Math.round(monthlyLostHours).toLocaleString() + " Hrs";
+        document.getElementById('month_lost_cajas').innerText = Math.round(monthlyLostCajas).toLocaleString() + " Cajas";
+    }
+
+    // --- 6. SIX SIGMA (CANVAS) ---
+    function drawBellCurve() {
+        const canvas = document.getElementById('bellCurveCanvas');
+        const ctx = canvas.getContext('2d');
+        // Resize canvas to parent
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+        
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const lsl = parseFloat(document.getElementById('ss_lsl').value);
+        const usl = parseFloat(document.getElementById('ss_usl').value);
+        const mean = parseFloat(document.getElementById('ss_mean').value);
+        const std = parseFloat(document.getElementById('ss_std').value);
+
+        // CPK CALC
+        const cpu = (usl - mean) / (3 * std);
+        const cpl = (mean - lsl) / (3 * std);
+        const cpk = Math.min(cpu, cpl);
+
+        // UI UPDATE
+        const resEl = document.getElementById('res_cpk');
+        const statEl = document.getElementById('cpk_status');
+        resEl.innerText = cpk.toFixed(2);
+
+        if(cpk < 1.0) {
+            resEl.style.color = "#ef4444";
+            statEl.innerText = "NO CAPAZ";
+            statEl.style.background = "#fef2f2"; statEl.style.color = "#ef4444";
+        } else if (cpk < 1.33) {
+            resEl.style.color = "#f59e0b";
+            statEl.innerText = "ALERTA";
+            statEl.style.background = "#fffbeb"; statEl.style.color = "#f59e0b";
+        } else {
+            resEl.style.color = "#10b981";
+            statEl.innerText = "CLASE MUNDIAL";
+            statEl.style.background = "#f0fdf4"; statEl.style.color = "#10b981";
+        }
+
+        // DRAW
+        ctx.clearRect(0,0,width,height);
+        
+        const viewMin = mean - 4.5*std;
+        const viewMax = mean + 4.5*std;
+        const range = viewMax - viewMin;
+        function mapX(v) { return ((v - viewMin)/range) * width; }
+        
+        // Curve
+        ctx.beginPath();
+        for(let x=0; x<=width; x+=5) {
+            const val = viewMin + (x/width)*range;
+            const y = (1/(std*Math.sqrt(2*Math.PI))) * Math.exp(-0.5*Math.pow((val-mean)/std, 2));
+            const hScale = height * std * 2.5; 
+            const plotY = height - (y * hScale) - 20;
+            if(x===0) ctx.moveTo(x, plotY); else ctx.lineTo(x, plotY);
+        }
+        ctx.lineWidth = 3; ctx.strokeStyle = "#2563eb"; ctx.stroke();
+        
+        // Fill Red Areas
+        // Simplified visual logic for defects
+        // (Advanced implementation would fill paths properly)
+
+        // Lines
+        function drawLine(val, color, text) {
+            const x = mapX(val);
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height);
+            ctx.strokeStyle = color; ctx.setLineDash([5,5]); ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = color; ctx.font = "bold 12px Arial"; ctx.fillText(text, x+5, 15);
+            ctx.setLineDash([]);
+        }
+
+        drawLine(lsl, "#ef4444", "LSL");
+        drawLine(usl, "#ef4444", "USL");
+        drawLine(mean, "#10b981", "Media");
+    }
+
+    // INIT
+    updateShiftModel();
+</script>
+
+</body>
+</html>
