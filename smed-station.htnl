@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SMED - Registro de Tiempos Absolutos</title>
+    <style>
+        :root {
+            --neon-green: #00ff00;
+            --neon-blue: #00d4ff;
+            --neon-orange: #ffaa00;
+            --bg-dark: #050505;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER: RELOJ PRINCIPAL CON UN DECIMAL */
+        header {
+            background: #111;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-bottom: 2px solid #333;
+        }
+
+        .main-clock-box { text-align: center; }
+        .main-clock { font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--neon-green); }
+        .clock-label { font-size: 0.6rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* CUERPO PRINCIPAL: REGISTROS IZQ | BOTONES DER */
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Lado Izquierdo: Tabla de Registros */
+        .log-section {
+            flex: 1.5;
+            background: #000;
+            overflow-y: auto;
+            padding: 10px;
+            border-right: 1px solid #222;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.85rem; }
+        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; }
+        td { padding: 8px; border-bottom: 1px solid #111; color: #ccc; }
+        .dur-cell { font-weight: bold; color: var(--neon-orange); }
+
+        /* Lado Derecho: Panel de Botones SMED */
+        .control-panel {
+            flex: 1;
+            background: #0a0a0a;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .smed-btn {
+            height: 80px;
+            border: 2px solid #333;
+            background: #1a1a1a;
+            color: #fff;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .smed-btn.active {
+            border-color: var(--neon-orange);
+            background: #332200;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+        }
+
+        .smed-btn span { font-size: 0.7rem; color: #888; margin-top: 5px; }
+
+        /* FOOTER: EXPORTAR */
+        footer {
+            height: 60px;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #333;
+        }
+
+        .export-btn {
+            background: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="main-clock-box">
+            <div class="clock-label">Segundo del Día</div>
+            <div id="abs-clock" class="main-clock">00000.0</div>
+        </div>
+        <div class="main-clock-box">
+            <div class="clock-label">Reloj Estándar</div>
+            <div id="std-clock" style="font-size: 1.5rem; color:#666">00:00:00</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="log-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Actividad</th>
+                        <th>Inicio (s)</th>
+                        <th>Fin (s)</th>
+                        <th>Dura (s)</th>
+                    </tr>
+                </thead>
+                <tbody id="log-body">
+                    </tbody>
+            </table>
+        </section>
+
+        <section class="control-panel">
+            <div class="clock-label" style="text-align: center;">Panel SMED</div>
+            <button class="smed-btn" onclick="toggleTask(this, 'Desmontar Troquel')">Desmontar Troquel<span id="st-Desmontar Troquel">OFF</span></button>
+            <button class="smed-btn" onclick="toggleTask(this, 'Limpieza Prensa')">Limpieza Prensa<span id="st-Limpieza Prensa">OFF</span></button>
+            <button class="smed-btn" onclick="toggleTask(this, 'Montar Sello')">Montar Sello<span id="st-Montar Sello">OFF</span></button>
+            <button class="smed-btn" onclick="toggleTask(this, 'Ajuste Parámetros')">Ajuste Parámetros<span id="st-Ajuste Parámetros">OFF</span></button>
+            <button class="smed-btn" onclick="toggleTask(this, 'Prueba de Sello')">Prueba de Sello<span id="st-Prueba de Sello">OFF</span></button>
+        </section>
+    </main>
+
+    <footer>
+        <button class="export-btn" onclick="exportCSV()">EXPORTAR DATOS CSV (EXCEL)</button>
+    </footer>
+
+    <script>
+        let currentAbsTime = 0;
+        let activeTasks = {}; // Guarda el tiempo de inicio de cada tarea
+        let logs = []; // Guarda los resultados finales
+
+        // RELOJ PRINCIPAL CON UN DECIMAL
+        function updateClocks() {
+            const now = new Date();
+            const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
+            
+            // Segundo del día con un decimal
+            currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
+            document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
+            
+            // Reloj estándar
+            document.getElementById('std-clock').textContent = 
+                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // LÓGICA DE BOTÓN ON/OFF
+        function toggleTask(btn, taskName) {
+            const statusLabel = document.getElementById('st-' + taskName);
+
+            if (!activeTasks[taskName]) {
+                // INICIAR TAREA
+                activeTasks[taskName] = currentAbsTime;
+                btn.classList.add('active');
+                statusLabel.textContent = "INICIADO: " + currentAbsTime.toFixed(1) + "s";
+            } else {
+                // FINALIZAR TAREA
+                const startTime = activeTasks[taskName];
+                const endTime = currentAbsTime;
+                const duration = endTime - startTime;
+
+                const logEntry = {
+                    name: taskName,
+                    start: startTime.toFixed(1),
+                    end: endTime.toFixed(1),
+                    duration: duration.toFixed(1)
+                };
+
+                logs.push(logEntry);
+                renderLogs();
+
+                // Resetear estado del botón
+                delete activeTasks[taskName];
+                btn.classList.remove('active');
+                statusLabel.textContent = "OFF";
+            }
+        }
+
+        function renderLogs() {
+            const body = document.getElementById('log-body');
+            body.innerHTML = logs.map(entry => `
+                <tr>
+                    <td>${entry.name}</td>
+                    <td>${entry.start}</td>
+                    <td>${entry.end}</td>
+                    <td class="dur-cell">${entry.duration}s</td>
+                </tr>
+            `).join('');
+            // Auto-scroll al final
+            const container = document.querySelector('.log-section');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // EXPORTAR A CSV
+        function exportCSV() {
+            if (logs.length === 0) return alert("No hay datos para exportar");
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Actividad,Inicio (s),Fin (s),Duracion (s)\n";
+            
+            logs.forEach(row => {
+                csvContent += `${row.name},${row.start},${row.end},${row.duration}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "registro_SMED.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        setInterval(updateClocks, 100);
+        updateClocks();
+    </script>
+</body>
+</html>
+
