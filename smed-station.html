@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Pro - Personalizable</title>
+    <title>SMED Industrial - Control de Tiempos</title>
     <style>
         :root {
             --neon-green: #00ff00;
             --neon-blue: #00d4ff;
             --neon-orange: #ffaa00;
             --bg-dark: #050505;
-            --panel-bg: #111;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
@@ -25,9 +24,9 @@
             overflow: hidden;
         }
 
-        /* HEADER */
+        /* HEADER OPTIMIZADO */
         header {
-            background: var(--panel-bg);
+            background: #111;
             padding: 10px 20px;
             display: flex;
             justify-content: space-between;
@@ -35,37 +34,26 @@
             border-bottom: 2px solid #333;
         }
 
+        .main-clock-area { display: flex; flex-direction: column; }
         .main-clock { font-size: 3.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
-        .clock-label { font-size: 0.6rem; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .info-right { text-align: right; display: flex; flex-direction: column; gap: 5px; }
+        .real-time { font-family: monospace; color: #aaa; font-size: 1rem; }
+        .date-display { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* DASHBOARD PRINCIPAL */
-        main {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
+        /* DASHBOARD */
+        main { flex: 1; display: flex; overflow: hidden; }
 
-        /* Lado Izquierdo: Logs y Config */
-        .left-panel {
-            flex: 1.2;
-            display: flex;
-            flex-direction: column;
-            border-right: 2px solid #222;
-        }
-
+        .left-panel { flex: 1.2; display: flex; flex-direction: column; border-right: 2px solid #222; }
         .log-section { flex: 2; overflow-y: auto; background: #000; padding: 10px; }
+        
         table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.8rem; }
         th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; }
         td { padding: 8px; border-bottom: 1px solid #111; color: #ccc; }
 
-        .config-section { 
-            flex: 0.8; 
-            padding: 15px; 
-            background: #111; 
-            border-top: 1px solid #333;
-        }
+        .config-section { flex: 0.8; padding: 15px; background: #111; border-top: 1px solid #333; }
 
-        /* Lado Derecho: Botones de Acción */
+        /* BOTONES DE ACTIVIDAD */
         .control-panel {
             flex: 1;
             background: #0a0a0a;
@@ -76,72 +64,48 @@
             overflow-y: auto;
         }
 
-        .smed-btn-container { position: relative; display: flex; align-items: stretch; }
-        
+        .smed-btn-container { display: flex; align-items: stretch; height: 70px; }
         .smed-btn {
             flex: 1;
-            height: 70px;
             background: #1a1a1a;
             color: #fff;
             border: 2px solid #444;
-            border-radius: 8px;
+            border-radius: 8px 0 0 8px;
             font-size: 1rem;
             font-weight: bold;
-            cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: center;
             padding-left: 15px;
         }
-
         .smed-btn.active { border-color: var(--neon-orange); background: #332200; }
-        .smed-btn span { font-size: 0.65rem; color: #666; margin-top: 4px; }
-
-        .del-btn {
-            width: 40px;
-            background: #441111;
-            border: none;
-            color: #ff5555;
-            font-weight: bold;
-            border-radius: 0 8px 8px 0;
-            cursor: pointer;
-        }
-
-        /* CONTROLES */
-        input[type="text"] {
-            width: 70%;
-            padding: 10px;
-            background: #000;
-            border: 1px solid #444;
-            color: #fff;
-            border-radius: 5px;
-        }
-
-        .btn-add { padding: 10px; background: var(--neon-blue); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .smed-btn span { font-size: 0.6rem; color: #666; margin-top: 4px; }
         
-        footer {
-            height: 60px;
-            background: #111;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
-            border-top: 1px solid #333;
-        }
+        .del-btn { width: 45px; background: #331111; border: 1px solid #444; color: #ff5555; border-radius: 0 8px 8px 0; cursor: pointer; }
 
-        .btn-export { background: #333; color: #fff; border: 1px solid #555; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-        .btn-fs { background: transparent; border: 1px solid #444; color: #666; padding: 5px 10px; font-size: 10px; cursor: pointer; }
-
+        /* CONTROLES INFERIORES */
+        footer { height: 70px; background: #111; display: flex; gap: 10px; justify-content: center; align-items: center; border-top: 1px solid #333; }
+        
+        button { cursor: pointer; transition: 0.2s; }
+        .btn-add { padding: 10px 15px; background: var(--neon-blue); border: none; font-weight: bold; border-radius: 5px; }
+        .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
+        .btn-fs { background: transparent; border: 1px solid #444; color: #555; padding: 4px 8px; font-size: 0.6rem; border-radius: 4px; }
+        
+        input[type="text"] { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 5px; width: 70%; }
     </style>
 </head>
 <body>
 
     <header>
-        <div>
-            <div class="clock-label">Segundo del Día (SMED)</div>
+        <div class="main-clock-area">
+            <div class="clock-label">Segundo del Día</div>
             <div id="abs-clock" class="main-clock">00000.0</div>
         </div>
-        <button class="btn-fs" onclick="toggleFS()">FS (Pantalla Completa)</button>
+        <div class="info-right">
+            <div id="date-display" class="date-display">-- / -- / ----</div>
+            <div id="real-clock" class="real-time">00:00:00</div>
+            <button class="btn-fs" onclick="toggleFS()">PANTALLA COMPLETA</button>
+        </div>
     </header>
 
     <main>
@@ -149,20 +113,14 @@
             <div class="log-section">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Tarea</th>
-                            <th>Inic</th>
-                            <th>Fin</th>
-                            <th>Dura</th>
-                        </tr>
+                        <tr><th>Tarea</th><th>Inic</th><th>Fin</th><th>Dura</th></tr>
                     </thead>
                     <tbody id="log-body"></tbody>
                 </table>
             </div>
-
             <div class="config-section">
-                <div class="clock-label" style="margin-bottom:10px">Configurar Nuevo Botón</div>
-                <input type="text" id="new-task-name" placeholder="Nombre de actividad...">
+                <div class="clock-label" style="margin-bottom:8px">Añadir Actividad</div>
+                <input type="text" id="new-task-name" placeholder="Nombre de tarea...">
                 <button class="btn-add" onclick="addNewButton()">+</button>
             </div>
         </section>
@@ -176,9 +134,9 @@
     </main>
 
     <footer>
-        <button class="btn-export" onclick="exportFile('csv')">EXPORTAR CSV</button>
-        <button class="btn-export" onclick="exportFile('txt')">EXPORTAR TXT</button>
-        <button class="btn-export" style="background:#441111" onclick="clearLogs()">LIMPIAR TABLA</button>
+        <button class="btn-export" onclick="prepareExport('csv')">EXPORTAR CSV</button>
+        <button class="btn-export" onclick="prepareExport('txt')">EXPORTAR TXT</button>
+        <button class="btn-export" style="border-color:#ff3333; color:#ff3333" onclick="clearLogs()">LIMPIAR</button>
     </footer>
 
     <script>
@@ -186,18 +144,21 @@
         let activeTasks = {};
         let logs = [];
 
-        // ACTUALIZACIÓN DE RELOJ (0.1s de precisión)
-        function updateClock() {
+        function updateClocks() {
             const now = new Date();
             const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
+            
+            // Reloj Principal (Absoluto)
             currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
             document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
+            
+            // Reloj Real y Fecha
+            document.getElementById('real-clock').textContent = now.toLocaleTimeString('es-ES');
+            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        // LÓGICA DE BOTONES SMED
         function toggleTask(btn, taskName) {
             const statusLabel = document.getElementById('st-' + taskName);
-
             if (!activeTasks[taskName]) {
                 activeTasks[taskName] = currentAbsTime;
                 btn.classList.add('active');
@@ -205,15 +166,7 @@
             } else {
                 const start = activeTasks[taskName];
                 const end = currentAbsTime;
-                const duration = end - start;
-
-                logs.push({
-                    name: taskName,
-                    start: start.toFixed(1),
-                    end: end.toFixed(1),
-                    duration: duration.toFixed(1)
-                });
-
+                logs.push({ name: taskName, start: start.toFixed(1), end: end.toFixed(1), duration: (end - start).toFixed(1) });
                 delete activeTasks[taskName];
                 btn.classList.remove('active');
                 statusLabel.textContent = "OFF";
@@ -221,78 +174,61 @@
             }
         }
 
-        // GESTIÓN DE BOTONES PERSONALIZADOS
         function addNewButton() {
             const name = document.getElementById('new-task-name').value.trim();
             if (!name) return;
-
             const container = document.getElementById('button-container');
             const div = document.createElement('div');
             div.className = 'smed-btn-container';
-            div.dataset.task = name;
-            div.innerHTML = `
-                <button class="smed-btn" onclick="toggleTask(this, '${name}')">
-                    ${name} <span id="st-${name}">OFF</span>
-                </button>
-                <button class="del-btn" onclick="removeButton(this)">×</button>
-            `;
+            div.innerHTML = `<button class="smed-btn" onclick="toggleTask(this, '${name}')">${name} <span id="st-${name}">OFF</span></button><button class="del-btn" onclick="removeButton(this)">×</button>`;
             container.appendChild(div);
             document.getElementById('new-task-name').value = "";
         }
 
-        function removeButton(btn) {
-            if(confirm("¿Eliminar este botón?")) btn.parentElement.remove();
-        }
+        function removeButton(btn) { if(confirm("¿Eliminar botón?")) btn.parentElement.remove(); }
 
         function renderLogs() {
             const body = document.getElementById('log-body');
-            body.innerHTML = logs.map(e => `
-                <tr>
-                    <td>${e.name}</td>
-                    <td>${e.start}</td>
-                    <td>${e.end}</td>
-                    <td style="color:var(--neon-orange)">${e.duration}s</td>
-                </tr>
-            `).join('');
+            body.innerHTML = logs.map(e => `<tr><td>${e.name}</td><td>${e.start}</td><td>${e.end}</td><td style="color:var(--neon-orange)">${e.duration}s</td></tr>`).join('');
+            document.querySelector('.log-section').scrollTop = 99999;
         }
 
-        function clearLogs() {
-            if(confirm("¿Borrar todos los registros de la tabla?")) {
-                logs = [];
-                renderLogs();
-            }
-        }
+        function prepareExport(format) {
+            if (logs.length === 0) return alert("No hay datos registrados.");
+            
+            const responsable = prompt("Nombre del Responsable:");
+            if (!responsable) return;
+            const turno = prompt("Turno (Ej: Matutino, Nocturno):");
+            if (!turno) return;
 
-        // EXPORTACIÓN
-        function exportFile(format) {
-            if (logs.length === 0) return alert("No hay datos");
+            const now = new Date();
+            const fechaStr = now.toLocaleDateString();
+            const horaStr = now.toLocaleTimeString();
 
             let content = "";
-            let filename = "REPORTE_SMED." + format;
-
             if (format === 'csv') {
-                content = "Actividad,Inicio,Fin,Duracion\n";
+                content = `REPORTE SMED\nFecha,${fechaStr}\nHora,${horaStr}\nResponsable,${responsable}\nTurno,${turno}\n\n`;
+                content += "Actividad,Segundo Inicio,Segundo Fin,Duracion Segundos\n";
                 logs.forEach(l => content += `${l.name},${l.start},${l.end},${l.duration}\n`);
             } else {
-                content = "=== REPORTE DE TIEMPOS SMED ===\n\n";
-                logs.forEach(l => content += `Tarea: ${l.name} | Inic: ${l.start} | Fin: ${l.end} | Duración: ${l.duration}s\n`);
+                content = `==============================\n   REPORTE INDUSTRIAL SMED\n==============================\n`;
+                content += `FECHA: ${fechaStr} | HORA: ${horaStr}\nRESPONSABLE: ${responsable}\nTURNO: ${turno}\n`;
+                content += `------------------------------\n`;
+                logs.forEach(l => content += `TAREA: ${l.name}\nINICIO: ${l.start}s | FIN: ${l.end}s | DURACIÓN: ${l.duration}s\n\n`);
             }
 
             const blob = new Blob([content], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
+            a.href = URL.createObjectURL(blob);
+            a.download = `SMED_${responsable.replace(/\s/g, '_')}_${fechaStr.replace(/\//g, '-')}.${format}`;
             a.click();
         }
 
-        function toggleFS() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        }
+        function clearLogs() { if(confirm("¿Limpiar toda la tabla?")) { logs = []; renderLogs(); } }
+        function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
-        setInterval(updateClock, 100);
-        updateClock();
+        setInterval(updateClocks, 100);
+        updateClocks();
     </script>
 </body>
 </html>
