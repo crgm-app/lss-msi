@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Parallel Analytics</title>
+    <title>SMED Safe-Storage v5</title>
     <style>
         :root {
             --neon-green: #00ff00;
@@ -24,7 +24,6 @@
             overflow: hidden;
         }
 
-        /* HEADER */
         header {
             background: #111;
             padding: 8px 15px;
@@ -37,10 +36,8 @@
         .main-clock { font-size: 2.8rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
         .info-right { text-align: right; font-size: 0.75rem; color: #888; }
 
-        /* DASHBOARD */
         main { flex: 1; display: flex; overflow: hidden; }
 
-        /* TABLA IZQUIERDA */
         .left-panel { flex: 1.3; display: flex; flex-direction: column; border-right: 2px solid #222; }
         .log-section { flex: 2; overflow-y: auto; background: #000; padding: 5px; }
         
@@ -52,7 +49,6 @@
 
         .config-section { padding: 10px; background: #111; border-top: 1px solid #333; }
 
-        /* PANEL DE BOTONES DERECHA */
         .control-panel {
             flex: 1;
             background: #0a0a0a;
@@ -77,14 +73,12 @@
             position: relative;
         }
         
-        /* Colores por grupo */
         .smed-btn.active { border-color: var(--neon-orange); background: #221a00; }
         .group-tag { font-size: 0.55rem; color: var(--neon-blue); text-transform: uppercase; position: absolute; top: 5px; right: 10px; }
         .smed-btn span { font-size: 0.6rem; color: #666; display: block; margin-top: 2px; }
         
         .del-btn { width: 30px; background: #221111; border: 1px solid #444; color: #ff5555; border-radius: 0 6px 6px 0; cursor: pointer; }
 
-        /* FOOTER */
         footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; }
         .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
         
@@ -96,12 +90,12 @@
     <header>
         <div>
             <div id="abs-clock" class="main-clock">00000.0</div>
-            <div style="font-size: 0.5rem; color: #555; letter-spacing: 2px;">ABS TIME (S)</div>
+            <div style="font-size: 0.5rem; color: #555; letter-spacing: 2px;">MODO SEGURO ACTIVO</div>
         </div>
         <div class="info-right">
             <div id="date-display">--/--/--</div>
             <div id="real-clock" style="color: #aaa;">00:00:00</div>
-            <button onclick="toggleFS()" style="font-size: 8px; background:none; border: 1px solid #333; color:#555">FS</button>
+            <button onclick="toggleFS()" style="font-size: 8px; border: 1px solid #333; background:none; color:#555">FS</button>
         </div>
     </header>
 
@@ -116,26 +110,31 @@
                 </table>
             </div>
             <div class="config-section">
-                <input type="text" id="new-task-name" placeholder="Ej: Troquel Limpiar">
-                <button onclick="addNewButton()" style="padding:8px; background:var(--neon-blue); border:none; border-radius:4px; font-weight:bold;">+</button>
+                <input type="text" id="new-task-name" placeholder="Ej: Troquel 1">
+                <button onclick="handleNewBtnClick()" style="padding:8px; background:var(--neon-blue); border:none; border-radius:4px; font-weight:bold;">+</button>
             </div>
         </section>
 
-        <section class="control-panel" id="button-container">
-            </section>
+        <section class="control-panel" id="button-container"></section>
     </main>
 
     <footer>
         <button class="btn-export" onclick="prepareExport('csv')">CSV</button>
         <button class="btn-export" onclick="prepareExport('txt')">TXT</button>
         <button class="btn-export" style="color:var(--neon-orange)" onclick="closeAllActive()">CERRAR TODO</button>
-        <button class="btn-export" style="color:#ff3333" onclick="clearLogs()">BORRAR</button>
+        <button class="btn-export" style="color:#ff3333" onclick="fullReset()">RESET TOTAL</button>
     </footer>
 
     <script>
         let currentAbsTime = 0;
-        let logs = [];
-        let activeTasksByGroup = {}; // Estructura: { 'Troquel': 'Troquel Limpiar', 'Sello': 'Sello Montar' }
+        let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
+        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Desmontar", "Troquel Montar", "Sello Ajuste"];
+        let activeTasksByGroup = {}; 
+
+        function saveToStorage() {
+            localStorage.setItem('smed_logs', JSON.stringify(logs));
+            localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
+        }
 
         function updateClocks() {
             const now = new Date();
@@ -146,54 +145,33 @@
             document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES');
         }
 
-        function getGroupName(name) {
-            return name.split(' ')[0].toUpperCase();
-        }
+        function getGroupName(name) { return name.split(' ')[0].toUpperCase(); }
 
         function handleSmedAction(btn, taskName) {
             const group = getGroupName(taskName);
-            const span = btn.querySelector('span');
-
-            // Si presionas la que ya está activa en ese grupo -> La apagas
             if (activeTasksByGroup[group] === taskName) {
                 closeTask(taskName, btn);
                 delete activeTasksByGroup[group];
                 return;
             }
-
-            // Si hay OTRA del mismo grupo activa -> La cerramos automáticamente
             if (activeTasksByGroup[group]) {
                 const prevTaskName = activeTasksByGroup[group];
-                const allBtns = document.querySelectorAll('.smed-btn');
-                let prevBtn;
-                allBtns.forEach(b => { if(b.innerText.includes(prevTaskName)) prevBtn = b; });
-                
+                const prevBtn = Array.from(document.querySelectorAll('.smed-btn')).find(b => b.dataset.task === prevTaskName);
                 if (prevBtn) closeTask(prevTaskName, prevBtn);
             }
-
-            // Iniciar la nueva
             activeTasksByGroup[group] = taskName;
             btn.classList.add('active');
             btn.dataset.startTime = currentAbsTime;
-            span.textContent = "CONTANDO...";
+            btn.querySelector('span').textContent = "CONTANDO...";
         }
 
         function closeTask(name, btn) {
             const start = parseFloat(btn.dataset.startTime);
-            const end = currentAbsTime;
-            const duration = (end - start).toFixed(1);
-
-            logs.push({
-                name: name,
-                group: getGroupName(name),
-                type: "Interna",
-                start: start.toFixed(1),
-                end: end.toFixed(1),
-                duration: duration
-            });
-
+            const duration = (currentAbsTime - start).toFixed(1);
+            logs.push({ name, group: getGroupName(name), type: "Interna", start: start.toFixed(1), end: currentAbsTime.toFixed(1), duration });
             btn.classList.remove('active');
             btn.querySelector('span').textContent = "ULT: " + duration + "s";
+            saveToStorage();
             renderLogs();
         }
 
@@ -202,38 +180,56 @@
             body.innerHTML = logs.map((e, i) => `
                 <tr>
                     <td>${e.name}</td>
-                    <td><select class="smed-type" onchange="logs[${i}].type=this.value">
-                        <option value="Interna">Int</option><option value="Externa">Ext</option><option value="Muda">Muda</option>
+                    <td><select class="smed-type" onchange="logs[${i}].type=this.value; saveToStorage();">
+                        <option value="Interna" ${e.type==='Interna'?'selected':''}>Int</option>
+                        <option value="Externa" ${e.type==='Externa'?'selected':''}>Ext</option>
+                        <option value="Muda" ${e.type==='Muda'?'selected':''}>Muda</option>
                     </select></td>
                     <td style="color:var(--neon-orange)">${e.duration}s</td>
-                    <td style="font-size:0.6rem; color:#444">${e.group}</td>
+                    <td style="font-size:0.5rem; color:#444">${e.group}</td>
                 </tr>
             `).join('');
             document.querySelector('.log-section').scrollTop = 99999;
         }
 
-        function addNewButton() {
+        function handleNewBtnClick() {
             const name = document.getElementById('new-task-name').value.trim();
-            if (!name) return;
-            const group = getGroupName(name);
+            if (name && !btnNames.includes(name)) {
+                btnNames.push(name);
+                saveToStorage();
+                renderButtons();
+                document.getElementById('new-task-name').value = "";
+            }
+        }
+
+        function renderButtons() {
             const container = document.getElementById('button-container');
-            const div = document.createElement('div');
-            div.className = 'smed-btn-container';
-            div.innerHTML = `
-                <button class="smed-btn" onclick="handleSmedAction(this, '${name}')">
-                    <div class="group-tag">${group}</div>
-                    ${name} <span>OFF</span>
-                </button>
-                <button class="del-btn" onclick="this.parentElement.remove()">×</button>
-            `;
-            container.appendChild(div);
-            document.getElementById('new-task-name').value = "";
+            container.innerHTML = "";
+            btnNames.forEach(name => {
+                const group = getGroupName(name);
+                const div = document.createElement('div');
+                div.className = 'smed-btn-container';
+                div.innerHTML = `
+                    <button class="smed-btn" data-task="${name}" onclick="handleSmedAction(this, '${name}')">
+                        <div class="group-tag">${group}</div>${name} <span>OFF</span>
+                    </button>
+                    <button class="del-btn" onclick="removeBtn('${name}')">×</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function removeBtn(name) {
+            if(confirm("¿Eliminar botón?")) {
+                btnNames = btnNames.filter(n => n !== name);
+                saveToStorage();
+                renderButtons();
+            }
         }
 
         function prepareExport(format) {
             const resp = prompt("Responsable:"), turno = prompt("Turno:");
             if(!resp) return;
-            let content = `SMED PARALLEL REPORT - ${new Date().toLocaleString()}\nResp: ${resp} | Turno: ${turno}\n\n`;
+            let content = `REPORTE SMED\nResponsable: ${resp} | Turno: ${turno}\n\n`;
             if (format === 'csv') {
                 content += "Grupo,Actividad,Tipo,Duracion,Inicio,Fin\n";
                 logs.forEach(l => content += `${l.group},${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
@@ -248,23 +244,24 @@
         }
 
         function closeAllActive() {
-            const activeBtns = document.querySelectorAll('.smed-btn.active');
-            activeBtns.forEach(btn => {
-                const name = btn.innerText.split('\n')[1].trim();
-                closeTask(name, btn);
+            document.querySelectorAll('.smed-btn.active').forEach(btn => {
+                closeTask(btn.dataset.task, btn);
             });
             activeTasksByGroup = {};
         }
 
-        function clearLogs() { if(confirm("¿Borrar?")) { logs = []; renderLogs(); } }
+        function fullReset() {
+            if(confirm("¡ATENCIÓN! Se borrarán todos los registros de la tabla y los botones personalizados. ¿Continuar?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
         function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
-        // Inicializar con algunos ejemplos
         window.onload = () => {
-            document.getElementById('new-task-name').value = "Troquel Desmontar"; addNewButton();
-            document.getElementById('new-task-name').value = "Troquel Limpiar"; addNewButton();
-            document.getElementById('new-task-name').value = "Sello Preparar"; addNewButton();
-            updateClocks();
+            renderButtons();
+            renderLogs();
             setInterval(updateClocks, 100);
         };
     </script>
