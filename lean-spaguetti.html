@@ -27,13 +27,28 @@
         .indicator { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .active-gps { background: #22c55e; box-shadow: 0 0 5px #22c55e; }
         .idle-gps { background: var(--w); }
+        .manual-pause { background: var(--d); }
 
         /* Mapa */
         #viewport { flex: 1; overflow: auto; background: #475569; position: relative; display: flex; align-items: flex-start; justify-content: center; }
-        canvas { background: white; touch-action: none; cursor: crosshair; }
+        canvas { background: white; touch-action: none; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
         
         .floating-menu { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; }
         .btn-float { width: 50px; height: 50px; border-radius: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 20px; }
+
+        /* Calibración */
+        .calibration-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none;}
+        .calibration-overlay.active { display: flex; }
+        .calibration-overlay button { background: var(--p); color: white; padding: 10px 20px; border-radius: 5px; margin-top: 20px; }
+        .calibration-dot { position: absolute; width: 16px; height: 16px; background: yellow; border-radius: 50%; border: 2px solid black; transform: translate(-8px, -8px); pointer-events: none;}
+        
+        /* Modal para rutas */
+        .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+        .route-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .route-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -45,7 +60,7 @@
         <input type="text" id="destination" placeholder="Hacia (Destino)">
         <input type="text" id="purpose" placeholder="Propósito (Ej: Surtido)" class="full-input">
         <div style="display:flex; align-items:center; gap:5px; grid-column: span 2;">
-            <label style="font-size:12px">Color de ruta:</label>
+            <label style="font-size:12px">Color:</label>
             <input type="color" id="routeColor" value="#2563eb" style="width:50px; padding:2px; height:30px;">
             <input type="file" id="mapLoader" accept="image/*" style="font-size:10px;">
         </div>
@@ -66,27 +81,63 @@
 
 <div id="viewport">
     <canvas id="mapCanvas"></canvas>
+    
+    <div id="calibrationOverlay" class="calibration-overlay">
+        <h2>Calibración del Mapa</h2>
+        <p>Haz clic en dos puntos de tu plano (Punto A y Punto B) y luego introduce sus coordenadas GPS reales.</p>
+        <div id="calibPointA" class="calibration-dot" style="display:none;"></div>
+        <div id="calibPointB" class="calibration-dot" style="display:none;"></div>
+        <div style="margin-top:20px; text-align:center;">
+            <label>Punto A (Mapa X,Y): <span id="calibAPos"></span></label><br>
+            <input type="text" id="calibALat" placeholder="Latitud A (GPS)" style="width:150px;">
+            <input type="text" id="calibALon" placeholder="Longitud A (GPS)" style="width:150px;"><br><br>
+            <label>Punto B (Mapa X,Y): <span id="calibBPos"></span></label><br>
+            <input type="text" id="calibBLat" placeholder="Latitud B (GPS)" style="width:150px;">
+            <input type="text" id="calibBLon" placeholder="Longitud B (GPS)" style="width:150px;"><br>
+        </div>
+        <button onclick="saveCalibration()">GUARDAR CALIBRACIÓN</button>
+    </div>
+
 </div>
 
 <div class="floating-menu">
+    <button onclick="toggleCalibration()" title="Calibrar Mapa" style="background:var(--p)" class="btn-float">📍</button>
+    <button onclick="showRouteModal()" title="Ver Rutas" style="background:var(--p)" class="btn-float">📄</button>
+    <button onclick="downloadPNG()" title="Exportar PNG del Mapa" style="background:#6d28d9" class="btn-float">🖼️</button>
     <button onclick="downloadCSV()" title="Exportar Excel" style="background:var(--s)" class="btn-float">📥</button>
     <button onclick="clearLogs()" title="Borrar Memoria" style="background:var(--d)" class="btn-float">🗑️</button>
 </div>
 
+<div id="routeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="document.getElementById('routeModal').style.display='none'">&times;</span>
+        <h2>Rutas Guardadas</h2>
+        <div id="routeList"></div>
+    </div>
+</div>
+
 <script>
-    let log = [];
+    let log = []; // Rutas actuales
     let watchId = null;
-    let baseCoords = null;
-    let lastPoint = null;
+    let baseCoords = null; // Coordenada base para el inicio de un tramo
+    let lastPoint = null; // Última coordenada GPS registrada
     let isPaused = false;
     
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const bg = new Image();
 
-    // Persistencia de imagen de plano
+    // Variables de Calibración
+    let calibrationPoints = []; // [{mapX, mapY, gpsLat, gpsLon}, ...]
+    let currentCalibStep = 0; // 0: esperando A click, 1: esperando B click
+    let calibData = { pointA: null, pointB: null };
+
+    // --- Carga y persistencia del plano ---
     if(localStorage.getItem('leanMap')) {
         bg.src = localStorage.getItem('leanMap');
+    }
+    if(localStorage.getItem('calibrationPoints')) {
+        calibrationPoints = JSON.parse(localStorage.getItem('calibrationPoints'));
     }
 
     document.getElementById('mapLoader').onchange = (e) => {
@@ -103,8 +154,130 @@
         canvas.height = bg.height;
         ctx.drawImage(bg, 0, 0);
         renderHistory();
+        renderCalibrationPoints(); // Dibuja los puntos de calibración
     };
 
+    // --- Funciones de Calibración ---
+    function toggleCalibration() {
+        const overlay = document.getElementById('calibrationOverlay');
+        overlay.classList.toggle('active');
+        if(overlay.classList.contains('active')) {
+            canvas.style.cursor = 'crosshair';
+            canvas.addEventListener('click', handleCalibrationClick);
+            currentCalibStep = 0;
+            calibData = { pointA: null, pointB: null };
+            document.getElementById('calibAPos').innerText = '';
+            document.getElementById('calibBPos').innerText = '';
+            document.getElementById('calibALat').value = '';
+            document.getElementById('calibALon').value = '';
+            document.getElementById('calibBLat').value = '';
+            document.getElementById('calibBLon').value = '';
+            document.getElementById('calibPointA').style.display = 'none';
+            document.getElementById('calibPointB').style.display = 'none';
+        } else {
+            canvas.removeEventListener('click', handleCalibrationClick);
+            canvas.style.cursor = 'default';
+        }
+    }
+
+    function handleCalibrationClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mapX = e.clientX - rect.left;
+        const mapY = e.clientY - rect.top;
+
+        const dotA = document.getElementById('calibPointA');
+        const dotB = document.getElementById('calibPointB');
+
+        if (currentCalibStep === 0) {
+            calibData.pointA = { mapX, mapY };
+            document.getElementById('calibAPos').innerText = `(${mapX.toFixed(0)}, ${mapY.toFixed(0)})`;
+            dotA.style.left = `${mapX}px`;
+            dotA.style.top = `${mapY}px`;
+            dotA.style.display = 'block';
+            currentCalibStep = 1;
+        } else {
+            calibData.pointB = { mapX, mapY };
+            document.getElementById('calibBPos').innerText = `(${mapX.toFixed(0)}, ${mapY.toFixed(0)})`;
+            dotB.style.left = `${mapX}px`;
+            dotB.style.top = `${mapY}px`;
+            dotB.style.display = 'block';
+            currentCalibStep = 0; // Listo para re-seleccionar A o guardar
+        }
+    }
+
+    function saveCalibration() {
+        const latA = parseFloat(document.getElementById('calibALat').value);
+        const lonA = parseFloat(document.getElementById('calibALon').value);
+        const latB = parseFloat(document.getElementById('calibBLat').value);
+        const lonB = parseFloat(document.getElementById('calibBLon').value);
+
+        if (!calibData.pointA || !calibData.pointB || isNaN(latA) || isNaN(lonA) || isNaN(latB) || isNaN(lonB)) {
+            return alert("Por favor, selecciona dos puntos en el mapa e introduce sus coordenadas GPS.");
+        }
+        
+        calibrationPoints = [
+            { mapX: calibData.pointA.mapX, mapY: calibData.pointA.mapY, gpsLat: latA, gpsLon: lonA },
+            { mapX: calibData.pointB.mapX, mapY: calibData.pointB.mapY, gpsLat: latB, gpsLon: lonB }
+        ];
+        localStorage.setItem('calibrationPoints', JSON.stringify(calibrationPoints));
+        alert("Calibración guardada. Reinicia el rastreo para aplicar.");
+        toggleCalibration();
+        renderCalibrationPoints(); // Dibuja los puntos de calibración guardados
+    }
+
+    function renderCalibrationPoints() {
+        if (calibrationPoints.length === 2) {
+            ctx.fillStyle = 'yellow';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            calibrationPoints.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.mapX, p.mapY, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
+        }
+    }
+
+    function gpsToCanvas(gpsLat, gpsLon) {
+        if (calibrationPoints.length < 2) {
+            // Si no hay calibración, usa un punto base simple (centro del canvas)
+            // Esto es menos preciso, pero evita errores si no hay calibración
+            const scale = 15; 
+            const x = (gpsLon - (baseCoords ? baseCoords.lon : gpsLon)) * 111320 * Math.cos(gpsLat * Math.PI/180);
+            const y = (gpsLat - (baseCoords ? baseCoords.lat : gpsLat)) * 110540;
+            return {
+                x: (canvas.width / 2) + (x * scale),
+                y: (canvas.height / 2) - (y * scale)
+            };
+        }
+
+        const [p1, p2] = calibrationPoints;
+        const x1 = p1.mapX, y1 = p1.mapY, lat1 = p1.gpsLat, lon1 = p1.gpsLon;
+        const x2 = p2.mapX, y2 = p2.mapY, lat2 = p2.gpsLat, lon2 = p2.gpsLon;
+
+        // Mapeo simple de GPS a píxeles (esto puede ser más complejo para rotación)
+        // Aproximación lineal (asume que el mapa no está rotado significativamente)
+        const rangeLat = lat2 - lat1;
+        const rangeLon = lon2 - lon1;
+        const rangeMapX = x2 - x1;
+        const rangeMapY = y2 - y1;
+
+        if (rangeLat === 0 || rangeLon === 0) { // Evita división por cero si puntos están en línea
+             return { x: x1, y: y1 }; // Fallback
+        }
+
+        const normLat = (gpsLat - lat1) / rangeLat;
+        const normLon = (gpsLon - lon1) / rangeLon;
+        
+        const canvasX = x1 + (normLon * rangeMapX);
+        const canvasY = y1 + (normLat * rangeMapY);
+        
+        return { x: canvasX, y: canvasY };
+    }
+
+
+    // --- Funciones de Geolocalización ---
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2-lat1) * Math.PI/180;
@@ -115,10 +288,18 @@
 
     document.getElementById('startBtn').onclick = () => {
         if(!bg.src) return alert("Sube el plano de la planta primero.");
+        if(calibrationPoints.length < 2) return alert("Calibra el mapa primero (icono de chincheta).");
+        
         isPaused = false;
+        log = []; // Reiniciar log para una nueva ruta/tramo
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('pauseBtn').style.display = 'block';
         document.getElementById('stopBtn').style.display = 'block';
+        
+        // Limpiar el canvas solo para esta nueva ruta, manteniendo las antiguas
+        ctx.drawImage(bg, 0, 0); // Redibuja el fondo
+        renderHistory(); // Redibuja las rutas guardadas
+        renderCalibrationPoints(); // Asegura que los puntos de calibración estén visibles
         
         watchId = navigator.geolocation.watchPosition(pos => {
             if(isPaused) return;
@@ -131,79 +312,107 @@
 
             let distFromLast = lastPoint ? getDistance(latitude, longitude, lastPoint.lat, lastPoint.lon) : 999;
 
-            // LÓGICA AUTO-PAUSA (Si se mueve menos de 1 metro, no registra pero GPS sigue activo)
-            if(distFromLast >= 1.0) {
+            if(distFromLast >= 1.0) { // Registra si se movió 1 metro o más
                 document.getElementById('moveStatus').innerText = "Caminando";
                 document.getElementById('gpsDot').className = "indicator active-gps";
                 
-                // Conversión a metros (X, Y)
-                const x = (longitude - baseCoords.lon) * 111320 * Math.cos(baseCoords.lat * Math.PI/180);
-                const y = (latitude - baseCoords.lat) * 110540;
+                // Usar la calibración para obtener X, Y en metros relativos al inicio de la calibración
+                const [p1, p2] = calibrationPoints;
+                const gpsRelX = (longitude - p1.gpsLon) * 111320 * Math.cos(p1.gpsLat * Math.PI/180);
+                const gpsRelY = (latitude - p1.gpsLat) * 110540;
+
 
                 const dataPoint = {
+                    id: Date.now() + Math.random(), // ID único para cada punto
                     op: document.getElementById('opName').value || 'N/A',
                     orig: document.getElementById('origin').value || 'Inicio',
                     dest: document.getElementById('destination').value || 'Fin',
                     motive: document.getElementById('purpose').value || 'Transporte',
                     sec: secondOfDay,
-                    x: x.toFixed(2),
-                    y: y.toFixed(2),
+                    lat: latitude.toFixed(6), // Guardar GPS original
+                    lon: longitude.toFixed(6),
+                    x: gpsRelX.toFixed(2), // Coordenadas relativas en metros
+                    y: gpsRelY.toFixed(2),
                     z: (altitude || 0).toFixed(2),
                     color: document.getElementById('routeColor').value
                 };
 
                 log.push(dataPoint);
-                lastPoint = { lat: latitude, lon: longitude };
-                draw(dataPoint);
+                lastPoint = { lat: latitude, lon: longitude }; // Actualiza para el cálculo de distancia
                 
+                // Actualiza stats
                 document.getElementById('totalDist').innerText = log.length;
+                document.getElementById('gpsStatus').innerText = `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
+                
+                drawPoint(dataPoint); // Dibuja el punto en el canvas
             } else {
                 document.getElementById('moveStatus').innerText = "Auto-Pausa (Quieto)";
                 document.getElementById('gpsDot').className = "indicator idle-gps";
             }
-            document.getElementById('gpsStatus').innerText = "GPS Activo";
-        }, err => console.error(err), { enableHighAccuracy: true });
+        }, err => {
+            console.error(err);
+            document.getElementById('gpsStatus').innerText = "GPS Error";
+            document.getElementById('gpsDot').className = "indicator manual-pause"; // Indicar error
+        }, { enableHighAccuracy: true });
     };
 
     document.getElementById('pauseBtn').onclick = () => {
         isPaused = !isPaused;
         document.getElementById('pauseBtn').innerText = isPaused ? "▶ REANUDAR" : "⏸ PAUSA MANUAL";
-        document.getElementById('moveStatus').innerText = isPaused ? "Pausado" : "Esperando...";
+        document.getElementById('moveStatus').innerText = isPaused ? "Pausado Manualmente" : "Esperando movimiento...";
+        document.getElementById('gpsDot').className = isPaused ? "indicator manual-pause" : "indicator idle-gps";
     };
 
     document.getElementById('stopBtn').onclick = () => {
         navigator.geolocation.clearWatch(watchId);
+        
+        // Guardar el tramo actual como una entrada en el historial
         const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
-        history.push(...log);
+        if (log.length > 0) { // Solo guarda si hay puntos
+            history.push({
+                op: log[0].op,
+                orig: log[0].orig,
+                dest: log[0].dest,
+                motive: log[0].motive,
+                color: log[0].color,
+                points: log // Guardar todos los puntos de este tramo
+            });
+        }
         localStorage.setItem('leanHistory', JSON.stringify(history));
         
-        alert("Tramo guardado con éxito.");
-        location.reload();
+        alert(`Tramo guardado con ${log.length} puntos.`);
+        location.reload(); // Recargar para limpiar y mostrar lo nuevo
     };
 
-    function draw(p) {
-        const scale = 15; // Ajustar según tamaño del plano
-        const dx = (canvas.width/2) + (p.x * scale);
-        const dy = (canvas.height/2) - (p.y * scale);
+    function drawPoint(p) {
+        // Usa la función de calibración para obtener las coordenadas en el canvas
+        const canvasCoords = gpsToCanvas(parseFloat(p.lat), parseFloat(p.lon));
         
         ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(dx, dy, 3, 0, Math.PI*2);
+        ctx.arc(canvasCoords.x, canvasCoords.y, 3, 0, Math.PI*2);
         ctx.fill();
     }
 
     function renderHistory() {
+        // Se redibuja todo el fondo primero en bg.onload
         const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
-        history.forEach(p => draw(p));
+        history.forEach(route => {
+            route.points.forEach(p => drawPoint(p));
+        });
     }
 
+    // --- Funciones de Descarga y Limpieza ---
     function downloadCSV() {
         const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
         if(history.length === 0) return alert("No hay datos para exportar.");
 
-        let csv = "\uFEFFOP,Origen,Destino,Motivo,Segundo_Dia,X_Metros,Y_Metros,Z_Metros\n";
-        history.forEach(p => {
-            csv += `${p.op},${p.orig},${p.dest},${p.motive},${p.sec},${p.x},${p.y},${p.z}\n`;
+        let csv = "\uFEFFOP,Origen,Destino,Motivo,Segundo_Dia,Latitud,Longitud,X_Metros_Relativo_Calib,Y_Metros_Relativo_Calib,Z_Metros\n";
+        
+        history.forEach(route => {
+            route.points.forEach(p => {
+                csv += `${p.op},${p.orig},${p.dest},${p.motive},${p.sec},${p.lat},${p.lon},${p.x},${p.y},${p.z}\n`;
+            });
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -213,11 +422,57 @@
         link.click();
     }
 
+    function downloadPNG() {
+        if (!bg.src) return alert("Carga un plano primero.");
+        const link = document.createElement('a');
+        link.download = 'mapa_rutas_lean.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
+
     function clearLogs() {
-        if(confirm("¿Seguro que quieres borrar todo el historial?")) {
+        if(confirm("¿Seguro que quieres borrar TODO el historial y la calibración?")) {
             localStorage.removeItem('leanHistory');
+            localStorage.removeItem('leanMap');
+            localStorage.removeItem('calibrationPoints');
             location.reload();
         }
+    }
+
+    // --- Modal de Rutas Guardadas ---
+    function showRouteModal() {
+        const modal = document.getElementById('routeModal');
+        const list = document.getElementById('routeList');
+        list.innerHTML = ''; // Limpiar lista anterior
+        
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        if (history.length === 0) {
+            list.innerHTML = '<p>No hay rutas guardadas aún.</p>';
+        } else {
+            history.forEach((route, index) => {
+                const routeDiv = document.createElement('div');
+                routeDiv.className = 'route-item';
+                routeDiv.innerHTML = `
+                    <span><strong>Ruta ${index + 1}:</strong> ${route.orig} &rarr; ${route.dest} (${route.motive}) - OP: ${route.op}</span>
+                    <button style="background:${route.color}; color:white; padding:5px 10px; border-radius:4px; font-size:12px;" onclick="viewSingleRoute(${index})">Ver</button>
+                `;
+                list.appendChild(routeDiv);
+            });
+        }
+        modal.style.display = 'block';
+    }
+
+    function viewSingleRoute(index) {
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        if (index < 0 || index >= history.length) return;
+
+        const routeToView = history[index];
+        ctx.clearRect(0,0,canvas.width, canvas.height); // Limpiar
+        ctx.drawImage(bg, 0, 0); // Redibujar fondo
+        renderCalibrationPoints(); // Asegura los puntos de calibración
+
+        routeToView.points.forEach(p => drawPoint(p));
+        document.getElementById('routeModal').style.display = 'none'; // Cerrar modal
     }
 </script>
 </body>
