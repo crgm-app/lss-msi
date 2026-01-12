@@ -3,86 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Safe-Storage v5</title>
+    <title>SMED Analytics - Fixed</title>
     <style>
         :root {
-            --neon-green: #00ff00;
-            --neon-blue: #00d4ff;
-            --neon-orange: #ffaa00;
-            --bg-dark: #050505;
+            --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-
-        body {
-            background-color: var(--bg-dark);
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        header {
-            background: #111;
-            padding: 8px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #333;
-        }
-
-        .main-clock { font-size: 2.8rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
-        .info-right { text-align: right; font-size: 0.75rem; color: #888; }
+        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        header { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; }
+        .main-clock { font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
+        .info-right { text-align: right; font-size: 0.8rem; color: #888; }
 
         main { flex: 1; display: flex; overflow: hidden; }
-
-        .left-panel { flex: 1.3; display: flex; flex-direction: column; border-right: 2px solid #222; }
+        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; }
         .log-section { flex: 2; overflow-y: auto; background: #000; padding: 5px; }
-        
         table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75rem; }
-        th { background: #1a1a1a; color: var(--neon-blue); padding: 6px; text-align: left; position: sticky; top: 0; z-index: 10; }
+        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; z-index: 10; }
         td { padding: 6px; border-bottom: 1px solid #111; }
+        .smed-type { background: #111; color: #fff; border: 1px solid #444; font-size: 0.7rem; }
 
-        .smed-type { background: #111; color: #fff; border: 1px solid #444; font-size: 0.65rem; padding: 2px; }
-
-        .config-section { padding: 10px; background: #111; border-top: 1px solid #333; }
-
-        .control-panel {
-            flex: 1;
-            background: #0a0a0a;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto;
-        }
-
-        .smed-btn-container { display: flex; align-items: stretch; height: 60px; margin-bottom: 2px; }
-        .smed-btn {
-            flex: 1;
-            background: #1a1a1a;
-            color: #fff;
-            border: 2px solid #444;
-            border-radius: 6px 0 0 6px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            text-align: left;
-            padding-left: 10px;
-            position: relative;
-        }
-        
-        .smed-btn.active { border-color: var(--neon-orange); background: #221a00; }
+        .control-panel { flex: 1; background: #0a0a0a; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .smed-btn-container { display: flex; align-items: stretch; height: 65px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 12px; position: relative; }
+        .smed-btn.active { background: linear-gradient(90deg, #332200, #1a1a1a); color: var(--neon-orange); border-left: 4px solid var(--neon-orange); }
         .group-tag { font-size: 0.55rem; color: var(--neon-blue); text-transform: uppercase; position: absolute; top: 5px; right: 10px; }
-        .smed-btn span { font-size: 0.6rem; color: #666; display: block; margin-top: 2px; }
-        
-        .del-btn { width: 30px; background: #221111; border: 1px solid #444; color: #ff5555; border-radius: 0 6px 6px 0; cursor: pointer; }
+        .del-btn { width: 40px; background: #221111; color: #ff5555; border: none; cursor: pointer; }
 
-        footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; }
-        .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
-        
-        input[type="text"] { background: #000; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 5px; width: 70%; }
+        footer { height: 70px; background: #111; display: flex; gap: 8px; justify-content: center; align-items: center; padding: 0 10px; }
+        button { cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .btn-pause { background: var(--neon-orange); color: #000; border: none; padding: 10px; flex: 1; }
+        .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px; font-size: 0.7rem; }
+        input { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 5px; flex: 2; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -90,12 +42,11 @@
     <header>
         <div>
             <div id="abs-clock" class="main-clock">00000.0</div>
-            <div style="font-size: 0.5rem; color: #555; letter-spacing: 2px;">MODO SEGURO ACTIVO</div>
+            <div id="date-display" style="font-size:0.7rem; color:#444">--/--/--</div>
         </div>
         <div class="info-right">
-            <div id="date-display">--/--/--</div>
-            <div id="real-clock" style="color: #aaa;">00:00:00</div>
-            <button onclick="toggleFS()" style="font-size: 8px; border: 1px solid #333; background:none; color:#555">FS</button>
+            <div id="real-clock" style="color:var(--neon-blue)">00:00:00</div>
+            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:3px; margin-top:5px">PANTALLA COMPLETA</button>
         </div>
     </header>
 
@@ -103,15 +54,13 @@
         <section class="left-panel">
             <div class="log-section">
                 <table>
-                    <thead>
-                        <tr><th>Actividad</th><th>Tipo</th><th>Dura(s)</th><th>Grupo</th></tr>
-                    </thead>
+                    <thead><tr><th>Tarea</th><th>Tipo</th><th>Dur(s)</th><th>Grupo</th></tr></thead>
                     <tbody id="log-body"></tbody>
                 </table>
             </div>
-            <div class="config-section">
-                <input type="text" id="new-task-name" placeholder="Ej: Troquel 1">
-                <button onclick="handleNewBtnClick()" style="padding:8px; background:var(--neon-blue); border:none; border-radius:4px; font-weight:bold;">+</button>
+            <div style="padding:10px; background:#111; display:flex; border-top:1px solid #333">
+                <input type="text" id="new-task-name" placeholder="Ej: Troquel Limpiar">
+                <button onclick="addNewButton()" style="padding:10px; background:var(--neon-blue); border:none; width:50px">+</button>
             </div>
         </section>
 
@@ -119,148 +68,134 @@
     </main>
 
     <footer>
+        <button class="btn-pause" onclick="pauseAll()">PAUSA (STOP ALL)</button>
         <button class="btn-export" onclick="prepareExport('csv')">CSV</button>
         <button class="btn-export" onclick="prepareExport('txt')">TXT</button>
-        <button class="btn-export" style="color:var(--neon-orange)" onclick="closeAllActive()">CERRAR TODO</button>
-        <button class="btn-export" style="color:#ff3333" onclick="fullReset()">RESET TOTAL</button>
+        <button class="btn-export" style="background:#300; color:#f55" onclick="fullReset()">RESET</button>
     </footer>
 
     <script>
         let currentAbsTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Desmontar", "Sello Desmontar", "Tinta Desmontar"];
+        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Desmontar", "Sello Ajuste"];
         let activeTasksByGroup = {}; 
-
-        function saveToStorage() {
-            localStorage.setItem('smed_logs', JSON.stringify(logs));
-            localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
-        }
 
         function updateClocks() {
             const now = new Date();
             const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
             currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
             document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
-            document.getElementById('real-clock').textContent = now.toLocaleTimeString('es-ES');
-            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES');
+            document.getElementById('real-clock').textContent = now.toLocaleTimeString();
+            document.getElementById('date-display').textContent = now.toLocaleDateString();
         }
 
         function getGroupName(name) { return name.split(' ')[0].toUpperCase(); }
 
-        function handleSmedAction(btn, taskName) {
+        function handleAction(btn, taskName) {
             const group = getGroupName(taskName);
             if (activeTasksByGroup[group] === taskName) {
-                closeTask(taskName, btn);
+                confirmClose(taskName, btn);
                 delete activeTasksByGroup[group];
-                return;
+            } else {
+                if (activeTasksByGroup[group]) {
+                    const prevName = activeTasksByGroup[group];
+                    const prevBtn = document.querySelector(`[data-task="${prevName}"]`);
+                    if (prevBtn) confirmClose(prevName, prevBtn);
+                }
+                activeTasksByGroup[group] = taskName;
+                btn.classList.add('active');
+                btn.dataset.startTime = currentAbsTime;
+                btn.querySelector('.status').textContent = "INICIADO: " + currentAbsTime.toFixed(1);
             }
-            if (activeTasksByGroup[group]) {
-                const prevTaskName = activeTasksByGroup[group];
-                const prevBtn = Array.from(document.querySelectorAll('.smed-btn')).find(b => b.dataset.task === prevTaskName);
-                if (prevBtn) closeTask(prevTaskName, prevBtn);
-            }
-            activeTasksByGroup[group] = taskName;
-            btn.classList.add('active');
-            btn.dataset.startTime = currentAbsTime;
-            btn.querySelector('span').textContent = "CONTANDO...";
         }
 
-        function closeTask(name, btn) {
+        function confirmClose(name, btn) {
             const start = parseFloat(btn.dataset.startTime);
+            if (isNaN(start)) return; 
             const duration = (currentAbsTime - start).toFixed(1);
             logs.push({ name, group: getGroupName(name), type: "Interna", start: start.toFixed(1), end: currentAbsTime.toFixed(1), duration });
             btn.classList.remove('active');
-            btn.querySelector('span').textContent = "ULT: " + duration + "s";
-            saveToStorage();
+            btn.querySelector('.status').textContent = "ULT: " + duration + "s";
+            localStorage.setItem('smed_logs', JSON.stringify(logs));
             renderLogs();
         }
 
         function renderLogs() {
-            const body = document.getElementById('log-body');
-            body.innerHTML = logs.map((e, i) => `
+            document.getElementById('log-body').innerHTML = logs.map((e, i) => `
                 <tr>
                     <td>${e.name}</td>
-                    <td><select class="smed-type" onchange="logs[${i}].type=this.value; saveToStorage();">
+                    <td><select class="smed-type" onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs));">
                         <option value="Interna" ${e.type==='Interna'?'selected':''}>Int</option>
                         <option value="Externa" ${e.type==='Externa'?'selected':''}>Ext</option>
                         <option value="Muda" ${e.type==='Muda'?'selected':''}>Muda</option>
                     </select></td>
-                    <td style="color:var(--neon-orange)">${e.duration}s</td>
+                    <td style="color:var(--neon-orange); font-weight:bold">${e.duration}s</td>
                     <td style="font-size:0.5rem; color:#444">${e.group}</td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
             document.querySelector('.log-section').scrollTop = 99999;
         }
 
-        function handleNewBtnClick() {
+        function addNewButton() {
             const name = document.getElementById('new-task-name').value.trim();
-            if (name && !btnNames.includes(name)) {
-                btnNames.push(name);
-                saveToStorage();
-                renderButtons();
-                document.getElementById('new-task-name').value = "";
-            }
+            if (!name || btnNames.includes(name)) return;
+            btnNames.push(name);
+            localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
+            createButtonElement(name);
+            document.getElementById('new-task-name').value = "";
         }
 
-        function renderButtons() {
+        function createButtonElement(name) {
             const container = document.getElementById('button-container');
-            container.innerHTML = "";
-            btnNames.forEach(name => {
-                const group = getGroupName(name);
-                const div = document.createElement('div');
-                div.className = 'smed-btn-container';
-                div.innerHTML = `
-                    <button class="smed-btn" data-task="${name}" onclick="handleSmedAction(this, '${name}')">
-                        <div class="group-tag">${group}</div>${name} <span>OFF</span>
-                    </button>
-                    <button class="del-btn" onclick="removeBtn('${name}')">×</button>`;
-                container.appendChild(div);
-            });
+            const group = getGroupName(name);
+            const div = document.createElement('div');
+            div.className = 'smed-btn-container';
+            div.innerHTML = `
+                <button class="smed-btn" data-task="${name}">
+                    <div class="group-tag">${group}</div>
+                    ${name} <br> <span class="status" style="font-size:0.6rem; color:#666">OFF</span>
+                </button>
+                <button class="del-btn">×</button>`;
+            
+            const btn = div.querySelector('.smed-btn');
+            btn.onclick = () => handleAction(btn, name);
+            div.querySelector('.del-btn').onclick = () => {
+                if(confirm("¿Eliminar?")) {
+                    btnNames = btnNames.filter(n => n !== name);
+                    localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
+                    div.remove();
+                }
+            };
+            container.appendChild(div);
         }
 
-        function removeBtn(name) {
-            if(confirm("¿Eliminar botón?")) {
-                btnNames = btnNames.filter(n => n !== name);
-                saveToStorage();
-                renderButtons();
-            }
+        function pauseAll() {
+            document.querySelectorAll('.smed-btn.active').forEach(btn => {
+                confirmClose(btn.dataset.task, btn);
+            });
+            activeTasksByGroup = {};
         }
 
         function prepareExport(format) {
             const resp = prompt("Responsable:"), turno = prompt("Turno:");
             if(!resp) return;
-            let content = `REPORTE SMED\nResponsable: ${resp} | Turno: ${turno}\n\n`;
+            let content = `REPORTE SMED\nFecha: ${new Date().toLocaleDateString()}\nResponsable: ${resp} | Turno: ${turno}\n\n`;
             if (format === 'csv') {
                 content += "Grupo,Actividad,Tipo,Duracion,Inicio,Fin\n";
                 logs.forEach(l => content += `${l.group},${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
             } else {
                 logs.forEach(l => content += `[${l.group}] ${l.name}: ${l.duration}s\n`);
             }
-            const blob = new Blob([content], { type: 'text/plain' });
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
+            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
             a.download = `SMED_${resp}_${Date.now()}.${format}`;
             a.click();
         }
 
-        function closeAllActive() {
-            document.querySelectorAll('.smed-btn.active').forEach(btn => {
-                closeTask(btn.dataset.task, btn);
-            });
-            activeTasksByGroup = {};
-        }
-
-        function fullReset() {
-            if(confirm("¡ATENCIÓN! Se borrarán todos los registros de la tabla y los botones personalizados. ¿Continuar?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
+        function fullReset() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
         function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
         window.onload = () => {
-            renderButtons();
+            btnNames.forEach(createButtonElement);
             renderLogs();
             setInterval(updateClocks, 100);
         };
