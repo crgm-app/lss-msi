@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lean Tracker - Mapa de Flujo</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #status { margin: 20px; padding: 10px; border: 1px solid #ccc; }
+        button { padding: 15px; font-size: 16px; margin: 5px; cursor: pointer; }
+        .recording { background-color: #ff4d4d; color: white; }
+    </style>
+</head>
+<body>
+
+    <h2>Rastreador de Rutas Lean</h2>
+    
+    <input type="text" id="routeName" placeholder="Nombre de la ruta (ej. Almacén-Línea 1)">
+    <br><br>
+    
+    <button id="startBtn">Iniciar Seguimiento</button>
+    <button id="stopBtn" disabled>Detener y Descargar</button>
+
+    <div id="status">Esperando inicio...</div>
+    <canvas id="miniMap" width="300" height="300" style="border:1px solid #000; display:none;"></canvas>
+
+    <script>
+        let watchId = null;
+        let dataLog = [];
+        let intervalId = null;
+        let currentPos = { lat: null, lon: null };
+
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const routeInput = document.getElementById('routeName');
+
+        // Capturar posición cada vez que cambie
+        const startTracking = () => {
+            if (!navigator.geolocation) return alert("GPS no soportado");
+
+            dataLog = [];
+            status.innerHTML = "Localizando...";
+            
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    currentPos.lat = pos.coords.latitude;
+                    currentPos.lon = pos.coords.longitude;
+                },
+                (err) => console.error(err),
+                { enableHighAccuracy: true }
+            );
+
+            // Guardar en el log cada 1 segundo
+            intervalId = setInterval(() => {
+                if (currentPos.lat) {
+                    const entry = {
+                        timestamp: new Date().toISOString(),
+                        ruta: routeInput.value || "Sin nombre",
+                        lat: currentPos.lat,
+                        lon: currentPos.lon
+                    };
+                    dataLog.push(entry);
+                    status.innerHTML = `Registrando: ${dataLog.length} puntos...<br>Lat: ${entry.lat}`;
+                }
+            }, 1000);
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            startBtn.classList.add('recording');
+        };
+
+        const stopTracking = () => {
+            navigator.geolocation.clearWatch(watchId);
+            clearInterval(intervalId);
+            
+            // Descargar JSON
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataLog));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `ruta_${routeInput.value || 'lean'}.json`);
+            downloadAnchor.click();
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            startBtn.classList.remove('recording');
+            status.innerHTML = "Archivo descargado. Listo para nueva ruta.";
+        };
+
+        startBtn.addEventListener('click', startTracking);
+        stopBtn.addEventListener('click', stopTracking);
+    </script>
+</body>
+</html>
+
