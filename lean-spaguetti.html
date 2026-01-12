@@ -3,131 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lean Spaghetti Tracker</title>
+    <title>Lean Route Tracker PRO</title>
     <style>
-        :root { --primary: #0056b3; --danger: #dc3545; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; margin-bottom: 10px; }
-        button { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        #startBtn { background: var(--primary); color: white; }
-        #stopBtn { background: var(--danger); color: white; }
-        #canvasContainer { width: 100%; overflow: auto; background: #ddd; border: 1px solid #999; }
-        canvas { background-color: white; display: block; margin: 0 auto; }
-        .stats { font-size: 12px; color: #555; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        :root { --p: #2563eb; --s: #10b981; --d: #ef4444; }
+        body { font-family: system-ui, sans-serif; margin: 0; background: #f8fafc; display: flex; flex-direction: column; height: 100vh; }
+        .panel { background: white; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .controls button { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
+        #startBtn { background: var(--p); }
+        #stopBtn { background: var(--s); }
+        #clearBtn { background: var(--d); margin-top: 20px; }
+        
+        #canvasWrapper { flex: 1; overflow: auto; position: relative; background: #64748b; display: flex; align-items: flex-start; justify-content: center; }
+        canvas { background: white; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.3); }
+        .status-bar { font-size: 11px; background: #1e293b; color: #cbd5e1; padding: 5px 15px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h3>Lean Flow Tracker</h3>
-        <input type="text" id="routeName" placeholder="Nombre: Ej. Operador A - Turno 1" style="width:95%; padding:8px; margin-bottom:10px;">
-        <div class="stats">
-            <div>Seg. Día: <span id="statSec">-</span></div>
-            <div>Puntos: <span id="statPoints">0</span></div>
-            <div>X: <span id="statX">0</span> m</div>
-            <div>Y: <span id="statY">0</span> m</div>
-        </div>
-        <button id="startBtn">INICIAR RUTA</button>
-        <button id="stopBtn" disabled>DETENER Y DESCARGAR CSV</button>
+<div class="panel">
+    <div class="grid-inputs">
+        <input type="text" id="opName" placeholder="Operario / OP">
+        <select id="turno">
+            <option value="T1">Turno 1</option>
+            <option value="T2">Turno 2</option>
+            <option value="T3">Turno 3</option>
+        </select>
+        <input type="color" id="routeColor" value="#2563eb">
+        <input type="file" id="mapUpload" accept="image/*">
     </div>
-
-    <div id="canvasContainer">
-        <canvas id="mapCanvas" width="600" height="600"></canvas>
+    <div class="controls">
+        <button id="startBtn">INICIAR NUEVA RUTA</button>
+        <button id="stopBtn" style="display:none;">DETENER Y GUARDAR</button>
     </div>
+</div>
 
-    <script>
-        let dataLog = [];
-        let baseCoords = null;
-        let watchId = null;
-        let intervalId = null;
-        let lastPos = null;
+<div class="status-bar">
+    <span id="posStats">GPS: Esperando...</span>
+    <span id="distStats">Distancia: 0m</span>
+    <span id="dbStats">Rutas en memoria: 0</span>
+</div>
 
-        const canvas = document.getElementById('mapCanvas');
-        const ctx = canvas.getContext('2d');
+<div id="canvasWrapper">
+    <canvas id="mapCanvas"></canvas>
+</div>
+
+<button id="clearBtn" onclick="clearHistory()">BORRAR TODO EL HISTORIAL</button>
+<button id="downloadBtn" onclick="downloadAll()">DESCARGAR TODO (CSV)</button>
+
+<script>
+    let currentData = [];
+    let watchId = null;
+    let baseCoords = null;
+    let lastRegisteredCoords = null;
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const bgImage = new Image();
+
+    // 1. FUNCIONAMIENTO SIN INTERNET Y PERSISTENCIA
+    window.onload = () => {
+        updateDbStats();
+        if(localStorage.getItem('mapBase64')) {
+            bgImage.src = localStorage.getItem('mapBase64');
+        }
+    };
+
+    // Cargar imagen y guardarla localmente
+    document.getElementById('mapUpload').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            localStorage.setItem('mapBase64', event.target.result);
+            bgImage.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    bgImage.onload = () => {
+        canvas.width = bgImage.width;
+        canvas.height = bgImage.height;
+        ctx.drawImage(bgImage, 0, 0);
+        drawAllSavedRoutes();
+    };
+
+    // 2. LÓGICA DE GEOLOCALIZACIÓN Y FILTRO DE 1 METRO
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Metros
+        const phi1 = lat1 * Math.PI/180;
+        const phi2 = lat2 * Math.PI/180;
+        const dPhi = (lat2-lat1) * Math.PI/180;
+        const dLambda = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dPhi/2) * Math.sin(dPhi/2) +
+                  Math.cos(phi1) * Math.cos(phi2) *
+                  Math.sin(dLambda/2) * Math.sin(dLambda/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    document.getElementById('startBtn').onclick = () => {
+        if (!bgImage.src) return alert("Primero carga un plano de la planta");
         
-        // Dibujar cuadrícula inicial
-        const drawGrid = () => {
-            ctx.strokeStyle = "#eee";
-            for(let i=0; i<canvas.width; i+=20) {
-                ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke();
-            }
-        };
-        drawGrid();
+        currentData = [];
+        baseCoords = null;
+        lastRegisteredCoords = null;
+        
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'block';
 
-        function getSecondOfDay() {
+        watchId = navigator.geolocation.watchPosition(pos => {
+            const { latitude, longitude, altitude } = pos.coords;
             const now = new Date();
-            return (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+            const secOfDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+
+            if (!baseCoords) baseCoords = { lat: latitude, lon: longitude };
+
+            // FILTRO: Solo registrar si se movió más de 1 metro
+            let distanceMove = 0;
+            if (lastRegisteredCoords) {
+                distanceMove = calculateDistance(latitude, longitude, lastRegisteredCoords.lat, lastRegisteredCoords.lon);
+            }
+
+            if (!lastRegisteredCoords || distanceMove >= 1.0) {
+                const xRel = (longitude - baseCoords.lon) * 111320 * Math.cos(baseCoords.lat * Math.PI / 180);
+                const yRel = (latitude - baseCoords.lat) * 110540;
+
+                const point = { 
+                    s: secOfDay, 
+                    x: xRel.toFixed(2), 
+                    y: yRel.toFixed(2), 
+                    z: (altitude || 0).toFixed(2),
+                    op: document.getElementById('opName').value || 'SinNombre',
+                    turno: document.getElementById('turno').value,
+                    color: document.getElementById('routeColor').value
+                };
+
+                currentData.push(point);
+                lastRegisteredCoords = { lat: latitude, lon: longitude };
+                
+                document.getElementById('posStats').innerText = `X: ${point.x} Y: ${point.y}`;
+                document.getElementById('distStats').innerText = `Puntos: ${currentData.length}`;
+                
+                drawPoint(point);
+            }
+        }, null, { enableHighAccuracy: true });
+    };
+
+    function drawPoint(p) {
+        // Ajuste manual: Escala 1m = 20px (puedes cambiar este factor)
+        const scale = 20; 
+        const drawX = (canvas.width / 2) + (p.x * scale);
+        const drawY = (canvas.height / 2) - (p.y * scale);
+        
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // 3. GUARDADO AUTOMÁTICO EN LOCALSTORAGE
+    document.getElementById('stopBtn').onclick = () => {
+        navigator.geolocation.clearWatch(watchId);
+        
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        history.push({
+            id: Date.now(),
+            op: document.getElementById('opName').value,
+            points: currentData
+        });
+        
+        localStorage.setItem('leanHistory', JSON.stringify(history));
+        
+        document.getElementById('startBtn').style.display = 'block';
+        document.getElementById('stopBtn').style.display = 'none';
+        updateDbStats();
+        alert("Ruta guardada en memoria local.");
+    };
+
+    function drawAllSavedRoutes() {
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        history.forEach(route => {
+            route.points.forEach(p => drawPoint(p));
+        });
+    }
+
+    function updateDbStats() {
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        document.getElementById('dbStats').innerText = `Rutas en memoria: ${history.length}`;
+    }
+
+    function downloadAll() {
+        const history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+        let csv = "OP,Turno,Segundo_Dia,X_Metros,Y_Metros,Z_Metros,Color\n";
+        
+        history.forEach(route => {
+            route.points.forEach(p => {
+                csv += `${p.op},${p.turno},${p.s},${p.x},${p.y},${p.z},${p.color}\n`;
+            });
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_lean_completo.csv`;
+        a.click();
+    }
+
+    function clearHistory() {
+        if(confirm("¿Borrar todos los datos guardados?")) {
+            localStorage.removeItem('leanHistory');
+            location.reload();
         }
-
-        function getRelativeCoords(lat, lon, bLat, bLon) {
-            // Conversión aproximada: 1 grado latitud = 111,111 metros
-            const y = (lat - bLat) * 111111;
-            const x = (lon - bLon) * 111111 * Math.cos(bLat * Math.PI / 180);
-            return { x: x.toFixed(2), y: y.toFixed(2) };
-        }
-
-        document.getElementById('startBtn').onclick = () => {
-            if (!navigator.geolocation) return alert("Tu móvil no soporta GPS");
-
-            baseCoords = null;
-            dataLog = [];
-            ctx.clearRect(0,0,canvas.width, canvas.height);
-            drawGrid();
-
-            watchId = navigator.geolocation.watchPosition(pos => {
-                lastPos = pos;
-                if (!baseCoords) {
-                    baseCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                }
-            }, err => alert("Error GPS: " + err.message), { enableHighAccuracy: true });
-
-            intervalId = setInterval(() => {
-                if (lastPos && baseCoords) {
-                    const sec = getSecondOfDay();
-                    const rel = getRelativeCoords(lastPos.coords.latitude, lastPos.coords.longitude, baseCoords.lat, baseCoords.lon);
-                    
-                    dataLog.push({
-                        segundo: sec,
-                        x: rel.x,
-                        y: rel.y,
-                        z: lastPos.coords.altitude || 0
-                    });
-
-                    // Actualizar UI
-                    document.getElementById('statSec').innerText = sec;
-                    document.getElementById('statPoints').innerText = dataLog.length;
-                    document.getElementById('statX').innerText = rel.x;
-                    document.getElementById('statY').innerText = rel.y;
-
-                    // Dibujar en el canvas (escala 1m = 10px)
-                    const drawX = (canvas.width/2) + (rel.x * 10);
-                    const drawY = (canvas.height/2) - (rel.y * 10);
-                    ctx.fillStyle = "blue";
-                    ctx.fillRect(drawX, drawY, 3, 3);
-                }
-            }, 1000);
-
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
-        };
-
-        document.getElementById('stopBtn').onclick = () => {
-            navigator.geolocation.clearWatch(watchId);
-            clearInterval(intervalId);
-
-            let csv = "segundo_dia,x_metros,y_metros,z_metros\n";
-            dataLog.forEach(d => csv += `${d.segundo},${d.x},${d.y},${d.z}\n`);
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `ruta_${document.getElementById('routeName').value || 'lean'}.csv`;
-            a.click();
-
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
-        };
-    </script>
+    }
+</script>
 </body>
 </html>
