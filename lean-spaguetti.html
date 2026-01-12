@@ -3,109 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lean Tracker - Calibración Flotante</title>
+    <title>Lean Tracker Pro - Console</title>
     <style>
-        :root { --p: #2563eb; --s: #059669; --d: #dc2626; --w: #f59e0b; }
-        body { font-family: sans-serif; margin: 0; background: #f1f5f9; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --p: #2563eb; --s: #059669; --d: #dc2626; --w: #f59e0b; --dark: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #0f172a; color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Interfaz superior */
-        .header { background: white; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-        .full { grid-column: span 2; }
+        /* HEADER */
+        .header { background: white; color: #333; padding: 10px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        input, select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; }
+        .gps-monitor { background: #f1f5f9; padding: 5px 10px; border-radius: 4px; border: 1px dashed var(--p); color: var(--p); font-family: monospace; font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 5px; }
+
+        /* CONTENEDOR PRINCIPAL */
+        .main-container { flex: 1; display: flex; position: relative; overflow: hidden; }
+
+        /* BARRA LATERAL (LISTA DE RUTAS) */
+        #sidebar { width: 280px; background: var(--dark); border-right: 1px solid #334155; overflow-y: auto; transition: 0.3s; padding: 15px; }
+        #sidebar.collapsed { margin-left: -280px; }
+        .route-card { background: #334155; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 12px; position: relative; border-left: 4px solid var(--p); }
+        .route-card h5 { margin: 0 0 5px 0; color: #fff; }
+        .route-card .stats { color: #cbd5e1; font-size: 11px; }
+        .del-btn { position: absolute; top: 5px; right: 5px; background: var(--d); color: white; border: none; border-radius: 3px; cursor: pointer; padding: 2px 6px; }
+
+        /* VIEWPORT (MAPA) */
+        #viewport { flex: 1; position: relative; cursor: grab; background: #000; overflow: hidden; }
+        #mapCanvas { transform-origin: 0 0; }
+
+        /* CALIBRACIÓN FLOTANTE */
+        #calibBox { position: fixed; top: 120px; right: 20px; width: 240px; background: white; color: #333; padding: 15px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 200; display: none; border: 2px solid var(--p); }
         
-        .controls { display: flex; gap: 5px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
-        #startBtn { background: var(--p); }
-        #stopBtn { background: var(--s); display: none; }
+        /* BOTONES FLOTANTES */
+        .fab { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-round { width: 55px; height: 55px; border-radius: 50%; border: none; color: white; font-size: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* Contenedor de Mapa */
-        #viewport { flex: 1; overflow: auto; background: #475569; position: relative; }
-        canvas { background: white; display: block; }
-
-        /* VENTANA FLOTANTE DE CALIBRACIÓN */
-        #calibBox { 
-            position: fixed; top: 100px; right: 10px; width: 220px; 
-            background: rgba(255, 255, 255, 0.95); padding: 15px; 
-            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 1000; border: 2px solid var(--p); display: none;
-        }
-        #calibBox h4 { margin: 0 0 10px 0; color: var(--p); font-size: 14px; }
-        #calibBox p { font-size: 11px; margin-bottom: 10px; }
-        .calib-step { background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-left: 4px solid #ddd; }
-        .calib-step.active { border-left-color: var(--w); background: #fffbeb; }
-        .calib-step label { font-size: 10px; font-weight: bold; display: block; }
+        .btn-start { background: var(--p); width: 100%; padding: 12px; color: white; border: none; border-radius: 5px; font-weight: bold; margin-bottom: 5px; }
+        .btn-stop { background: var(--s); width: 100%; padding: 12px; color: white; border: none; border-radius: 5px; font-weight: bold; display: none; }
         
-        /* Pines visuales en el canvas */
-        .pin { position: absolute; width: 20px; height: 20px; border-radius: 50% 50% 50% 0; background: var(--p); transform: rotate(-45deg); pointer-events: none; border: 2px solid white; }
-        .pin::after { content: ""; position: absolute; width: 8px; height: 8px; background: white; border-radius: 50%; top: 6px; left: 6px; }
-        #pinA { background: var(--w); }
-        #pinB { background: var(--d); }
-
-        .floating-btns { position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .round-btn { width: 50px; height: 50px; border-radius: 25px; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .pin { position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; pointer-events: none; z-index: 50; }
     </style>
 </head>
 <body>
 
 <div class="header">
+    <div class="gps-monitor">
+        <span>📍 GPS ACTUAL:</span>
+        <span id="liveGPS">Esperando señal...</span>
+    </div>
     <div class="input-grid">
-        <input type="text" id="opName" placeholder="Operario / OP" class="full">
-        <input type="text" id="origin" placeholder="Origen">
-        <input type="text" id="destination" placeholder="Destino">
-        <div style="display:flex; align-items:center; gap:10px; grid-column: span 2;">
-            <input type="file" id="mapLoader" accept="image/*" style="flex:1">
-            <input type="color" id="routeColor" value="#2563eb" style="width:40px; height:35px; padding:0;">
+        <input type="text" id="opName" placeholder="Operario / OP">
+        <input type="text" id="routeLabel" placeholder="Ej: Pasillo A -> B">
+        <div style="display:flex; gap:5px;">
+            <input type="file" id="mapLoader" accept="image/*" style="width: 100px;">
+            <input type="color" id="routeColor" value="#2563eb" style="width:40px; height:32px;">
         </div>
     </div>
-    <div class="controls">
-        <button id="startBtn">▶ INICIAR</button>
-        <button id="stopBtn">💾 GUARDAR</button>
+    <button id="startBtn" class="btn-start">▶ INICIAR RASTREO</button>
+    <button id="stopBtn" class="btn-stop">💾 GUARDAR Y FINALIZAR</button>
+</div>
+
+<div class="main-container">
+    <div id="sidebar">
+        <h4 style="margin-top:0">📋 Rutas Guardadas</h4>
+        <div id="routeList"></div>
+    </div>
+
+    <div id="viewport" id="panzoom">
+        <canvas id="mapCanvas"></canvas>
+        <div id="pinA" class="pin" style="background:var(--w); display:none;"></div>
+        <div id="pinB" class="pin" style="background:var(--d); display:none;"></div>
     </div>
 </div>
 
 <div id="calibBox">
-    <h4>📍 Calibrar Mapa</h4>
-    <p>1. Toca un punto en el plano.<br>2. Escribe su GPS real.</p>
+    <h4 style="margin:0; color:var(--p)">📍 Calibrar Escala</h4>
+    <p style="font-size:10px; color:#666">Haz clic en 2 esquinas del mapa e ingresa sus coordenadas GPS.</p>
     
-    <div id="stepA" class="calib-step active">
-        <label>PUNTO 1 (AMARILLO)</label>
-        <input type="number" id="latA" placeholder="Lat: 14.6349" step="0.000001">
-        <input type="number" id="lonA" placeholder="Lon: -90.5068" step="0.000001">
+    <div style="background:#f8fafc; padding:8px; border-radius:5px; margin-bottom:8px">
+        <label style="font-size:10px; font-weight:bold">PUNTO A (NARANJA)</label>
+        <input type="number" id="latA" placeholder="Latitud" step="0.000001" style="width:100%">
+        <input type="number" id="lonA" placeholder="Longitud" step="0.000001" style="width:100%">
     </div>
-
-    <div id="stepB" class="calib-step">
-        <label>PUNTO 2 (ROJO)</label>
-        <input type="number" id="latB" placeholder="Lat: 14.6341" step="0.000001">
-        <input type="number" id="lonB" placeholder="Lon: -90.5061" step="0.000001">
+    <div style="background:#f8fafc; padding:8px; border-radius:5px; margin-bottom:8px">
+        <label style="font-size:10px; font-weight:bold">PUNTO B (ROJO)</label>
+        <input type="number" id="latB" placeholder="Latitud" step="0.000001" style="width:100%">
+        <input type="number" id="lonB" placeholder="Longitud" step="0.000001" style="width:100%">
     </div>
-
-    <button onclick="saveCalib()" style="background:var(--p); width:100%; font-size:12px;">FINALIZAR</button>
-    <button onclick="toggleCalib()" style="background:#64748b; width:100%; font-size:10px; margin-top:5px;">CANCELAR</button>
+    <button onclick="saveCalib()" style="background:var(--p); color:white; width:100%; border:none; padding:10px; border-radius:5px">GUARDAR</button>
+    <button onclick="toggleCalib()" style="background:#ccc; width:100%; border:none; padding:5px; margin-top:5px; border-radius:5px">Cerrar</button>
 </div>
 
-<div id="viewport">
-    <canvas id="mapCanvas"></canvas>
-    <div id="pinA" class="pin" style="display:none;"></div>
-    <div id="pinB" class="pin" style="display:none;"></div>
-</div>
-
-<div class="floating-btns">
-    <button onclick="toggleCalib()" class="round-btn" style="background:var(--w)">📍</button>
-    <button onclick="downloadPNG()" class="round-btn" style="background:#6d28d9">🖼️</button>
-    <button onclick="downloadCSV()" class="round-btn" style="background:var(--s)">📥</button>
+<div class="fab">
+    <button onclick="toggleSidebar()" class="btn-round" style="background:var(--dark)">📋</button>
+    <button onclick="toggleCalib()" class="btn-round" style="background:var(--w)">📍</button>
+    <button onclick="downloadPNG()" class="btn-round" style="background:#6d28d9">🖼️</button>
 </div>
 
 <script>
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const bg = new Image();
-    let calibPoints = { a: null, b: null };
-    let calibStep = 'a';
-    let isCalibrating = false;
     let history = JSON.parse(localStorage.getItem('leanHistory') || '[]');
+    let scale = 1, offsetX = 0, offsetY = 0;
+    let isCalibrating = false, calibStep = 'a', calibPoints = { a: null, b: null };
 
-    // Cargar Mapa
+    // CARGAR MAPA Y AJUSTAR VIEWPORT
     if(localStorage.getItem('leanMap')) bg.src = localStorage.getItem('leanMap');
     document.getElementById('mapLoader').onchange = e => {
         const r = new FileReader();
@@ -116,150 +117,166 @@
     bg.onload = () => {
         canvas.width = bg.width;
         canvas.height = bg.height;
-        redraw();
+        render();
+        updateRouteList();
     };
 
-    function redraw() {
-        ctx.clearRect(0,0,canvas.width, canvas.height);
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(bg, 0, 0);
         history.forEach(route => {
-            ctx.fillStyle = route.color || 'blue';
-            route.points.forEach(p => {
+            if(route.points.length < 2) return;
+            ctx.beginPath();
+            ctx.strokeStyle = route.color || '#2563eb';
+            ctx.lineWidth = 4;
+            route.points.forEach((p, i) => {
                 const pos = gpsToCanvas(p.lat, p.lon);
-                ctx.beginPath(); ctx.arc(pos.x, pos.y, 3, 0, Math.PI*2); ctx.fill();
+                if(i === 0) ctx.moveTo(pos.x, pos.y);
+                else ctx.lineTo(pos.x, pos.y);
             });
+            ctx.stroke();
         });
     }
 
-    // --- Lógica de Calibración ---
-    function toggleCalib() {
-        isCalibrating = !isCalibrating;
-        document.getElementById('calibBox').style.display = isCalibrating ? 'block' : 'none';
-        calibStep = 'a';
-        updateCalibUI();
+    // MONITOR GPS EN VIVO
+    navigator.geolocation.watchPosition(pos => {
+        document.getElementById('liveGPS').innerText = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+    }, null, { enableHighAccuracy: true });
+
+    // CALIBRACIÓN
+    function toggleCalib() { 
+        isCalibrating = !isCalibrating; 
+        document.getElementById('calibBox').style.display = isCalibrating ? 'block' : 'none'; 
     }
 
     canvas.addEventListener('click', e => {
         if(!isCalibrating) return;
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const x = (e.clientX - rect.left) / scale;
+        const y = (e.clientY - rect.top) / scale;
 
         if(calibStep === 'a') {
-            calibPoints.a = { x, y };
-            setPin('pinA', x, y);
+            calibPoints.a = {x, y};
+            setPin('pinA', e.clientX, e.clientY);
             calibStep = 'b';
         } else {
-            calibPoints.b = { x, y };
-            setPin('pinB', x, y);
+            calibPoints.b = {x, y};
+            setPin('pinB', e.clientX, e.clientY);
             calibStep = 'a';
         }
-        updateCalibUI();
     });
 
     function setPin(id, x, y) {
         const p = document.getElementById(id);
-        p.style.left = x + 'px';
-        p.style.top = (y - 20) + 'px'; // Ajuste para que la punta toque el pixel
-        p.style.display = 'block';
-    }
-
-    function updateCalibUI() {
-        document.getElementById('stepA').className = calibStep === 'a' ? 'calib-step active' : 'calib-step';
-        document.getElementById('stepB').className = calibStep === 'b' ? 'calib-step active' : 'calib-step';
+        p.style.display = 'block'; p.style.left = x + 'px'; p.style.top = y + 'px';
     }
 
     function saveCalib() {
-        const latA = parseFloat(document.getElementById('latA').value);
-        const lonA = parseFloat(document.getElementById('lonA').value);
-        const latB = parseFloat(document.getElementById('latB').value);
-        const lonB = parseFloat(document.getElementById('lonB').value);
-
-        if(!calibPoints.a || !calibPoints.b || isNaN(latA) || isNaN(latB)) return alert("Completa los puntos y las coordenadas");
-
-        const calibration = {
-            p1: { x: calibPoints.a.x, y: calibPoints.a.y, lat: latA, lon: lonA },
-            p2: { x: calibPoints.b.x, y: calibPoints.b.y, lat: latB, lon: lonB }
+        const data = {
+            p1: { x: calibPoints.a.x, y: calibPoints.a.y, lat: parseFloat(document.getElementById('latA').value), lon: parseFloat(document.getElementById('lonA').value) },
+            p2: { x: calibPoints.b.x, y: calibPoints.b.y, lat: parseFloat(document.getElementById('latB').value), lon: parseFloat(document.getElementById('lonB').value) }
         };
-        localStorage.setItem('leanCalib', JSON.stringify(calibration));
-        alert("¡Mapa Calibrado!");
+        localStorage.setItem('leanCalib', JSON.stringify(data));
+        alert("¡Calibración exitosa!");
         toggleCalib();
     }
 
     function gpsToCanvas(lat, lon) {
         const c = JSON.parse(localStorage.getItem('leanCalib'));
-        if(!c) return { x: 0, y: 0 };
-
-        // Interpolación lineal simple entre dos puntos
+        if(!c) return {x:0, y:0};
         const pctLat = (lat - c.p1.lat) / (c.p2.lat - c.p1.lat);
         const pctLon = (lon - c.p1.lon) / (c.p2.lon - c.p1.lon);
-
         return {
             x: c.p1.x + (pctLon * (c.p2.x - c.p1.x)),
             y: c.p1.y + (pctLat * (c.p2.y - c.p1.y))
         };
     }
 
-    // --- Seguimiento ---
-    let currentRoute = [];
-    let watchId = null;
+    // SEGUIMIENTO DE RUTA
+    let currentRoutePoints = [], watchId = null, startTime = null;
 
     document.getElementById('startBtn').onclick = () => {
-        if(!localStorage.getItem('leanCalib')) return alert("Calibra primero");
-        currentRoute = [];
+        if(!localStorage.getItem('leanCalib')) return alert("Calibra el plano antes de empezar.");
+        currentRoutePoints = [];
+        startTime = Date.now();
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('stopBtn').style.display = 'block';
 
         watchId = navigator.geolocation.watchPosition(pos => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            
-            // Filtro 1 metro (aprox)
-            if(currentRoute.length > 0) {
-                const last = currentRoute[currentRoute.length-1];
-                const d = Math.sqrt(Math.pow(lat-last.lat, 2) + Math.pow(lon-last.lon, 2));
-                if(d < 0.00001) return; 
-            }
-
-            currentRoute.push({ lat, lon, time: new Date().getTime() });
-            redraw();
-            // Dibujar ruta actual en vivo
-            ctx.fillStyle = document.getElementById('routeColor').value;
-            currentRoute.forEach(p => {
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            currentRoutePoints.push({ lat, lon, t: Date.now() });
+            render();
+            // Dibujar ruta actual
+            ctx.beginPath();
+            ctx.strokeStyle = document.getElementById('routeColor').value;
+            ctx.lineWidth = 5;
+            currentRoutePoints.forEach((p, i) => {
                 const c = gpsToCanvas(p.lat, p.lon);
-                ctx.beginPath(); ctx.arc(c.x, c.y, 4, 0, Math.PI*2); ctx.fill();
+                if(i===0) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
             });
+            ctx.stroke();
         }, null, { enableHighAccuracy: true });
     };
 
     document.getElementById('stopBtn').onclick = () => {
         navigator.geolocation.clearWatch(watchId);
-        const newRoute = {
-            op: document.getElementById('opName').value,
+        const duration = Math.round((Date.now() - startTime) / 1000);
+        
+        // Calcular metros (Haversine aproximado)
+        let totalMetros = 0;
+        for(let i=1; i<currentRoutePoints.length; i++) {
+            const p1 = currentRoutePoints[i-1], p2 = currentRoutePoints[i];
+            const d = Math.sqrt(Math.pow(p2.lat-p1.lat,2) + Math.pow(p2.lon-p1.lon,2)) * 111320;
+            totalMetros += d;
+        }
+
+        history.push({
+            id: Date.now(),
+            op: document.getElementById('opName').value || 'Anónimo',
+            label: document.getElementById('routeLabel').value || 'Ruta sin nombre',
             color: document.getElementById('routeColor').value,
-            points: currentRoute
-        };
-        history.push(newRoute);
+            duration: duration,
+            dist: totalMetros.toFixed(1),
+            points: currentRoutePoints
+        });
         localStorage.setItem('leanHistory', JSON.stringify(history));
+        updateRouteList();
+        render();
         document.getElementById('startBtn').style.display = 'block';
         document.getElementById('stopBtn').style.display = 'none';
-        alert("Ruta guardada.");
     };
 
-    function downloadCSV() {
-        let csv = "OP,Lat,Lon,Timestamp\n";
-        history.forEach(r => r.points.forEach(p => csv += `${r.op},${p.lat},${p.lon},${p.time}\n`));
-        const b = new Blob([csv], {type: 'text/csv'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = "lean_data.csv";
-        a.click();
+    // GESTIÓN DE SIDEBAR Y RUTAS
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+    function updateRouteList() {
+        const container = document.getElementById('routeList');
+        container.innerHTML = history.map((r, i) => `
+            <div class="route-card" style="border-left-color:${r.color}">
+                <button class="del-btn" onclick="deleteRoute(${i})">×</button>
+                <h5>${r.label}</h5>
+                <div class="stats">
+                    👤 OP: ${r.op}<br>
+                    ⏱ Duración: ${r.duration} seg<br>
+                    📏 Distancia: ${r.dist} m
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function deleteRoute(index) {
+        if(confirm("¿Eliminar esta ruta?")) {
+            history.splice(index, 1);
+            localStorage.setItem('leanHistory', JSON.stringify(history));
+            updateRouteList();
+            render();
+        }
     }
 
     function downloadPNG() {
         const a = document.createElement('a');
         a.href = canvas.toDataURL();
-        a.download = "mapa_lean.png";
+        a.download = "lean-report.png";
         a.click();
     }
 </script>
