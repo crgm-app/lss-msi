@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Analytics - Fixed</title>
+    <title>SMED Analytics Pro - Industrial</title>
     <style>
         :root {
             --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505;
@@ -21,18 +21,18 @@
         table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75rem; }
         th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; z-index: 10; }
         td { padding: 6px; border-bottom: 1px solid #111; }
-        .smed-type { background: #111; color: #fff; border: 1px solid #444; font-size: 0.7rem; }
+        .smed-type { background: #111; color: #fff; border: 1px solid #444; font-size: 0.7rem; padding: 2px; }
 
         .control-panel { flex: 1; background: #0a0a0a; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .smed-btn-container { display: flex; align-items: stretch; height: 65px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        .smed-btn-container { display: flex; align-items: stretch; height: 65px; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-bottom: 2px; }
         .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 12px; position: relative; }
         .smed-btn.active { background: linear-gradient(90deg, #332200, #1a1a1a); color: var(--neon-orange); border-left: 4px solid var(--neon-orange); }
         .group-tag { font-size: 0.55rem; color: var(--neon-blue); text-transform: uppercase; position: absolute; top: 5px; right: 10px; }
         .del-btn { width: 40px; background: #221111; color: #ff5555; border: none; cursor: pointer; }
 
         footer { height: 70px; background: #111; display: flex; gap: 8px; justify-content: center; align-items: center; padding: 0 10px; }
-        button { cursor: pointer; font-weight: bold; border-radius: 5px; }
-        .btn-pause { background: var(--neon-orange); color: #000; border: none; padding: 10px; flex: 1; }
+        button { cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.2s; }
+        .btn-pause { background: var(--neon-orange); color: #000; border: none; padding: 10px; flex: 1; font-size: 0.8rem; }
         .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px; font-size: 0.7rem; }
         input { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 5px; flex: 2; margin-right: 5px; }
     </style>
@@ -46,7 +46,7 @@
         </div>
         <div class="info-right">
             <div id="real-clock" style="color:var(--neon-blue)">00:00:00</div>
-            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:3px; margin-top:5px">PANTALLA COMPLETA</button>
+            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:3px; margin-top:5px">FULLSCREEN</button>
         </div>
     </header>
 
@@ -59,7 +59,7 @@
                 </table>
             </div>
             <div style="padding:10px; background:#111; display:flex; border-top:1px solid #333">
-                <input type="text" id="new-task-name" placeholder="Ej: Troquel Limpiar">
+                <input type="text" id="new-task-name" placeholder="Nueva actividad...">
                 <button onclick="addNewButton()" style="padding:10px; background:var(--neon-blue); border:none; width:50px">+</button>
             </div>
         </section>
@@ -68,16 +68,16 @@
     </main>
 
     <footer>
-        <button class="btn-pause" onclick="pauseAll()">PAUSA (STOP ALL)</button>
-        <button class="btn-export" onclick="prepareExport('csv')">CSV</button>
-        <button class="btn-export" onclick="prepareExport('txt')">TXT</button>
+        <button class="btn-pause" onclick="pauseAll()">STOP ALL (PAUSA)</button>
+        <button class="btn-export" onclick="prepareExport('csv')">EXPORT CSV</button>
+        <button class="btn-export" onclick="prepareExport('txt')">EXPORT TXT</button>
         <button class="btn-export" style="background:#300; color:#f55" onclick="fullReset()">RESET</button>
     </footer>
 
     <script>
         let currentAbsTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Desmontar", "Sello Ajuste"];
+        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Montar", "Sello Ajuste", "Limpieza"];
         let activeTasksByGroup = {}; 
 
         function updateClocks() {
@@ -105,7 +105,7 @@
                 activeTasksByGroup[group] = taskName;
                 btn.classList.add('active');
                 btn.dataset.startTime = currentAbsTime;
-                btn.querySelector('.status').textContent = "INICIADO: " + currentAbsTime.toFixed(1);
+                btn.querySelector('.status').textContent = "RUNNING: " + currentAbsTime.toFixed(1);
             }
         }
 
@@ -155,11 +155,10 @@
                     ${name} <br> <span class="status" style="font-size:0.6rem; color:#666">OFF</span>
                 </button>
                 <button class="del-btn">×</button>`;
-            
             const btn = div.querySelector('.smed-btn');
             btn.onclick = () => handleAction(btn, name);
             div.querySelector('.del-btn').onclick = () => {
-                if(confirm("¿Eliminar?")) {
+                if(confirm("¿Eliminar actividad?")) {
                     btnNames = btnNames.filter(n => n !== name);
                     localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
                     div.remove();
@@ -176,22 +175,39 @@
         }
 
         function prepareExport(format) {
-            const resp = prompt("Responsable:"), turno = prompt("Turno:");
-            if(!resp) return;
-            let content = `REPORTE SMED\nFecha: ${new Date().toLocaleDateString()}\nResponsable: ${resp} | Turno: ${turno}\n\n`;
+            if(logs.length === 0) return alert("Sin datos.");
+            
+            const resp = prompt("Nombre del Responsable:");
+            const op = prompt("Número de OP (Orden de Producción):");
+            const colores = prompt("Número de Colores:");
+            const area = prompt("Área (Pies²/Metros²):");
+            const turno = prompt("Turno:");
+
+            if(!resp || !op) return alert("Nombre y OP son obligatorios.");
+
+            let content = "";
+            const fecha = new Date().toLocaleDateString();
+
             if (format === 'csv') {
+                content = `REPORTE SMED INDUSTRIAL\n`;
+                content += `Fecha,${fecha}\nResponsable,${resp}\nTurno,${turno}\nOP,${op}\nColores,${colores}\nArea,${area}\n\n`;
                 content += "Grupo,Actividad,Tipo,Duracion,Inicio,Fin\n";
                 logs.forEach(l => content += `${l.group},${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
             } else {
-                logs.forEach(l => content += `[${l.group}] ${l.name}: ${l.duration}s\n`);
+                content = `==============================\n   REPORTE SMED INDUSTRIAL\n==============================\n`;
+                content += `FECHA: ${fecha}\nOP: ${op} | COLORES: ${colores}\nAREA: ${area}\nRESPONSABLE: ${resp} | TURNO: ${turno}\n`;
+                content += `------------------------------\n`;
+                logs.forEach(l => content += `[${l.type}] ${l.name}: ${l.duration}s\n`);
             }
+
+            const blob = new Blob([content], { type: 'text/plain' });
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
-            a.download = `SMED_${resp}_${Date.now()}.${format}`;
+            a.href = URL.createObjectURL(blob);
+            a.download = `SMED_OP${op}_${resp.replace(/\s/g,'_')}.${format}`;
             a.click();
         }
 
-        function fullReset() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
+        function fullReset() { if(confirm("¿Borrar todo permanentemente?")) { localStorage.clear(); location.reload(); } }
         function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
         window.onload = () => {
