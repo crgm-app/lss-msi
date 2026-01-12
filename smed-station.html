@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Industrial - Control de Tiempos</title>
+    <title>SMED Analytics Pro</title>
     <style>
         :root {
             --neon-green: #00ff00;
@@ -17,94 +17,98 @@
         body {
             background-color: var(--bg-dark);
             color: #fff;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* HEADER OPTIMIZADO */
+        /* HEADER */
         header {
             background: #111;
-            padding: 10px 20px;
+            padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #333;
         }
 
-        .main-clock-area { display: flex; flex-direction: column; }
-        .main-clock { font-size: 3.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
-        
-        .info-right { text-align: right; display: flex; flex-direction: column; gap: 5px; }
-        .real-time { font-family: monospace; color: #aaa; font-size: 1rem; }
-        .date-display { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .main-clock { font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
+        .info-right { text-align: right; font-size: 0.8rem; color: #888; }
 
         /* DASHBOARD */
         main { flex: 1; display: flex; overflow: hidden; }
 
-        .left-panel { flex: 1.2; display: flex; flex-direction: column; border-right: 2px solid #222; }
-        .log-section { flex: 2; overflow-y: auto; background: #000; padding: 10px; }
+        /* TABLA IZQUIERDA */
+        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; }
+        .log-section { flex: 2; overflow-y: auto; background: #000; padding: 5px; }
         
-        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.8rem; }
-        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; }
-        td { padding: 8px; border-bottom: 1px solid #111; color: #ccc; }
+        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75rem; }
+        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; z-index: 10; }
+        td { padding: 6px; border-bottom: 1px solid #111; }
 
-        .config-section { flex: 0.8; padding: 15px; background: #111; border-top: 1px solid #333; }
+        /* SELECTOR SMED EN TABLA */
+        .smed-type {
+            background: #111;
+            color: #fff;
+            border: 1px solid #444;
+            font-size: 0.7rem;
+            padding: 2px;
+            border-radius: 3px;
+        }
 
-        /* BOTONES DE ACTIVIDAD */
+        .config-section { padding: 10px; background: #111; border-top: 1px solid #333; }
+
+        /* PANEL DE BOTONES DERECHA */
         .control-panel {
-            flex: 1;
+            flex: 0.8;
             background: #0a0a0a;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             overflow-y: auto;
         }
 
-        .smed-btn-container { display: flex; align-items: stretch; height: 70px; }
+        .smed-btn-container { display: flex; align-items: stretch; height: 65px; position: relative;}
         .smed-btn {
             flex: 1;
             background: #1a1a1a;
             color: #fff;
             border: 2px solid #444;
             border-radius: 8px 0 0 8px;
-            font-size: 1rem;
             font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-left: 15px;
+            font-size: 0.9rem;
+            text-align: left;
+            padding-left: 12px;
         }
-        .smed-btn.active { border-color: var(--neon-orange); background: #332200; }
-        .smed-btn span { font-size: 0.6rem; color: #666; margin-top: 4px; }
+        .smed-btn.active { 
+            border-color: var(--neon-orange); 
+            background: linear-gradient(90deg, #332200, #1a1a1a);
+        }
+        .smed-btn span { font-size: 0.6rem; color: #666; display: block; margin-top: 3px; }
         
-        .del-btn { width: 45px; background: #331111; border: 1px solid #444; color: #ff5555; border-radius: 0 8px 8px 0; cursor: pointer; }
+        .del-btn { width: 35px; background: #221111; border: 1px solid #444; color: #ff5555; border-radius: 0 8px 8px 0; cursor: pointer; }
 
-        /* CONTROLES INFERIORES */
-        footer { height: 70px; background: #111; display: flex; gap: 10px; justify-content: center; align-items: center; border-top: 1px solid #333; }
+        /* FOOTER */
+        footer { height: 60px; background: #111; display: flex; gap: 8px; justify-content: center; align-items: center; }
+        .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; }
         
-        button { cursor: pointer; transition: 0.2s; }
-        .btn-add { padding: 10px 15px; background: var(--neon-blue); border: none; font-weight: bold; border-radius: 5px; }
-        .btn-export { background: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; border-radius: 5px; font-weight: bold; }
-        .btn-fs { background: transparent; border: 1px solid #444; color: #555; padding: 4px 8px; font-size: 0.6rem; border-radius: 4px; }
-        
-        input[type="text"] { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 5px; width: 70%; }
+        input[type="text"] { background: #000; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 5px; width: 75%; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="main-clock-area">
-            <div class="clock-label">Segundo del Día</div>
+        <div>
             <div id="abs-clock" class="main-clock">00000.0</div>
+            <div style="font-size: 0.6rem; color: #555; letter-spacing: 2px;">SEGUNDOS ACUMULADOS</div>
         </div>
         <div class="info-right">
-            <div id="date-display" class="date-display">-- / -- / ----</div>
-            <div id="real-clock" class="real-time">00:00:00</div>
-            <button class="btn-fs" onclick="toggleFS()">PANTALLA COMPLETA</button>
+            <div id="date-display">-- / -- / ----</div>
+            <div id="real-clock" style="color: #aaa; font-weight: bold;">00:00:00</div>
+            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#444; font-size:10px; padding:2px 5px; margin-top:5px;">FULLSCREEN</button>
         </div>
     </header>
 
@@ -113,65 +117,123 @@
             <div class="log-section">
                 <table>
                     <thead>
-                        <tr><th>Tarea</th><th>Inic</th><th>Fin</th><th>Dura</th></tr>
+                        <tr>
+                            <th>Actividad</th>
+                            <th>Tipo SMED</th>
+                            <th>Dur(s)</th>
+                            <th>Inic/Fin</th>
+                        </tr>
                     </thead>
                     <tbody id="log-body"></tbody>
                 </table>
             </div>
             <div class="config-section">
-                <div class="clock-label" style="margin-bottom:8px">Añadir Actividad</div>
-                <input type="text" id="new-task-name" placeholder="Nombre de tarea...">
-                <button class="btn-add" onclick="addNewButton()">+</button>
+                <input type="text" id="new-task-name" placeholder="Nueva actividad...">
+                <button onclick="addNewButton()" style="padding:8px 15px; background:var(--neon-blue); border:none; border-radius:5px; font-weight:bold;">+</button>
             </div>
         </section>
 
         <section class="control-panel" id="button-container">
-            <div class="smed-btn-container" data-task="Desmontar Troquel">
-                <button class="smed-btn" onclick="toggleTask(this, 'Desmontar Troquel')">Desmontar Troquel <span id="st-Desmontar Troquel">OFF</span></button>
-                <button class="del-btn" onclick="removeButton(this)">×</button>
+            <div class="smed-btn-container">
+                <button class="smed-btn" id="btn-Desmontar" onclick="handleSmedAction(this, 'Desmontar')">Desmontar <span>OFF</span></button>
+                <button class="del-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="smed-btn-container">
+                <button class="smed-btn" id="btn-Limpiar" onclick="handleSmedAction(this, 'Limpiar')">Limpiar <span>OFF</span></button>
+                <button class="del-btn" onclick="this.parentElement.remove()">×</button>
+            </div>
+            <div class="smed-btn-container">
+                <button class="smed-btn" id="btn-Montar" onclick="handleSmedAction(this, 'Montar')">Montar <span>OFF</span></button>
+                <button class="del-btn" onclick="this.parentElement.remove()">×</button>
             </div>
         </section>
     </main>
 
     <footer>
-        <button class="btn-export" onclick="prepareExport('csv')">EXPORTAR CSV</button>
-        <button class="btn-export" onclick="prepareExport('txt')">EXPORTAR TXT</button>
-        <button class="btn-export" style="border-color:#ff3333; color:#ff3333" onclick="clearLogs()">LIMPIAR</button>
+        <button class="btn-export" onclick="prepareExport('csv')">EXP CSV</button>
+        <button class="btn-export" onclick="prepareExport('txt')">EXP TXT</button>
+        <button class="btn-export" style="color:var(--neon-orange)" onclick="autoCloseAll()">CERRAR TODO</button>
+        <button class="btn-export" style="color:#ff3333" onclick="clearLogs()">BORRAR</button>
     </footer>
 
     <script>
         let currentAbsTime = 0;
-        let activeTasks = {};
         let logs = [];
+        let activeTaskName = null; // Solo una tarea puede estar activa a la vez para el auto-cierre
 
         function updateClocks() {
             const now = new Date();
             const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
-            
-            // Reloj Principal (Absoluto)
             currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
             document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
-            
-            // Reloj Real y Fecha
             document.getElementById('real-clock').textContent = now.toLocaleTimeString('es-ES');
-            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES');
         }
 
-        function toggleTask(btn, taskName) {
-            const statusLabel = document.getElementById('st-' + taskName);
-            if (!activeTasks[taskName]) {
-                activeTasks[taskName] = currentAbsTime;
-                btn.classList.add('active');
-                statusLabel.textContent = "INICIADO: " + currentAbsTime.toFixed(1);
-            } else {
-                const start = activeTasks[taskName];
-                const end = currentAbsTime;
-                logs.push({ name: taskName, start: start.toFixed(1), end: end.toFixed(1), duration: (end - start).toFixed(1) });
-                delete activeTasks[taskName];
-                btn.classList.remove('active');
-                statusLabel.textContent = "OFF";
-                renderLogs();
+        // LÓGICA DE AUTO-CIERRE Y REGISTRO
+        function handleSmedAction(btn, taskName) {
+            const span = btn.querySelector('span');
+
+            // Caso 1: Estamos apagando la misma tarea que estaba encendida
+            if (activeTaskName === taskName) {
+                closeTask(taskName, btn);
+                activeTaskName = null;
+                return;
             }
+
+            // Caso 2: Hay OTRA tarea encendida, la cerramos antes de iniciar la nueva
+            if (activeTaskName !== null) {
+                const activeBtn = document.querySelector('.smed-btn.active');
+                closeTask(activeTaskName, activeBtn);
+            }
+
+            // Iniciar la nueva tarea
+            activeTaskName = taskName;
+            btn.classList.add('active');
+            btn.dataset.startTime = currentAbsTime;
+            span.textContent = "EN CURSO...";
+        }
+
+        function closeTask(name, btn) {
+            const start = parseFloat(btn.dataset.startTime);
+            const end = currentAbsTime;
+            const duration = (end - start).toFixed(1);
+
+            logs.push({
+                id: Date.now(),
+                name: name,
+                type: "Interna", // Default
+                start: start.toFixed(1),
+                end: end.toFixed(1),
+                duration: duration
+            });
+
+            btn.classList.remove('active');
+            btn.querySelector('span').textContent = "ULT: " + duration + "s";
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const body = document.getElementById('log-body');
+            body.innerHTML = logs.map((e, index) => `
+                <tr>
+                    <td>${e.name}</td>
+                    <td>
+                        <select class="smed-type" onchange="updateType(${index}, this.value)">
+                            <option value="Interna">Interna</option>
+                            <option value="Externa">Externa</option>
+                            <option value="Muda">Muda (Desperdicio)</option>
+                        </select>
+                    </td>
+                    <td style="color:var(--neon-orange); font-weight:bold;">${e.duration}s</td>
+                    <td style="font-size:0.6rem; color:#555;">${e.start} > ${e.end}</td>
+                </tr>
+            `).join('');
+            document.querySelector('.log-section').scrollTop = 99999;
+        }
+
+        function updateType(index, value) {
+            logs[index].type = value;
         }
 
         function addNewButton() {
@@ -180,51 +242,42 @@
             const container = document.getElementById('button-container');
             const div = document.createElement('div');
             div.className = 'smed-btn-container';
-            div.innerHTML = `<button class="smed-btn" onclick="toggleTask(this, '${name}')">${name} <span id="st-${name}">OFF</span></button><button class="del-btn" onclick="removeButton(this)">×</button>`;
+            div.innerHTML = `<button class="smed-btn" onclick="handleSmedAction(this, '${name}')">${name} <span>OFF</span></button><button class="del-btn" onclick="this.parentElement.remove()">×</button>`;
             container.appendChild(div);
             document.getElementById('new-task-name').value = "";
         }
 
-        function removeButton(btn) { if(confirm("¿Eliminar botón?")) btn.parentElement.remove(); }
-
-        function renderLogs() {
-            const body = document.getElementById('log-body');
-            body.innerHTML = logs.map(e => `<tr><td>${e.name}</td><td>${e.start}</td><td>${e.end}</td><td style="color:var(--neon-orange)">${e.duration}s</td></tr>`).join('');
-            document.querySelector('.log-section').scrollTop = 99999;
-        }
-
         function prepareExport(format) {
-            if (logs.length === 0) return alert("No hay datos registrados.");
+            if (logs.length === 0) return alert("Sin datos.");
+            const resp = prompt("Nombre Responsable:");
+            const turno = prompt("Turno:");
             
-            const responsable = prompt("Nombre del Responsable:");
-            if (!responsable) return;
-            const turno = prompt("Turno (Ej: Matutino, Nocturno):");
-            if (!turno) return;
+            let content = `REPORTE SMED - ${new Date().toLocaleDateString()}\n`;
+            content += `Responsable: ${resp} | Turno: ${turno}\n\n`;
 
-            const now = new Date();
-            const fechaStr = now.toLocaleDateString();
-            const horaStr = now.toLocaleTimeString();
-
-            let content = "";
             if (format === 'csv') {
-                content = `REPORTE SMED\nFecha,${fechaStr}\nHora,${horaStr}\nResponsable,${responsable}\nTurno,${turno}\n\n`;
-                content += "Actividad,Segundo Inicio,Segundo Fin,Duracion Segundos\n";
-                logs.forEach(l => content += `${l.name},${l.start},${l.end},${l.duration}\n`);
+                content += "Actividad,Tipo SMED,Duracion,Inicio,Fin\n";
+                logs.forEach(l => content += `"${l.name}","${l.type}",${l.duration},${l.start},${l.end}\n`);
             } else {
-                content = `==============================\n   REPORTE INDUSTRIAL SMED\n==============================\n`;
-                content += `FECHA: ${fechaStr} | HORA: ${horaStr}\nRESPONSABLE: ${responsable}\nTURNO: ${turno}\n`;
-                content += `------------------------------\n`;
-                logs.forEach(l => content += `TAREA: ${l.name}\nINICIO: ${l.start}s | FIN: ${l.end}s | DURACIÓN: ${l.duration}s\n\n`);
+                logs.forEach(l => content += `[${l.type}] ${l.name}: ${l.duration}s (${l.start} a ${l.end})\n`);
             }
 
             const blob = new Blob([content], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `SMED_${responsable.replace(/\s/g, '_')}_${fechaStr.replace(/\//g, '-')}.${format}`;
+            a.download = `SMED_${resp}_${Date.now()}.${format}`;
             a.click();
         }
 
-        function clearLogs() { if(confirm("¿Limpiar toda la tabla?")) { logs = []; renderLogs(); } }
+        function autoCloseAll() {
+            if (activeTaskName) {
+                const activeBtn = document.querySelector('.smed-btn.active');
+                closeTask(activeTaskName, activeBtn);
+                activeTaskName = null;
+            }
+        }
+
+        function clearLogs() { if(confirm("¿Borrar tabla?")) { logs = []; renderLogs(); } }
         function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
         setInterval(updateClocks, 100);
