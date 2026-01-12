@@ -3,55 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Tiempo Absoluto</title>
+    <title>Dashboard de Tiempo Absoluto</title>
     <style>
         :root {
             --neon-green: #00ff00;
             --neon-red: #ff3333;
             --neon-blue: #00d4ff;
             --bg-dark: #050505;
-            --panel-bg: #111;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-dark);
             color: #fff;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             height: 100vh;
+            width: 100vw;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Evita el scroll */
         }
 
-        /* Sección Superior: Reloj Principal */
-        .top-section {
-            flex: 2;
+        /* Barra de progreso superior */
+        .progress-bar {
+            position: absolute;
+            top: 0; left: 0; height: 6px;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+            box-shadow: 0 0 15px var(--neon-green);
+            transition: width 1s linear;
+            z-index: 10;
+        }
+
+        /* SECCIÓN 1: RELOJ PRINCIPAL (60% de la pantalla) */
+        .hero-section {
+            flex: 3;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            text-align: center;
             padding: 20px;
-            border-bottom: 1px solid #222;
         }
 
-        .label { font-size: 1rem; letter-spacing: 5px; color: #666; text-transform: uppercase; margin-bottom: 10px; }
-        .main-seconds { font-size: 12vw; font-weight: 900; line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
-        .remaining-box { margin-top: 20px; text-align: center; }
-        .rem-seconds { font-size: 4vw; color: var(--neon-red); font-family: 'Courier New', monospace; }
+        .label { font-size: 1rem; letter-spacing: 4px; color: #555; text-transform: uppercase; margin-bottom: 10px; }
+        .main-seconds { 
+            font-size: 18vw; /* Tamaño dinámico según ancho de pantalla */
+            font-weight: 900; 
+            line-height: 0.9;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 40px rgba(255,255,255,0.05);
+        }
+        .rem-seconds { 
+            font-size: 5vw; 
+            color: var(--neon-red); 
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+        }
 
-        /* Sección Media: Cronómetro y Laps */
-        .middle-section {
-            flex: 1.5;
+        /* SECCIÓN 2: CRONÓMETRO (30% de la pantalla) */
+        .chrono-section {
+            flex: 2;
             display: flex;
-            background: var(--panel-bg);
+            background: #0f0f0f;
+            border-top: 1px solid #222;
             border-bottom: 1px solid #222;
         }
 
-        .chrono-container {
-            flex: 1;
+        .chrono-controls {
+            flex: 1.2;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -59,183 +79,174 @@
             border-right: 1px solid #222;
         }
 
-        .chrono-display { font-size: 5vw; color: var(--neon-blue); font-family: monospace; margin-bottom: 15px; }
+        .chrono-display { font-size: 7vw; color: var(--neon-blue); font-family: monospace; line-height: 1; margin-bottom: 15px; }
         
-        .laps-container {
+        .laps-list {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #0a0a0a;
+            background: #080808;
             font-family: monospace;
+            font-size: 1.2rem;
         }
 
-        .lap-item {
+        .lap-entry {
             display: flex;
             justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid #222;
-            color: #aaa;
+            padding: 10px 0;
+            border-bottom: 1px solid #1a1a1a;
+            color: #888;
         }
-        .lap-item b { color: var(--neon-blue); }
+        .lap-entry b { color: var(--neon-blue); }
 
-        /* Sección Inferior: Equivalencias */
-        .bottom-section {
+        /* SECCIÓN 3: PIE DE PÁGINA (10% de la pantalla) */
+        .footer-section {
             flex: 0.8;
             display: flex;
             justify-content: space-around;
             align-items: center;
             background: #000;
-            padding: 10px;
         }
 
-        .stat-box { text-align: center; }
-        .stat-val { font-size: 2vw; display: block; font-weight: bold; }
-        .stat-label { font-size: 0.7rem; color: #555; text-transform: uppercase; }
+        .data-point { text-align: center; }
+        .data-val { font-size: 2.5vw; font-weight: bold; display: block; }
+        .data-lab { font-size: 0.8rem; color: #444; text-transform: uppercase; }
 
-        /* Botones */
+        /* BOTONES */
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         button {
-            background: transparent;
-            border: 2px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 10px 25px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #eee;
+            padding: 12px 24px;
             font-size: 1rem;
             cursor: pointer;
-            border-radius: 8px;
-            margin: 5px;
-            text-transform: uppercase;
-            font-weight: bold;
-            transition: 0.2s;
+            border-radius: 4px;
+            transition: all 0.2s;
         }
-        button:hover { background: var(--neon-blue); color: #000; }
-        button.btn-lap { border-color: #fff; color: #fff; }
-        button.btn-lap:hover { background: #fff; color: #000; }
+        button:hover { background: #333; border-color: var(--neon-blue); color: var(--neon-blue); }
+        .btn-primary { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .btn-fullscreen { position: absolute; top: 20px; right: 20px; font-size: 0.7rem; opacity: 0.5; }
+        .btn-fullscreen:hover { opacity: 1; }
 
-        /* Barra de progreso sutil */
-        .progress-bar {
-            position: absolute;
-            top: 0; left: 0; height: 4px;
-            background: var(--neon-green);
-            transition: width 1s linear;
-        }
     </style>
 </head>
 <body>
 
     <div id="p-bar" class="progress-bar"></div>
+    
+    <button class="btn-fullscreen" onclick="toggleFullScreen()">PANTALLA COMPLETA (F11)</button>
 
-    <section class="top-section">
-        <div class="label">Segundos Transcurridos del Día</div>
+    <section class="hero-section">
+        <div class="label">Segundos Transcurridos</div>
         <div id="main-sec" class="main-seconds">00000</div>
-        <div class="remaining-box">
-            <div class="label" style="color: var(--neon-red);">Faltan para reiniciar</div>
-            <div id="rem-sec" class="rem-seconds">-00000</div>
-        </div>
+        <div id="rem-sec" class="rem-seconds">-00000</div>
     </section>
 
-    <section class="middle-section">
-        <div class="chrono-container">
-            <div class="label" style="color: var(--neon-blue);">Cronómetro de Precisión</div>
+    <section class="chrono-section">
+        <div class="chrono-controls">
             <div id="chrono-display" class="chrono-display">00:00.00</div>
-            <div>
-                <button onclick="startChrono()">Inicio</button>
-                <button onclick="pauseChrono()">Pausa</button>
-                <button class="btn-lap" onclick="recordLap()">Lap</button>
-                <button onclick="resetChrono()" style="border-color:#555; color:#555;">Reset</button>
+            <div class="btn-group">
+                <button class="btn-primary" onclick="startChrono()">Iniciar</button>
+                <button onclick="pauseChrono()">Pausar</button>
+                <button onclick="recordLap()">Vuelta (Lap)</button>
+                <button onclick="resetChrono()">Reiniciar</button>
             </div>
         </div>
-        <div class="laps-container" id="laps-list">
-            <div class="label">Vueltas / Marcaciones</div>
+        <div class="laps-list" id="laps-list">
+            <div class="label" style="margin-bottom:15px">Historial de Laps</div>
             </div>
     </section>
 
-    <section class="bottom-section">
-        <div class="stat-box">
-            <span class="stat-label">Hora Actual (24h)</span>
-            <span id="std-now" class="stat-val" style="color: var(--neon-green);">00:00:00</span>
+    <section class="footer-section">
+        <div class="data-point">
+            <span class="data-lab">Hora Estándar</span>
+            <span id="std-now" class="data-val" style="color: var(--neon-green);">00:00:00</span>
         </div>
-        <div class="stat-box">
-            <span class="stat-label">Equivalencia de lo que falta</span>
-            <span id="std-rem" class="stat-val" style="color: var(--neon-red);">00:00:00</span>
+        <div class="data-point">
+            <span class="data-lab">Equivalente para Reinicio</span>
+            <span id="std-rem" class="data-val" style="color: var(--neon-red);">00:00:00</span>
         </div>
     </section>
 
     <script>
-        // --- RELOJ PRINCIPAL Y EQUIVALENCIAS ---
-        function updateGlobalTime() {
+        // ACTUALIZACIÓN DE TIEMPO
+        function updateAll() {
             const now = new Date();
             const h = now.getHours();
             const m = now.getMinutes();
             const s = now.getSeconds();
 
-            const currentTotal = (h * 3600) + (m * 60) + s;
-            const remainingTotal = 86400 - currentTotal;
+            const current = (h * 3600) + (m * 60) + s;
+            const remaining = 86400 - current;
 
-            // Números Enteros
-            document.getElementById('main-sec').textContent = currentTotal.toLocaleString();
-            document.getElementById('rem-sec').textContent = "-" + remainingTotal.toLocaleString();
+            // Actualizar Números
+            document.getElementById('main-sec').textContent = current.toLocaleString('es-ES');
+            document.getElementById('rem-sec').textContent = "-" + remaining.toLocaleString('es-ES');
 
-            // Reloj Estándar
+            // Actualizar Relojes Inferiores
             document.getElementById('std-now').textContent = 
                 `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-            // Equivalencia Restante
-            const rH = Math.floor(remainingTotal / 3600);
-            const rM = Math.floor((remainingTotal % 3600) / 60);
-            const rS = remainingTotal % 60;
+            
+            const rH = Math.floor(remaining / 3600);
+            const rM = Math.floor((remaining % 3600) / 60);
+            const rS = remaining % 60;
             document.getElementById('std-rem').textContent = 
                 `${String(rH).padStart(2,'0')}:${String(rM).padStart(2,'0')}:${String(rS).padStart(2,'0')}`;
 
-            // Barra de progreso superior
-            document.getElementById('p-bar').style.width = (currentTotal / 86400 * 100) + "%";
+            // Barra de progreso
+            document.getElementById('p-bar').style.width = (current / 86400 * 100) + "%";
         }
 
-        // --- LÓGICA DEL CRONÓMETRO ---
-        let startTime, elapsedTime = 0, timerInterval;
-        let lapCount = 0;
+        // CRONÓMETRO
+        let startTime, elapsedTime = 0, timerInterval, lapCount = 0;
 
         function startChrono() {
             if (!timerInterval) {
                 startTime = Date.now() - elapsedTime;
-                timerInterval = setInterval(updateChronoDisplay, 10);
+                timerInterval = setInterval(() => {
+                    elapsedTime = Date.now() - startTime;
+                    let m = Math.floor(elapsedTime / 60000);
+                    let s = Math.floor((elapsedTime % 60000) / 1000);
+                    let ms = Math.floor((elapsedTime % 1000) / 10);
+                    document.getElementById('chrono-display').textContent = 
+                        `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+                }, 10);
             }
         }
 
-        function pauseChrono() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
+        function pauseChrono() { clearInterval(timerInterval); timerInterval = null; }
 
         function resetChrono() {
-            pauseChrono();
-            elapsedTime = 0;
-            lapCount = 0;
+            pauseChrono(); elapsedTime = 0; lapCount = 0;
             document.getElementById('chrono-display').textContent = "00:00.00";
-            document.getElementById('laps-list').innerHTML = '<div class="label">Vueltas / Marcaciones</div>';
-        }
-
-        function updateChronoDisplay() {
-            elapsedTime = Date.now() - startTime;
-            let m = Math.floor(elapsedTime / 60000);
-            let s = Math.floor((elapsedTime % 60000) / 1000);
-            let ms = Math.floor((elapsedTime % 1000) / 10);
-            document.getElementById('chrono-display').textContent = 
-                `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+            document.getElementById('laps-list').innerHTML = '<div class="label" style="margin-bottom:15px">Historial de Laps</div>';
         }
 
         function recordLap() {
             if (elapsedTime === 0) return;
             lapCount++;
-            const lapTime = document.getElementById('chrono-display').textContent;
-            const lapItem = document.createElement('div');
-            lapItem.className = 'lap-item';
-            lapItem.innerHTML = `<span>Vuelta ${lapCount}</span> <b>${lapTime}</b>`;
-            
+            const time = document.getElementById('chrono-display').textContent;
+            const lap = document.createElement('div');
+            lap.className = 'lap-entry';
+            lap.innerHTML = `<span>Vuelta ${lapCount}</span> <b>${time}</b>`;
             const list = document.getElementById('laps-list');
-            list.insertBefore(lapItem, list.childNodes[2]); // Inserta arriba
+            list.insertBefore(lap, list.childNodes[2]);
         }
 
-        setInterval(updateGlobalTime, 1000);
-        updateGlobalTime();
+        // FUNCIÓN FULLSCREEN
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        setInterval(updateAll, 1000);
+        updateAll();
     </script>
 </body>
 </html>
