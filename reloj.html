@@ -2,139 +2,140 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reloj de Segundos Absolutos</title>
+    <title>Reloj de Segundos Totales</title>
     <style>
         :root {
             --neon-green: #00ff00;
+            --neon-red: #ff4444;
             --neon-blue: #00d4ff;
             --bg-dark: #0a0a0a;
         }
         body {
             background-color: var(--bg-dark);
             color: var(--neon-green);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            align-items: center;
+            height: 100vh;
             margin: 0;
         }
         .card {
-            background: #151515;
-            padding: 30px;
-            border-radius: 15px;
+            background: #111;
+            padding: 40px;
+            border-radius: 20px;
             border: 1px solid #333;
             text-align: center;
-            width: 450px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
-        .label { font-size: 0.8rem; letter-spacing: 2px; color: #888; text-transform: uppercase; }
-        .main-seconds { font-size: 5rem; font-weight: bold; margin: 10px 0; color: #fff; }
-        .sub-clock { font-size: 1.5rem; margin-bottom: 20px; opacity: 0.8; }
-        .reset-counter { color: #ff3e3e; font-family: monospace; font-size: 1.2rem; margin-bottom: 30px;}
+        .label { font-size: 0.7rem; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 5px; }
         
-        .chrono-box {
+        /* Reloj de Segundos Transcurridos */
+        .main-seconds { font-size: 6rem; font-weight: 900; color: #fff; margin-bottom: 5px; line-height: 1; }
+        
+        /* Reloj de Segundos Restantes */
+        .remaining-seconds { font-size: 2.5rem; color: var(--neon-red); font-family: monospace; margin-bottom: 20px; }
+        
+        /* Barra de progreso */
+        .progress-container {
+            width: 100%;
+            height: 10px;
             background: #222;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px dashed var(--neon-blue);
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
         }
-        .chrono-display { font-size: 2.5rem; color: var(--neon-blue); font-family: monospace; margin: 10px 0; }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .chrono-box {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        .chrono-display { font-size: 2rem; color: var(--neon-blue); font-family: monospace; margin-bottom: 10px; }
         button {
             background: transparent;
             border: 1px solid var(--neon-blue);
             color: var(--neon-blue);
-            padding: 8px 20px;
+            padding: 8px 15px;
             cursor: pointer;
             border-radius: 5px;
-            margin: 5px;
-            transition: 0.3s;
+            margin: 3px;
+            font-size: 0.8rem;
         }
         button:hover { background: var(--neon-blue); color: #000; }
+        .std-clock-small { color: #444; font-size: 0.9rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="label">Reloj Estándar</div>
-        <div id="std-clock" class="sub-clock">00:00:00</div>
-
-        <div class="label">Segundos del Día (Entero)</div>
+        <div class="label">Segundos Transcurridos</div>
         <div id="total-seconds" class="main-seconds">00000</div>
+        
+        <div class="progress-container">
+            <div id="bar" class="progress-bar"></div>
+        </div>
 
-        <div class="label">Resta para el Reinicio (86,400)</div>
-        <div id="countdown" class="reset-counter">00:00:00</div>
+        <div class="label" style="color: var(--neon-red);">Segundos para el Reinicio</div>
+        <div id="remaining-seconds" class="remaining-seconds">00000</div>
 
         <div class="chrono-box">
-            <div class="label" style="color: var(--neon-blue);">Cronómetro</div>
             <div id="chrono-display" class="chrono-display">00:00.00</div>
             <button onclick="startChrono()">Iniciar</button>
             <button onclick="pauseChrono()">Pausar</button>
             <button onclick="resetChrono()">Reset</button>
         </div>
+
+        <div id="std-clock" class="std-clock-small">Reloj normal: 00:00:00</div>
     </div>
 
     <script>
-        // Lógica del Reloj de 86,400 segundos
-        function updateMainClock() {
+        function updateClocks() {
             const now = new Date();
             const h = now.getHours();
             const m = now.getMinutes();
             const s = now.getSeconds();
 
-            // Reloj Estándar
-            document.getElementById('std-clock').textContent = 
-                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
-            // Segundos transcurridos (Número Entero)
+            // Cálculo entero
             const currentSecs = (h * 3600) + (m * 60) + s;
-            document.getElementById('total-seconds').textContent = currentSecs.toLocaleString();
+            const remainingSecs = 86400 - currentSecs;
+            const percent = (currentSecs / 86400) * 100;
 
-            // Tiempo restante para el reinicio (86,400)
-            const remaining = 86400 - currentSecs;
-            const rH = Math.floor(remaining / 3600);
-            const rM = Math.floor((remaining % 3600) / 60);
-            const rS = remaining % 60;
-            document.getElementById('countdown').textContent = 
-                `Faltan: ${String(rH).padStart(2,'0')}h ${String(rM).padStart(2,'0')}m ${String(rS).padStart(2,'0')}s`;
+            // Actualizar interfaz
+            document.getElementById('total-seconds').textContent = currentSecs.toLocaleString();
+            document.getElementById('remaining-seconds').textContent = "-" + remainingSecs.toLocaleString();
+            document.getElementById('bar').style.width = percent + "%";
+            document.getElementById('std-clock').textContent = `Reloj estándar: ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        // Lógica del Cronómetro
+        // Cronómetro (mismo código que antes)
         let startTime, elapsedTime = 0, timerInterval;
-
         function startChrono() {
             if (!timerInterval) {
                 startTime = Date.now() - elapsedTime;
                 timerInterval = setInterval(() => {
                     elapsedTime = Date.now() - startTime;
-                    displayChrono(elapsedTime);
+                    let min = Math.floor(elapsedTime / 60000);
+                    let sec = Math.floor((elapsedTime % 60000) / 1000);
+                    let ms = Math.floor((elapsedTime % 1000) / 10);
+                    document.getElementById('chrono-display').textContent = 
+                        `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
                 }, 10);
             }
         }
+        function pauseChrono() { clearInterval(timerInterval); timerInterval = null; }
+        function resetChrono() { pauseChrono(); elapsedTime = 0; document.getElementById('chrono-display').textContent = "00:00.00"; }
 
-        function pauseChrono() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        function resetChrono() {
-            pauseChrono();
-            elapsedTime = 0;
-            displayChrono(0);
-        }
-
-        function displayChrono(time) {
-            let m = Math.floor(time / 60000);
-            let s = Math.floor((time % 60000) / 1000);
-            let ms = Math.floor((time % 1000) / 10);
-            document.getElementById('chrono-display').textContent = 
-                `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
-        }
-
-        setInterval(updateMainClock, 1000);
-        updateMainClock();
+        setInterval(updateClocks, 1000);
+        updateClocks();
     </script>
 </body>
 </html>
-
