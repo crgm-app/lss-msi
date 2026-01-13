@@ -10,6 +10,7 @@
             --neon-green: #00ff00;
             --neon-blue: #00d4ff;
             --neon-orange: #ffaa00;
+            --neon-red: #ff3333;
             --bg-dark: #050505;
             --glass: rgba(255, 255, 255, 0.05);
         }
@@ -277,6 +278,87 @@
             color: #888;
         }
 
+        /* Scientific Charts */
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            background: #080808;
+            border: 1px solid #222;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .axis line,
+        .axis path {
+            stroke: #444;
+        }
+
+        .axis text {
+            fill: #888;
+            font-size: 10px;
+        }
+
+        .grid-line {
+            stroke: #222;
+            stroke-dasharray: 2;
+        }
+
+        .box-plot-box {
+            fill: rgba(0, 212, 255, 0.2);
+            stroke: var(--neon-blue);
+            stroke-width: 2;
+        }
+
+        .box-plot-median {
+            stroke: var(--neon-green);
+            stroke-width: 2;
+        }
+
+        .box-plot-whisker {
+            stroke: #888;
+            stroke-width: 1;
+        }
+
+        .bar-internal {
+            fill: var(--neon-red);
+        }
+
+        .bar-external {
+            fill: var(--neon-green);
+        }
+
+        .bar-muda {
+            fill: #444;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            justify-content: flex-end;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
         /* Theory View */
         .theory-container {
             flex: 1;
@@ -408,6 +490,30 @@
                     <!-- Content will be injected by JS -->
                     <div id="analysis-stats" class="stat-grid"></div>
                 </div>
+
+                <div class="card">
+                    <h3>Análisis Científico (Lean Six Sigma) - Variación del Proceso</h3>
+                    <p style="font-size:0.8rem; color:#888;">Gráfico de Caja y Bigotes (Box Plot) mostrando la
+                        dispersión de tiempos por grupo.</p>
+                    <div id="chart-variance" class="chart-container"></div>
+                    <div class="legend">
+                        <span><span class="dot" style="background:#00d4ff"></span> Rango (Q1-Q3)</span>
+                        <span><span class="dot" style="background:#00ff00"></span> Mediana</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Análisis de Desperdicios (Muda vs Valor)</h3>
+                    <p style="font-size:0.8rem; color:#888;">Comparativa de tiempos que agregan valor vs desperdicios.
+                    </p>
+                    <div id="chart-muda" class="chart-container" style="height:150px;"></div>
+                    <div class="legend">
+                        <span><span class="dot" style="background:var(--neon-green)"></span> Ext (Valor)</span>
+                        <span><span class="dot" style="background:var(--neon-red)"></span> Int (Parada)</span>
+                        <span><span class="dot" style="background:#444"></span> Muda</span>
+                    </div>
+                </div>
+
                 <div class="card">
                     <h3>Detalle por Grupos</h3>
                     <div id="analysis-groups"></div>
@@ -446,278 +552,344 @@
         <button class="btn-export" onclick="prepareExport('csv')">EXPORT CSV</button>
         <button class="btn-export" onclick="prepareExport('txt')">EXPORT TXT</button>
         <button class="btn-export" style="background:#300; color:#f55" onclick="fullReset()">RESET</button>
-    </footer>
-
-    <script>
-        let currentAbsTime = 0;
-        let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Maquina Abrir", "Troquel Desmontar", "Troquel Montar", "Troquel Requerir", "Sello Desmontar", "Sello Montar", "Sello Requerir", "Tinta Desmontar", "Tinta Montar", "Tinta Requerir", "Tinta Lavar", "Maquina Cerrar", "Centrado"];
-        let activeTasksByGroup = {};
-
-        // --- TABS & NAVIGATION ---
-        function switchTab(tabName) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-
-            document.getElementById(`view-${tabName}`).classList.add('active');
-            // Find the tab element to set active
-            const tabs = document.querySelectorAll('.nav-tab');
-            if (tabName === 'timer') tabs[0].classList.add('active');
-            if (tabName === 'analysis') { tabs[1].classList.add('active'); renderAnalysis(); }
-            if (tabName === 'theory') tabs[2].classList.add('active');
-        }
-
-        function updateClocks() {
-            const now = new Date();
-            const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
-            currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
-            document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
-            document.getElementById('real-clock').textContent = now.toLocaleTimeString();
-            document.getElementById('date-display').textContent = now.toLocaleDateString();
-        }
-
-        function getGroupName(name) { return name.split(' ')[0].toUpperCase(); }
-
-        function handleAction(btn, taskName) {
-            const group = getGroupName(taskName);
-            if (activeTasksByGroup[group] === taskName) {
-                confirmClose(taskName, btn);
-                delete activeTasksByGroup[group];
-            } else {
-                if (activeTasksByGroup[group]) {
-                    const prevName = activeTasksByGroup[group];
-                    const prevBtn = document.querySelector(`[data-task="${prevName}"]`);
-                    if (prevBtn) confirmClose(prevName, prevBtn);
-                }
-                activeTasksByGroup[group] = taskName;
-                btn.classList.add('active');
-                btn.dataset.startTime = currentAbsTime;
-                btn.querySelector('.status').textContent = "RUNNING: " + currentAbsTime.toFixed(1);
-            }
-        }
-
-        function confirmClose(name, btn) {
-            const start = parseFloat(btn.dataset.startTime);
-            if (isNaN(start)) return;
-            const duration = (currentAbsTime - start).toFixed(1);
-            logs.push({ name, group: getGroupName(name), type: "Interna", start: start.toFixed(1), end: currentAbsTime.toFixed(1), duration });
-            btn.classList.remove('active');
-            btn.querySelector('.status').textContent = "ULT: " + duration + "s";
-            localStorage.setItem('smed_logs', JSON.stringify(logs));
-            renderLogs();
-        }
-
-        function renderLogs() {
-            document.getElementById('log-body').innerHTML = logs.map((e, i) => `
-                <tr>
-                    <td>${e.name}</td>
-                    <td><select class="smed-type" onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs));">
-                        <option value="Interna" ${e.type === 'Interna' ? 'selected' : ''}>Int</option>
-                        <option value="Externa" ${e.type === 'Externa' ? 'selected' : ''}>Ext</option>
-                        <option value="Muda" ${e.type === 'Muda' ? 'selected' : ''}>Muda</option>
-                    </select></td>
-                    <td style="color:var(--neon-orange); font-weight:bold">${e.duration}s</td>
-                    <td style="font-size:0.5rem; color:#444">${e.group}</td>
-                </tr>`).join('');
-            document.querySelector('.log-section').scrollTop = 99999;
-        }
-
-        function addNewButton() {
-            const name = document.getElementById('new-task-name').value.trim();
-            if (!name || btnNames.includes(name)) return;
-            btnNames.push(name);
-            localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
-            createButtonElement(name);
-            document.getElementById('new-task-name').value = "";
-        }
-
-        // --- DRAG AND DROP ---
-        let dragSrcEl = null;
-
-        function handleDragStart(e) {
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-            this.classList.add('dragging');
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
         function handleDrop(e) {
-            if (e.stopPropagation) e.stopPropagation();
-            const targetContainer = this; // 'this' is the .smed-btn-container
+        if (e.stopPropagation) e.stopPropagation();
+        const targetContainer = this; // 'this' is the .smed-btn-container
 
-            if (dragSrcEl !== targetContainer) {
-                // Determine logic to swap in array
-                const srcName = dragSrcEl.querySelector('.smed-btn').dataset.task;
-                const destName = targetContainer.querySelector('.smed-btn').dataset.task;
+        if (dragSrcEl !== targetContainer) {
+        // Determine logic to swap in array
+        const srcName = dragSrcEl.querySelector('.smed-btn').dataset.task;
+        const destName = targetContainer.querySelector('.smed-btn').dataset.task;
 
-                const srcIdx = btnNames.indexOf(srcName);
-                const destIdx = btnNames.indexOf(destName);
+        const srcIdx = btnNames.indexOf(srcName);
+        const destIdx = btnNames.indexOf(destName);
 
-                // Swap in array
-                [btnNames[srcIdx], btnNames[destIdx]] = [btnNames[destIdx], btnNames[srcIdx]];
-                localStorage.setItem('smed_buttons', JSON.stringify(btnNames)); // Save persistence
+        // Swap in array
+        [btnNames[srcIdx], btnNames[destIdx]] = [btnNames[destIdx], btnNames[srcIdx]];
+        localStorage.setItem('smed_buttons', JSON.stringify(btnNames)); // Save persistence
 
-                // Re-render all buttons to match new order (easiest way)
-                const container = document.getElementById('button-container');
-                container.innerHTML = '';
-                btnNames.forEach(createButtonElement);
-            }
-            dragSrcEl.classList.remove('dragging');
-            return false;
+        // Re-render all buttons to match new order (easiest way)
+        const container = document.getElementById('button-container');
+        container.innerHTML = '';
+        btnNames.forEach(createButtonElement);
+        }
+        dragSrcEl.classList.remove('dragging');
+        return false;
         }
 
         function createButtonElement(name) {
-            const container = document.getElementById('button-container');
-            const group = getGroupName(name);
-            const div = document.createElement('div');
-            div.className = 'smed-btn-container';
-            div.setAttribute('draggable', 'true'); // Make container draggable
+        const container = document.getElementById('button-container');
+        const group = getGroupName(name);
+        const div = document.createElement('div');
+        div.className = 'smed-btn-container';
+        div.setAttribute('draggable', 'true'); // Make container draggable
 
-            div.innerHTML = `
-                <button class="smed-btn" data-task="${name}">
-                    <div class="group-tag">${group}</div>
-                    ${name} <br> <span class="status" style="font-size:0.6rem; color:#666">OFF</span>
-                </button>
-                <button class="del-btn">×</button>`;
+        div.innerHTML = `
+        <button class="smed-btn" data-task="${name}">
+            <div class="group-tag">${group}</div>
+            ${name} <br> <span class="status" style="font-size:0.6rem; color:#666">OFF</span>
+        </button>
+        <button class="del-btn">×</button>`;
 
-            // Add DnD listeners
-            div.addEventListener('dragstart', handleDragStart, false);
-            div.addEventListener('dragover', handleDragOver, false);
-            div.addEventListener('drop', handleDrop, false);
+        // Add DnD listeners
+        div.addEventListener('dragstart', handleDragStart, false);
+        div.addEventListener('dragover', handleDragOver, false);
+        div.addEventListener('drop', handleDrop, false);
 
-            const btn = div.querySelector('.smed-btn');
-            btn.onclick = () => handleAction(btn, name);
-            div.querySelector('.del-btn').onclick = () => {
-                if (confirm("¿Eliminar actividad?")) {
-                    btnNames = btnNames.filter(n => n !== name);
-                    localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
-                    div.remove();
-                }
-            };
-            container.appendChild(div);
+        const btn = div.querySelector('.smed-btn');
+        btn.onclick = () => handleAction(btn, name);
+        div.querySelector('.del-btn').onclick = () => {
+        if(confirm("¿Eliminar actividad?")) {
+        btnNames = btnNames.filter(n => n !== name);
+        localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
+        div.remove();
+        }
+        };
+        container.appendChild(div);
+        }
+
+        // --- STATISTICAL ENGINE ---
+        function calculateStats(values) {
+        if (values.length === 0) return { min:0, q1:0, median:0, q3:0, max:0, mean:0 };
+        values.sort((a, b) => a - b);
+        const sum = values.reduce((a, b) => a + b, 0);
+        const mean = sum / values.length;
+
+        const q1 = quantile(values, 0.25);
+        const median = quantile(values, 0.5);
+        const q3 = quantile(values, 0.75);
+
+        return {
+        min: values[0],
+        q1: q1,
+        median: median,
+        q3: q3,
+        max: values[values.length - 1],
+        mean: mean
+        };
+        }
+
+        function quantile(sorted, q) {
+        const pos = (sorted.length - 1) * q;
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        if (sorted[base + 1] !== undefined) {
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+        } else {
+        return sorted[base];
+        }
         }
 
         // --- ANALYSIS ---
         function renderAnalysis() {
-            if (logs.length === 0) {
-                document.getElementById('analysis-stats').innerHTML = '<p style="color:#666">No hay datos registrados aun.</p>';
-                return;
-            }
+        if(logs.length === 0) {
+        document.getElementById('analysis-stats').innerHTML = '<p style="color:#666">No hay datos registrados aun.</p>';
+        return;
+        }
 
-            // Stats basics
-            const totalDur = logs.reduce((acc, curr) => acc + parseFloat(curr.duration), 0);
-            const count = logs.length;
-            const avg = totalDur / count;
+        // Stats basics
+        const totalDur = logs.reduce((acc, curr) => acc + parseFloat(curr.duration), 0);
+        const count = logs.length;
+        const avg = totalDur / count;
 
-            // Stats Grid
-            document.getElementById('analysis-stats').innerHTML = `
-                <div class="stat-box">
-                    <div class="stat-val" style="color:var(--neon-green)">${totalDur.toFixed(1)}s</div>
-                    <div class="stat-label">Tiempo Total</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-val" style="color:var(--neon-blue)">${count}</div>
-                    <div class="stat-label">Actividades</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-val" style="color:var(--neon-orange)">${avg.toFixed(1)}s</div>
-                    <div class="stat-label">Promedio</div>
-                </div>
-            `;
+        // Stats Grid
+        document.getElementById('analysis-stats').innerHTML = `
+        <div class="stat-box">
+            <div class="stat-val" style="color:var(--neon-green)">${totalDur.toFixed(1)}s</div>
+            <div class="stat-label">Tiempo Total</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-val" style="color:var(--neon-blue)">${count}</div>
+            <div class="stat-label">Actividades</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-val" style="color:var(--neon-orange)">${avg.toFixed(1)}s</div>
+            <div class="stat-label">Promedio</div>
+        </div>
+        `;
 
-            // Group Analysis
-            // Calculate sums per group
-            const groups = {};
-            logs.forEach(l => {
-                if (!groups[l.group]) groups[l.group] = { dur: 0, count: 0, types: {} };
-                groups[l.group].dur += parseFloat(l.duration);
-                groups[l.group].count++;
-                if (!groups[l.group].types[l.type]) groups[l.group].types[l.type] = 0;
-                groups[l.group].types[l.type] += parseFloat(l.duration);
-            });
+        // Group Analysis Prep
+        const groups = {};
+        const mudaData = { internal: 0, external: 0, muda: 0 };
 
-            // Make HTML for groups
-            let groupHTML = '<table style="font-size:0.85rem;"><thead><tr><th>Grupo</th><th>Total(s)</th><th>%</th><th>Detalles</th></tr></thead><tbody>';
+        logs.forEach(l => {
+        if(!groups[l.group]) groups[l.group] = { dur: 0, count: 0, types: {}, times: [] };
+        const d = parseFloat(l.duration);
+        groups[l.group].dur += d;
+        groups[l.group].count++;
+        groups[l.group].times.push(d);
+        if(!groups[l.group].types[l.type]) groups[l.group].types[l.type] = 0;
+        groups[l.group].types[l.type] += d;
 
-            Object.keys(groups).forEach(g => {
+        // For stacked Bar
+        if(l.type === 'Interna') mudaData.internal += d;
+        if(l.type === 'Externa') mudaData.external += d;
+        if(l.type === 'Muda') mudaData.muda += d;
+        });
+
+        // 1. Render Group Table
+        let groupHTML = '<table style="font-size:0.85rem;">
+            <thead>
+                <tr>
+                    <th>Grupo</th>
+                    <th>Total(s)</th>
+                    <th>%</th>
+                    <th>Estadísticas (Min/Med/Max)</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+                Object.keys(groups).forEach(g => {
                 const gData = groups[g];
                 const pct = ((gData.dur / totalDur) * 100).toFixed(1);
-
-                // Breaking down types text
-                let typeText = [];
-                if (gData.types['Interna']) typeText.push(`<span style="color:#f55">Int: ${gData.types['Interna'].toFixed(1)}s</span>`);
-                if (gData.types['Externa']) typeText.push(`<span style="color:#5f5">Ext: ${gData.types['Externa'].toFixed(1)}s</span>`);
-                if (gData.types['Muda']) typeText.push(`<span style="color:#888">Muda: ${gData.types['Muda'].toFixed(1)}s</span>`);
+                const stats = calculateStats(gData.times);
 
                 groupHTML += `<tr>
                     <td>${g}</td>
                     <td style="color:var(--neon-blue)">${gData.dur.toFixed(1)}s</td>
                     <td>${pct}%</td>
-                    <td>${typeText.join(' ')}</td>
+                    <td style="font-size:0.7rem; color:#888">${stats.min.toFixed(1)} / <b
+                            style="color:#fff">${stats.median.toFixed(1)}</b> / ${stats.max.toFixed(1)}</td>
                 </tr>`;
-            });
-            groupHTML += '</tbody></table>';
+                });
+                groupHTML += '</tbody>
+        </table>';
+        document.getElementById('analysis-groups').innerHTML = groupHTML;
 
-            document.getElementById('analysis-groups').innerHTML = groupHTML;
+        // 2. Render Box Plot (Charts)
+        renderBoxPlot(groups);
+        renderMudaChart(mudaData, totalDur);
+        }
+
+        function renderBoxPlot(groups) {
+        const container = document.getElementById('chart-variance');
+        const width = container.offsetWidth || 500;
+        const height = 200;
+        const padding = 30;
+
+        // Determine global max for scaling
+        let maxVal = 0;
+        Object.values(groups).forEach(g => {
+        const m = Math.max(...g.times);
+        if(m > maxVal) maxVal = m;
+        });
+        if(maxVal === 0) maxVal = 10; // Prevent div/0
+
+        const groupKeys = Object.keys(groups);
+        const barWidth = (width - padding * 2) / groupKeys.length;
+        const scaleY = (val) => height - padding - ((val / maxVal) * (height - padding * 2));
+
+        let svg = `<svg viewBox="0 0 ${width} ${height}">`;
+
+            // Draw Axis lines
+            svg += `
+            <line x1="${padding}" y1="${height-padding}" x2="${width}" y2="${height-padding}" class="axis"
+                stroke="#444" />`; // X
+            svg += `
+            <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" class="axis" stroke="#444" />`;
+            // Y
+
+            // Draw ticks Y
+            for(let i=0; i<=5; i++){ const val=(maxVal / 5) * i; const y=scaleY(val); svg +=`<text x="${padding-5}"
+                y="${y+3}" text-anchor="end">${val.toFixed(0)}</text>`;
+                svg += `
+                <line x1="${padding}" y1="${y}" x2="${width}" y2="${y}" class="grid-line" stroke-width="0.5" />`;
+                }
+
+                // Draw Box Plots per group
+                groupKeys.forEach((g, i) => {
+                const stats = calculateStats(groups[g].times);
+                const center = padding + (i * barWidth) + (barWidth / 2);
+                const q1Y = scaleY(stats.q1);
+                const q3Y = scaleY(stats.q3);
+                const medY = scaleY(stats.median);
+                const minY = scaleY(stats.min);
+                const maxY = scaleY(stats.max);
+                const boxW = Math.min(barWidth * 0.6, 40);
+
+                // Whisker Line
+                svg += `
+                <line x1="${center}" y1="${minY}" x2="${center}" y2="${maxY}" class="box-plot-whisker" />`;
+                // Caps
+                svg += `
+                <line x1="${center - boxW/3}" y1="${minY}" x2="${center + boxW/3}" y2="${minY}"
+                    class="box-plot-whisker" />`; // Min Cap
+                svg += `
+                <line x1="${center - boxW/3}" y1="${maxY}" x2="${center + boxW/3}" y2="${maxY}"
+                    class="box-plot-whisker" />`; // Max Cap
+                // Box
+                svg += `
+                <rect x="${center - boxW/2}" y="${q3Y}" width="${boxW}" height="${q1Y - q3Y}" class="box-plot-box"
+                    rx="2" />`;
+                // Median
+                svg += `
+                <line x1="${center - boxW/2}" y1="${medY}" x2="${center + boxW/2}" y2="${medY}"
+                    class="box-plot-median" />`;
+                // Label
+                svg += `<text x="${center}" y="${height - 10}" text-anchor="middle" fill="#ccc"
+                    font-size="10">${g}</text>`;
+                });
+
+                svg += `
+        </svg>`;
+        container.innerHTML = svg;
+        }
+
+        function renderMudaChart(data, total) {
+        const container = document.getElementById('chart-muda');
+        const w = container.offsetWidth || 500;
+        const h = 150;
+        let svg = `<svg viewBox="0 0 ${w} ${h}">`;
+
+            const internalW = (data.internal / total) * w;
+            const externalW = (data.external / total) * w;
+            const mudaW = (data.muda / total) * w;
+
+            let x = 0;
+            // Bars
+            if(data.external > 0) {
+            svg += `
+            <rect x="${x}" y="30" width="${externalW}" height="50" class="bar-external" />`;
+            svg += `<text x="${x + externalW/2}" y="20" text-anchor="middle" fill="#fff" font-size="10">EXT:
+                ${((data.external/total)*100).toFixed(0)}%</text>`;
+            x += externalW;
+            }
+            if(data.internal > 0) {
+            svg += `
+            <rect x="${x}" y="30" width="${internalW}" height="50" class="bar-internal" />`;
+            svg += `<text x="${x + internalW/2}" y="20" text-anchor="middle" fill="#fff" font-size="10">INT:
+                ${((data.internal/total)*100).toFixed(0)}%</text>`;
+            x += internalW;
+            }
+            if(data.muda > 0) {
+            svg += `
+            <rect x="${x}" y="30" width="${mudaW}" height="50" class="bar-muda" />`;
+            svg += `<text x="${x + mudaW/2}" y="20" text-anchor="middle" fill="#fff" font-size="10">MUDA:
+                ${((data.muda/total)*100).toFixed(0)}%</text>`;
+            }
+            // Value Stream Line
+            svg += `
+            <line x1="0" y1="90" x2="${w}" y2="90" stroke="#333" stroke-width="2" />`;
+            svg += `<text x="0" y="110" fill="#666" font-size="10">Total Cycle Time: ${total.toFixed(1)}s</text>`;
+
+            svg += `
+        </svg>`;
+        container.innerHTML = svg;
         }
 
         function pauseAll() {
-            document.querySelectorAll('.smed-btn.active').forEach(btn => {
-                confirmClose(btn.dataset.task, btn);
-            });
-            activeTasksByGroup = {};
+        document.querySelectorAll('.smed-btn.active').forEach(btn => {
+        confirmClose(btn.dataset.task, btn);
+        });
+        activeTasksByGroup = {};
         }
 
         function prepareExport(format) {
-            if (logs.length === 0) return alert("Sin datos.");
+        if(logs.length === 0) return alert("Sin datos.");
 
-            const resp = prompt("Nombre del Responsable:");
-            const op = prompt("Número de OP (Orden de Producción):");
-            const colores = prompt("Número de Colores:");
-            const area = prompt("Área (Pies²/Metros²):");
-            const turno = prompt("Turno:");
+        const resp = prompt("Nombre del Responsable:");
+        const op = prompt("Número de OP (Orden de Producción):");
+        const colores = prompt("Número de Colores:");
+        const area = prompt("Área (Pies²/Metros²):");
+        const turno = prompt("Turno:");
 
-            if (!resp || !op) return alert("Nombre y OP son obligatorios.");
+        if(!resp || !op) return alert("Nombre y OP son obligatorios.");
 
-            let content = "";
-            const fecha = new Date().toLocaleDateString();
+        let content = "";
+        const fecha = new Date().toLocaleDateString();
 
-            if (format === 'csv') {
-                content = `REPORTE SMED INDUSTRIAL\n`;
-                content += `Fecha,${fecha}\nResponsable,${resp}\nTurno,${turno}\nOP,${op}\nColores,${colores}\nArea,${area}\n\n`;
-                content += "Grupo,Actividad,Tipo,Duracion,Inicio,Fin\n";
-                logs.forEach(l => content += `${l.group},${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
-            } else {
-                content = `==============================\n   REPORTE SMED INDUSTRIAL\n==============================\n`;
-                content += `FECHA: ${fecha}\nOP: ${op} | COLORES: ${colores}\nAREA: ${area}\nRESPONSABLE: ${resp} | TURNO: ${turno}\n`;
-                content += `------------------------------\n`;
-                content += `TOTAL TIEMPO: ${logs.reduce((a, b) => a + parseFloat(b.duration), 0).toFixed(1)}s\n`;
-                content += `------------------------------\n`;
-                logs.forEach(l => content += `[${l.type}] ${l.name}: ${l.duration}s\n`);
-            }
-
-            const blob = new Blob([content], { type: 'text/plain' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `SMED_OP${op}_${resp.replace(/\s/g, '_')}.${format}`;
-            a.click();
+        if (format === 'csv') {
+        content = `REPORTE SMED INDUSTRIAL\n`;
+        content +=
+        `Fecha,${fecha}\nResponsable,${resp}\nTurno,${turno}\nOP,${op}\nColores,${colores}\nArea,${area}\n\n`;
+        content += "Grupo,Actividad,Tipo,Duracion,Inicio,Fin\n";
+        logs.forEach(l => content += `${l.group},${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
+        } else {
+        content = `==============================\n REPORTE SMED INDUSTRIAL\n==============================\n`;
+        content += `FECHA: ${fecha}\nOP: ${op} | COLORES: ${colores}\nAREA: ${area}\nRESPONSABLE: ${resp} | TURNO:
+        ${turno}\n`;
+        content += `------------------------------\n`;
+        content += `TOTAL TIEMPO: ${logs.reduce((a,b)=>a+parseFloat(b.duration),0).toFixed(1)}s\n`;
+        content += `------------------------------\n`;
+        logs.forEach(l => content += `[${l.type}] ${l.name}: ${l.duration}s\n`);
         }
 
-        function fullReset() { if (confirm("¿Borrar todo permanentemente?")) { localStorage.clear(); location.reload(); } }
-        function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        const blob = new Blob([content], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `SMED_OP${op}_${resp.replace(/\s/g,'_')}.${format}`;
+        a.click();
+        }
+
+        function fullReset() { if(confirm("¿Borrar todo permanentemente?")) { localStorage.clear(); location.reload(); }
+        }
+        function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else
+        document.exitFullscreen(); }
 
         window.onload = () => {
-            btnNames.forEach(createButtonElement);
-            renderLogs();
-            setInterval(updateClocks, 100);
+        btnNames.forEach(createButtonElement);
         };
-    </script>
+        </script>
 </body>
 
 </html>
