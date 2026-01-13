@@ -77,7 +77,7 @@
     <script>
         let currentAbsTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Montar", "Sello Ajuste", "Limpieza"];
+        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Maquina Abrir","Troquel Desmontar", "Troquel Montar", "Troquel Requerir", "Sello Desmontar", "Sello Montar", "Sello Requerir", "Tinta Desmontar", "Tinta Montar", "Tinta Requerir", "Tinta Lavar", "Maquina Cerrar", "Centrado"];
         let activeTasksByGroup = {}; 
 
         function updateClocks() {
