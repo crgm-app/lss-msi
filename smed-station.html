@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Analytics Pro v10</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>SMED Analytics Pro v11</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; }
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
         body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; height: 50px; }
+        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; height: 50px; flex-shrink: 0; }
         .nav-btn { flex: 1; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
         .nav-btn.active { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); background: #222; }
 
-        header { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        header { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; flex-shrink: 0; }
         .main-clock { font-size: 2.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
 
         .tab-content { display: none; flex: 1; overflow: hidden; }
@@ -31,19 +31,19 @@
         
         /* ANÁLISIS */
         .analysis-view { flex-direction: column; padding: 10px; overflow-y: auto; background: #000; gap: 15px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-shrink: 0; }
         .stat-card { background: #111; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #222; }
         .stat-card h4 { font-size: 0.55rem; color: #555; }
-        .chart-box { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222; min-height: 250px; position: relative; }
+        .chart-box { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222; min-height: 250px; position: relative; width: 100%; }
 
         /* BOTONES */
-        .smed-btn-container { display: flex; height: 55px; border: 1px solid #333; border-radius: 5px; overflow: hidden; margin-bottom: 5px; }
-        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 10px; position: relative; font-size: 0.75rem; }
+        .smed-btn-container { display: flex; height: 55px; border: 1px solid #333; border-radius: 5px; overflow: hidden; margin-bottom: 5px; flex-shrink: 0; }
+        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 10px; position: relative; font-size: 0.75rem; overflow: hidden; }
         .smed-btn.active { background: linear-gradient(90deg, #320, #111); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
         .group-tag { font-size: 0.45rem; color: var(--neon-blue); position: absolute; top: 3px; right: 5px; text-transform: uppercase; }
-        .del-btn { width: 30px; background: #211; color: #f44; border: none; font-size: 1rem; }
+        .del-btn { width: 30px; background: #211; color: #f44; border: none; font-size: 1rem; flex-shrink: 0; }
 
-        footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; padding: 0 10px; border-top: 1px solid #333; }
+        footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; padding: 0 10px; border-top: 1px solid #333; flex-shrink: 0; }
         .btn-f { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
     </style>
 </head>
@@ -54,7 +54,7 @@
             <div id="abs-clock" class="main-clock">00000.0</div>
             <div id="date-info" style="font-size:0.6rem; color:#444">--/--/--</div>
         </div>
-        <button onclick="toggleFS()" style="background:#222; border:1px solid #444; color:#666; font-size:8px; padding:5px">PANTALLA COMPLETA</button>
+        <button id="fs-btn" onclick="toggleFS()" style="background:#222; border:1px solid #444; color:#666; font-size:8px; padding:5px">PANTALLA COMPLETA</button>
     </header>
 
     <nav>
@@ -86,7 +86,7 @@
             <div class="stat-card"><h4>MUDA</h4><p id="s-mud" style="color:var(--neon-orange)">0</p></div>
         </div>
         <div class="chart-box"><canvas id="c-pie"></canvas></div>
-        <div class="chart-box"><canvas id="c-bar"></canvas></div>
+        <div class="chart-box" style="margin-top:10px"><canvas id="c-bar"></canvas></div>
     </div>
 
     <footer>
@@ -98,7 +98,7 @@
     <script>
         let absTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btns = JSON.parse(localStorage.getItem('smed_btns')) || ["Troquel Montar", "Sello Limpiar"];
+        let btns = JSON.parse(localStorage.getItem('smed_btns')) || ["Maquina Abrir", "Tinta Desmontar"];
         let activeTasks = {};
         let pie = null, bar = null;
 
@@ -114,7 +114,10 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-'+t).classList.add('active');
             document.getElementById('btn-tab-'+t).classList.add('active');
-            if(t === 'ana') drawCharts();
+            if(t === 'ana') {
+                // Pequeño delay para asegurar que el DOM sea visible antes de dibujar
+                setTimeout(drawCharts, 50);
+            }
         }
 
         function handleAction(btn, name) {
@@ -146,7 +149,7 @@
         function renderLogs() {
             document.getElementById('log-body').innerHTML = logs.map((l, i) => `
                 <tr><td>${l.name}</td>
-                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs))" style="background:#000; color:#fff; font-size:0.6rem">
+                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs))" style="background:#000; color:#fff; font-size:0.6rem; border:1px solid #333">
                     <option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option>
                     <option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option>
                     <option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option>
@@ -155,6 +158,11 @@
         }
 
         function drawCharts() {
+            if (typeof Chart === 'undefined') {
+                alert("Error: La librería de gráficos no cargó. Asegúrate de tener conexión al menos una vez para que el navegador la guarde en caché.");
+                return;
+            }
+
             const t = { Interna: 0, Externa: 0, Muda: 0 };
             logs.forEach(l => t[l.type] += l.dur);
             document.getElementById('s-tot').textContent = (t.Interna+t.Externa+t.Muda).toFixed(1);
@@ -162,18 +170,51 @@
             document.getElementById('s-ext').textContent = t.Externa.toFixed(1);
             document.getElementById('s-mud').textContent = t.Muda.toFixed(1);
 
+            // Pie Chart
+            const ctxPie = document.getElementById('c-pie').getContext('2d');
             if(pie) pie.destroy();
-            pie = new Chart(document.getElementById('c-pie'), {
+            pie = new Chart(ctxPie, {
                 type: 'doughnut',
-                data: { labels: ['Int', 'Ext', 'Muda'], datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#fff', font: { size: 10 } } } } }
+                data: { 
+                    labels: ['Int', 'Ext', 'Muda'], 
+                    datasets: [{ 
+                        data: [t.Interna, t.Externa, t.Muda], 
+                        backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'], 
+                        borderWidth: 0 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'right', labels: { color: '#fff', font: { size: 10 } } } 
+                    } 
+                }
             });
 
+            // Gantt/Bar Chart
+            const ctxBar = document.getElementById('c-bar').getContext('2d');
             if(bar) bar.destroy();
-            bar = new Chart(document.getElementById('c-bar'), {
+            bar = new Chart(ctxBar, {
                 type: 'bar',
-                data: { labels: logs.map(l => l.name), datasets: [{ label: 'S', data: logs.map(l => [l.start, l.end]), backgroundColor: logs.map(l => l.type==='Interna'?'#00d4ff':(l.type==='Externa'?'#00ff00':'#ffaa00')) }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#666', font: { size: 8 } } }, y: { ticks: { color: '#fff', font: { size: 8 } } } }, plugins: { legend: { display: false } } }
+                data: { 
+                    labels: logs.map(l => l.name), 
+                    datasets: [{ 
+                        label: 'Segundos', 
+                        data: logs.map(l => [l.start, l.end]), 
+                        backgroundColor: logs.map(l => l.type==='Interna'?'#00d4ff':(l.type==='Externa'?'#00ff00':'#ffaa00')) 
+                    }] 
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { ticks: { color: '#666', font: { size: 8 } } }, 
+                        y: { ticks: { color: '#fff', font: { size: 8 } } } 
+                    }, 
+                    plugins: { legend: { display: false } } 
+                }
             });
         }
 
@@ -199,18 +240,38 @@
         function doExport() {
             const op = prompt("OP:"), res = prompt("Resp:"), col = prompt("Col:"), are = prompt("Área:");
             let c = `OP,${op},Resp,${res},Col,${col},Area,${are}\nActividad,Tipo,Dur,Ini,Fin\n`;
-            logs.forEach(l => c += `${l.name},${l.type},${l.dur},${l.start},${l.end}\n`);
+            logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
+            const blob = new Blob([c], { type: 'text/csv' });
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
-            a.download = `SMED_${op}.csv`;
+            a.href = URL.createObjectURL(blob);
+            a.download = `SMED_OP${op}_${new Date().getTime()}.csv`;
             a.click();
         }
 
         function stopAll() { document.querySelectorAll('.smed-btn.active').forEach(b => handleAction(b, b.dataset.task)); }
-        function clearAll() { if(confirm("¿RESET?")) { localStorage.clear(); location.reload(); } }
-        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        
+        function clearAll() { 
+            if(confirm("¿RESET TOTAL? Se borrarán todos los datos y gráficos.")) { 
+                localStorage.clear(); 
+                location.reload(); 
+            } 
+        }
 
-        window.onload = () => { btns.forEach(makeBtn); renderLogs(); setInterval(update, 100); };
+        function toggleFS() { 
+            if(!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => {
+                    console.error("Error al activar Fullscreen:", e);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        window.onload = () => { 
+            btns.forEach(makeBtn); 
+            renderLogs(); 
+            setInterval(update, 100); 
+        };
     </script>
 </body>
 </html>
