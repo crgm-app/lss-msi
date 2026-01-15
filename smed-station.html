@@ -3,49 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Analytics Pro Fixed</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <title>SMED Analytics Pro v10</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; }
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
         body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; min-height: 50px; }
-        .nav-btn { flex: 1; padding: 10px; border: none; background: none; color: #888; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.8rem; }
+        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; height: 50px; }
+        .nav-btn { flex: 1; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
         .nav-btn.active { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); background: #222; }
 
-        header { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-        .main-clock { font-size: 2.8rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
+        header { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .main-clock { font-size: 2.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
 
-        .tab-content { display: none; flex: 1; overflow: hidden; height: calc(100vh - 180px); }
+        .tab-content { display: none; flex: 1; overflow: hidden; }
         .tab-content.active { display: flex; }
 
-        /* VISTA REGISTRO */
+        /* REGISTRO */
         .registro-view { flex-direction: row; }
-        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; height: 100%; }
+        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; }
         .log-section { flex: 1; overflow-y: auto; background: #000; padding: 5px; }
-        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75rem; }
-        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; }
-        td { padding: 6px; border-bottom: 1px solid #111; }
-        .control-panel { flex: 0.9; background: #0a0a0a; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; }
+        th { background: #1a1a1a; color: var(--neon-blue); padding: 5px; text-align: left; position: sticky; top: 0; }
+        td { padding: 5px; border-bottom: 1px solid #111; }
+        .control-panel { flex: 0.9; background: #0a0a0a; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
         
-        /* VISTA ANÁLISIS */
-        .analysis-view { flex-direction: column; padding: 15px; overflow-y: auto; background: #000; gap: 20px; }
-        .chart-wrapper { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; width: 100%; margin-bottom: 15px; }
-        canvas { max-width: 100%; height: auto !important; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
-        .stat-card { background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #222; }
-        .stat-card h4 { font-size: 0.6rem; color: #666; text-transform: uppercase; }
-        .stat-card p { font-size: 1.1rem; font-weight: bold; }
+        /* ANÁLISIS */
+        .analysis-view { flex-direction: column; padding: 10px; overflow-y: auto; background: #000; gap: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .stat-card { background: #111; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #222; }
+        .stat-card h4 { font-size: 0.55rem; color: #555; }
+        .chart-box { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222; min-height: 250px; position: relative; }
 
         /* BOTONES */
-        .smed-btn-container { display: flex; height: 60px; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-bottom: 4px; }
-        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 10px; position: relative; font-size: 0.8rem; }
-        .smed-btn.active { background: linear-gradient(90deg, #332200, #1a1a1a); color: var(--neon-orange); border-left: 4px solid var(--neon-orange); }
-        .group-tag { font-size: 0.5rem; color: var(--neon-blue); text-transform: uppercase; position: absolute; top: 4px; right: 8px; }
+        .smed-btn-container { display: flex; height: 55px; border: 1px solid #333; border-radius: 5px; overflow: hidden; margin-bottom: 5px; }
+        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 10px; position: relative; font-size: 0.75rem; }
+        .smed-btn.active { background: linear-gradient(90deg, #320, #111); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
+        .group-tag { font-size: 0.45rem; color: var(--neon-blue); position: absolute; top: 3px; right: 5px; text-transform: uppercase; }
+        .del-btn { width: 30px; background: #211; color: #f44; border: none; font-size: 1rem; }
 
-        footer { height: 70px; background: #111; display: flex; gap: 10px; justify-content: center; align-items: center; padding: 0 10px; border-top: 2px solid #333; }
-        .btn-footer { background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; min-width: 80px; }
+        footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; padding: 0 10px; border-top: 1px solid #333; }
+        .btn-f { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -53,17 +52,17 @@
     <header>
         <div>
             <div id="abs-clock" class="main-clock">00000.0</div>
-            <div id="date-display" style="font-size:0.7rem; color:#444">2026-01-14</div>
+            <div id="date-info" style="font-size:0.6rem; color:#444">--/--/--</div>
         </div>
-        <button onclick="toggleFullscreen()" style="background:#222; border:1px solid #333; color:#aaa; font-size:10px; padding:6px; border-radius:4px;">F11 / PANTALLA</button>
+        <button onclick="toggleFS()" style="background:#222; border:1px solid #444; color:#666; font-size:8px; padding:5px">PANTALLA COMPLETA</button>
     </header>
 
     <nav>
-        <button class="nav-btn active" id="btn-reg" onclick="switchTab('registro')">Captura de Datos</button>
-        <button class="nav-btn" id="btn-ana" onclick="switchTab('analisis')">Gráficos & Análisis</button>
+        <button class="nav-btn active" id="btn-tab-reg" onclick="switchTab('reg')">Registro</button>
+        <button class="nav-btn" id="btn-tab-ana" onclick="switchTab('ana')">Análisis</button>
     </nav>
 
-    <div id="registro" class="tab-content active registro-view">
+    <div id="tab-reg" class="tab-content active registro-view">
         <section class="left-panel">
             <div class="log-section">
                 <table>
@@ -71,221 +70,147 @@
                     <tbody id="log-body"></tbody>
                 </table>
             </div>
-            <div style="padding:10px; background:#111; display:flex;">
-                <input type="text" id="new-task-name" placeholder="Nueva actividad..." style="background:#000; border:1px solid #444; color:#fff; padding:10px; flex:1; border-radius:5px; margin-right:5px; font-size: 0.8rem;">
-                <button onclick="addNewButton()" style="padding:10px; background:var(--neon-blue); border:none; width:50px; border-radius:5px; font-weight:bold">+</button>
+            <div style="padding:8px; background:#111; display:flex;">
+                <input type="text" id="new-task" placeholder="Actividad..." style="background:#000; border:1px solid #333; color:#fff; padding:8px; flex:1; border-radius:4px; font-size:0.8rem">
+                <button onclick="addBtn()" style="background:var(--neon-blue); border:none; width:40px; margin-left:5px; border-radius:4px">+</button>
             </div>
         </section>
-        <section class="control-panel" id="button-container"></section>
+        <section class="control-panel" id="btn-container"></section>
     </div>
 
-    <div id="analisis" class="tab-content analysis-view">
+    <div id="tab-ana" class="tab-content analysis-view">
         <div class="stats-grid">
-            <div class="stat-card"><h4>Total (s)</h4><p id="stat-total">0</p></div>
-            <div class="stat-card"><h4>Interno</h4><p id="stat-int" style="color:var(--neon-blue)">0</p></div>
-            <div class="stat-card"><h4>Externo</h4><p id="stat-ext" style="color:var(--neon-green)">0</p></div>
-            <div class="stat-card"><h4>Muda</h4><p id="stat-muda" style="color:var(--neon-orange)">0</p></div>
+            <div class="stat-card"><h4>TOTAL (S)</h4><p id="s-tot">0</p></div>
+            <div class="stat-card"><h4>INT</h4><p id="s-int" style="color:var(--neon-blue)">0</p></div>
+            <div class="stat-card"><h4>EXT</h4><p id="s-ext" style="color:var(--neon-green)">0</p></div>
+            <div class="stat-card"><h4>MUDA</h4><p id="s-mud" style="color:var(--neon-orange)">0</p></div>
         </div>
-        <div class="chart-wrapper">
-            <h4 style="color:#666; margin-bottom:10px; font-size:0.7rem; text-transform: uppercase;">Distribución de Tiempos (%)</h4>
-            <div style="height: 250px; position: relative;"><canvas id="pieChart"></canvas></div>
-        </div>
-        <div class="chart-wrapper">
-            <h4 style="color:#666; margin-bottom:10px; font-size:0.7rem; text-transform: uppercase;">Línea de Tiempo (Gantt)</h4>
-            <div style="height: 300px; position: relative;"><canvas id="timelineChart"></canvas></div>
-        </div>
+        <div class="chart-box"><canvas id="c-pie"></canvas></div>
+        <div class="chart-box"><canvas id="c-bar"></canvas></div>
     </div>
 
     <footer>
-        <button class="btn-footer" style="background:var(--neon-orange); color:#000" onclick="pauseAll()">STOP ALL</button>
-        <button class="btn-footer" onclick="exportData('csv')">CSV</button>
-        <button class="btn-footer" style="background:#400; color:#f55" onclick="fullReset()">RESET</button>
+        <button class="btn-f" style="background:var(--neon-orange); color:#000" onclick="stopAll()">STOP ALL</button>
+        <button class="btn-f" onclick="doExport()">EXPORTAR CSV</button>
+        <button class="btn-f" style="color:#f44" onclick="clearAll()">RESET</button>
     </footer>
 
     <script>
-        let currentAbsTime = 0;
+        let absTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Maquina Abrir", "Tinta Desmontar", "Troquel Desmontar"];
-        let activeTasksByGroup = {};
-        let pieChart = null, timelineChart = null;
+        let btns = JSON.parse(localStorage.getItem('smed_btns')) || ["Troquel Montar", "Sello Limpiar"];
+        let activeTasks = {};
+        let pie = null, bar = null;
 
-        function updateClocks() {
-            const now = new Date();
-            currentAbsTime = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds() + (now.getMilliseconds() / 1000);
-            document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
+        function update() {
+            const n = new Date();
+            absTime = (n.getHours()*3600)+(n.getMinutes()*60)+n.getSeconds()+(n.getMilliseconds()/1000);
+            document.getElementById('abs-clock').textContent = absTime.toFixed(1);
+            document.getElementById('date-info').textContent = n.toLocaleDateString() + " " + n.toLocaleTimeString();
         }
 
-        function switchTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            if (id === 'registro') document.getElementById('btn-reg').classList.add('active');
-            if (id === 'analisis') {
-                document.getElementById('btn-ana').classList.add('active');
-                setTimeout(updateCharts, 100); 
-            }
+            document.getElementById('tab-'+t).classList.add('active');
+            document.getElementById('btn-tab-'+t).classList.add('active');
+            if(t === 'ana') drawCharts();
         }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    alert(`Error intentando activar pantalla completa: ${err.message}`);
-                });
+        function handleAction(btn, name) {
+            const g = name.split(' ')[0].toUpperCase();
+            if(activeTasks[g] === name) {
+                closeTask(name, btn);
+                delete activeTasks[g];
             } else {
-                document.exitFullscreen();
-            }
-        }
-
-        function handleAction(btn, taskName) {
-            const group = taskName.split(' ')[0].toUpperCase();
-            if (activeTasksByGroup[group] === taskName) {
-                confirmClose(taskName, btn);
-                delete activeTasksByGroup[group];
-            } else {
-                if (activeTasksByGroup[group]) {
-                    const prevName = activeTasksByGroup[group];
-                    const prevBtn = document.querySelector(`[data-task="${prevName}"]`);
-                    if (prevBtn) confirmClose(prevName, prevBtn);
+                if(activeTasks[g]) {
+                    const prev = activeTasks[g];
+                    const pBtn = document.querySelector(`[data-task="${prev}"]`);
+                    if(pBtn) closeTask(prev, pBtn);
                 }
-                activeTasksByGroup[group] = taskName;
+                activeTasks[g] = name;
                 btn.classList.add('active');
-                btn.dataset.startTime = currentAbsTime;
-                btn.querySelector('.status').textContent = "RUNNING...";
+                btn.dataset.start = absTime;
             }
         }
 
-        function confirmClose(name, btn) {
-            const start = parseFloat(btn.dataset.startTime);
-            const duration = (currentAbsTime - start).toFixed(1);
-            logs.push({ 
-                name, 
-                group: name.split(' ')[0].toUpperCase(), 
-                type: "Interna", 
-                start: start.toFixed(1), 
-                end: currentAbsTime.toFixed(1), 
-                duration: parseFloat(duration) 
-            });
+        function closeTask(name, btn) {
+            const s = parseFloat(btn.dataset.start);
+            const d = parseFloat((absTime - s).toFixed(1));
+            logs.push({ name, type: "Interna", start: s.toFixed(1), end: absTime.toFixed(1), dur: d });
             btn.classList.remove('active');
-            btn.querySelector('.status').textContent = "OFF";
             localStorage.setItem('smed_logs', JSON.stringify(logs));
             renderLogs();
         }
 
         function renderLogs() {
-            document.getElementById('log-body').innerHTML = logs.map((e, i) => `
-                <tr><td>${e.name}</td>
-                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs));" style="background:#111; color:#fff; border:1px solid #444; font-size:0.7rem;">
-                    <option value="Interna" ${e.type==='Interna'?'selected':''}>Int</option>
-                    <option value="Externa" ${e.type==='Externa'?'selected':''}>Ext</option>
-                    <option value="Muda" ${e.type==='Muda'?'selected':''}>Muda</option>
+            document.getElementById('log-body').innerHTML = logs.map((l, i) => `
+                <tr><td>${l.name}</td>
+                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs))" style="background:#000; color:#fff; font-size:0.6rem">
+                    <option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option>
+                    <option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option>
+                    <option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option>
                 </select></td>
-                <td style="color:var(--neon-orange); font-weight:bold">${e.duration}s</td>
-                <td style="color:#555">${e.start}</td></tr>`).join('');
-            document.querySelector('.log-section').scrollTop = 99999;
+                <td style="color:var(--neon-orange)">${l.dur}s</td><td>${l.start}</td></tr>`).join('');
         }
 
-        function updateCharts() {
-            if (typeof Chart === 'undefined') {
-                console.error("Chart.js no ha cargado correctamente.");
-                return;
-            }
+        function drawCharts() {
+            const t = { Interna: 0, Externa: 0, Muda: 0 };
+            logs.forEach(l => t[l.type] += l.dur);
+            document.getElementById('s-tot').textContent = (t.Interna+t.Externa+t.Muda).toFixed(1);
+            document.getElementById('s-int').textContent = t.Interna.toFixed(1);
+            document.getElementById('s-ext').textContent = t.Externa.toFixed(1);
+            document.getElementById('s-mud').textContent = t.Muda.toFixed(1);
 
-            const totals = { Interna: 0, Externa: 0, Muda: 0 };
-            logs.forEach(l => totals[l.type] += l.duration);
-            
-            document.getElementById('stat-total').textContent = (totals.Interna + totals.Externa + totals.Muda).toFixed(1);
-            document.getElementById('stat-int').textContent = totals.Interna.toFixed(1);
-            document.getElementById('stat-ext').textContent = totals.Externa.toFixed(1);
-            document.getElementById('stat-muda').textContent = totals.Muda.toFixed(1);
-
-            const ctxPie = document.getElementById('pieChart').getContext('2d');
-            if(pieChart) pieChart.destroy();
-            pieChart = new Chart(ctxPie, {
+            if(pie) pie.destroy();
+            pie = new Chart(document.getElementById('c-pie'), {
                 type: 'doughnut',
-                data: {
-                    labels: ['Interna', 'Externa', 'Muda'],
-                    datasets: [{
-                        data: [totals.Interna, totals.Externa, totals.Muda],
-                        backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'],
-                        borderColor: '#111'
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff', font: { size: 10 } } } } }
+                data: { labels: ['Int', 'Ext', 'Muda'], datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#fff', font: { size: 10 } } } } }
             });
 
-            const ctxTime = document.getElementById('timelineChart').getContext('2d');
-            if(timelineChart) timelineChart.destroy();
-            timelineChart = new Chart(ctxTime, {
+            if(bar) bar.destroy();
+            bar = new Chart(document.getElementById('c-bar'), {
                 type: 'bar',
-                data: {
-                    labels: logs.map(l => l.name),
-                    datasets: [{
-                        label: 'Línea de Tiempo',
-                        data: logs.map(l => [l.start, l.end]),
-                        backgroundColor: logs.map(l => l.type === 'Interna' ? '#00d4ff' : (l.type === 'Externa' ? '#00ff00' : '#ffaa00'))
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    maintainAspectRatio: false,
-                    scales: { 
-                        x: { grid: { color: '#222' }, ticks: { color: '#666', font: { size: 9 } } },
-                        y: { grid: { display: false }, ticks: { color: '#fff', font: { size: 9 } } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
+                data: { labels: logs.map(l => l.name), datasets: [{ label: 'S', data: logs.map(l => [l.start, l.end]), backgroundColor: logs.map(l => l.type==='Interna'?'#00d4ff':(l.type==='Externa'?'#00ff00':'#ffaa00')) }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#666', font: { size: 8 } } }, y: { ticks: { color: '#fff', font: { size: 8 } } } }, plugins: { legend: { display: false } } }
             });
         }
 
-        function addNewButton() {
-            const name = document.getElementById('new-task-name').value.trim();
-            if (!name || btnNames.includes(name)) return;
-            btnNames.push(name);
-            localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
-            createButtonElement(name);
-            document.getElementById('new-task-name').value = "";
+        function addBtn() {
+            const n = document.getElementById('new-task').value.trim();
+            if(!n || btns.includes(n)) return;
+            btns.push(n);
+            localStorage.setItem('smed_btns', JSON.stringify(btns));
+            makeBtn(n);
+            document.getElementById('new-task').value = "";
         }
 
-        function createButtonElement(name) {
-            const div = document.createElement('div');
-            div.className = 'smed-btn-container';
-            div.innerHTML = `<button class="smed-btn" data-task="${name}"><div class="group-tag">${name.split(' ')[0]}</div>${name}<br><span class="status" style="font-size:0.6rem; color:#666">OFF</span></button><button class="del-btn" onclick="deleteBtn('${name}', this)">×</button>`;
-            div.querySelector('.smed-btn').onclick = () => handleAction(div.querySelector('.smed-btn'), name);
-            document.getElementById('button-container').appendChild(div);
+        function makeBtn(n) {
+            const d = document.createElement('div');
+            d.className = 'smed-btn-container';
+            d.innerHTML = `<button class="smed-btn" data-task="${n}"><div class="group-tag">${n.split(' ')[0]}</div>${n} <br><span style="font-size:0.5rem; color:#444">OFF</span></button><button class="del-btn">×</button>`;
+            const b = d.querySelector('.smed-btn');
+            b.onclick = () => handleAction(b, n);
+            d.querySelector('.del-btn').onclick = () => { if(confirm("¿Borrar?")) { btns = btns.filter(x => x !== n); localStorage.setItem('smed_btns', JSON.stringify(btns)); d.remove(); } };
+            document.getElementById('btn-container').appendChild(d);
         }
 
-        function deleteBtn(name, element) {
-            if(confirm("¿Eliminar actividad?")) {
-                btnNames = btnNames.filter(n => n !== name);
-                localStorage.setItem('smed_buttons', JSON.stringify(btnNames));
-                element.parentElement.remove();
-            }
-        }
-
-        function pauseAll() { document.querySelectorAll('.smed-btn.active').forEach(btn => confirmClose(btn.dataset.task, btn)); activeTasksByGroup = {}; }
-        function fullReset() { if(confirm("¿RESET TOTAL DE DATOS?")) { localStorage.clear(); location.reload(); } }
-        
-        function exportData(format) {
-            if(logs.length === 0) return alert("Sin datos.");
-            let content = "Actividad,Tipo,Duracion,Inicio,Fin\n";
-            logs.forEach(l => content += `${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
-            const blob = new Blob([content], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
+        function doExport() {
+            const op = prompt("OP:"), res = prompt("Resp:"), col = prompt("Col:"), are = prompt("Área:");
+            let c = `OP,${op},Resp,${res},Col,${col},Area,${are}\nActividad,Tipo,Dur,Ini,Fin\n`;
+            logs.forEach(l => c += `${l.name},${l.type},${l.dur},${l.start},${l.end}\n`);
             const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `SMED_REPORT_${new Date().getTime()}.csv`);
-            document.body.appendChild(a);
+            a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' }));
+            a.download = `SMED_${op}.csv`;
             a.click();
-            document.body.removeChild(a);
         }
 
-        window.onload = () => { 
-            btnNames.forEach(createButtonElement); 
-            renderLogs(); 
-            setInterval(updateClocks, 100); 
-        };
+        function stopAll() { document.querySelectorAll('.smed-btn.active').forEach(b => handleAction(b, b.dataset.task)); }
+        function clearAll() { if(confirm("¿RESET?")) { localStorage.clear(); location.reload(); } }
+        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+
+        window.onload = () => { btns.forEach(makeBtn); renderLogs(); setInterval(update, 100); };
     </script>
 </body>
 </html>
