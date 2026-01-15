@@ -3,502 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Stable v17</title>
+    <title>SMED Master V18</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
-        :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; --panel: #111; }
+        :root {
+            --neon-green: #00ff00; --neon-red: #ff3333; --neon-blue: #00d4ff; 
+            --neon-orange: #ffaa00; --bg-dark: #050505; --panel: #111;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', Roboto, monospace; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* HEADER & NAV */
-        header { background: var(--panel); padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; }
-        .main-clock { font-size: 1.8rem; font-weight: 900; font-family: monospace; color: var(--neon-green); }
-        
-        nav { display: flex; background: #000; border-bottom: 1px solid #333; height: 45px; flex-shrink: 0; }
-        .tab-btn { flex: 1; background: none; border: none; color: #666; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; }
-        .tab-btn.active { color: var(--neon-blue); background: #151515; border-bottom: 3px solid var(--neon-blue); }
+        /* HEADER COMPACTO CON TODA LA INFO */
+        header { 
+            background: var(--panel); padding: 5px 10px; border-bottom: 1px solid #333; 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; 
+            height: 60px; flex-shrink: 0;
+        }
 
+        .h-col { display: flex; flex-direction: column; justify-content: center; }
+        .h-center { align-items: center; text-align: center; }
+        .h-right { align-items: flex-end; text-align: right; }
+
+        .main-clock { font-size: 1.4rem; font-weight: 900; color: var(--neon-green); line-height: 1; }
+        .sub-clock { font-size: 0.6rem; color: #666; letter-spacing: 1px; }
+        
+        .rem-clock { font-size: 1.1rem; font-weight: bold; color: var(--neon-red); }
+        .rem-label { font-size: 0.55rem; color: #844; }
+
+        .real-time { font-size: 0.9rem; color: #fff; }
+        .date-display { font-size: 0.6rem; color: var(--neon-blue); }
+
+        /* NAVEGACIÓN */
+        nav { display: flex; background: #000; border-bottom: 1px solid #333; height: 40px; flex-shrink: 0; }
+        .tab-btn { flex: 1; background: none; border: none; color: #555; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; cursor: pointer; }
+        .tab-btn.active { color: var(--neon-blue); background: #151515; border-bottom: 2px solid var(--neon-blue); }
+
+        /* VISTAS */
         .view-section { display: none; flex: 1; overflow: hidden; position: relative; }
         .view-section.active { display: flex; }
 
-        /* VISTA 1: CAPTURA */
+        /* VISTA 1: CAPTURA (Compacta) */
         .capture-layout { flex-direction: row; width: 100%; }
-        .left-list { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .left-panel { flex: 1.2; display: flex; flex-direction: column; border-right: 1px solid #222; }
         .log-container { flex: 1; overflow-y: auto; background: #000; }
-        .right-buttons { flex: 1; background: #080808; padding: 5px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .right-panel { flex: 1; background: #080808; padding: 5px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 
-        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; }
-        th { background: #151515; color: var(--neon-blue); padding: 5px; text-align: left; position: sticky; top: 0; z-index: 2; }
-        td { padding: 4px 6px; border-bottom: 1px solid #222; }
+        /* TABLA DE REGISTROS */
+        table { width: 100%; border-collapse: collapse; font-size: 0.65rem; }
+        th { background: #151515; color: var(--neon-blue); padding: 4px; text-align: left; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid #333; }
+        td { padding: 3px 5px; border-bottom: 1px solid #1a1a1a; color: #ccc; }
+        .dur-cell { color: var(--neon-orange); font-weight: bold; }
 
+        /* BOTONES SMED */
         .smed-btn-box { display: flex; height: 50px; border: 1px solid #333; border-radius: 4px; overflow: hidden; background: #151515; flex-shrink: 0; }
-        .smed-btn { flex: 1; background: transparent; color: #ddd; border: none; text-align: left; padding-left: 10px; position: relative; font-weight: 600; font-size: 0.8rem; }
-        .smed-btn.active { background: linear-gradient(90deg, #332200, #151515); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
-        .grp-label { position: absolute; top: 2px; right: 5px; font-size: 0.5rem; color: #555; text-transform: uppercase; }
-        .del-btn { width: 30px; background: #200; color: #f55; border: none; font-size: 1rem; cursor: pointer; }
+        .smed-btn { flex: 1; background: transparent; color: #ddd; border: none; text-align: left; padding-left: 8px; position: relative; font-weight: 600; font-size: 0.75rem; cursor: pointer; }
+        .smed-btn.active { background: linear-gradient(90deg, #331500, #151515); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
+        .grp-label { position: absolute; top: 2px; right: 4px; font-size: 0.45rem; color: #555; text-transform: uppercase; }
+        .del-btn { width: 25px; background: #220a0a; color: #f55; border: none; font-size: 0.9rem; cursor: pointer; border-left: 1px solid #333; }
 
-        /* VISTA 2: CRONOLOGÍA (GANTT) */
-        .gantt-layout { flex-direction: column; padding: 10px; background: #000; overflow: hidden; }
-        .date-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #111; padding: 5px; border-radius: 5px; }
-        .date-btn { background: #222; color: #fff; border: 1px solid #444; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
-        .gantt-container { flex: 1; position: relative; background: #080808; border: 1px solid #333; border-radius: 4px; }
-        canvas#ganttCanvas { width: 100%; height: 100%; display: block; }
+        /* VISTA 2: GRÁFICOS */
+        .dashboard-layout { flex-direction: column; padding: 10px; overflow-y: auto; background: #000; gap: 10px; }
+        .chart-container { background: #111; border: 1px solid #333; border-radius: 6px; padding: 5px; min-height: 200px; display: flex; flex-direction: column; }
+        .chart-title { font-size: 0.7rem; color: #888; margin-bottom: 5px; text-transform: uppercase; text-align: center; }
 
-        /* VISTA 3: ESTADÍSTICA PRO (BOX PLOTS) */
-        .sigma-layout { flex-direction: column; padding: 10px; overflow-y: auto; background: #050505; }
-        .filter-bar { display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .filter-btn { padding: 6px 12px; background: #222; border: 1px solid #444; color: #aaa; border-radius: 15px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; }
-        .filter-btn.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); font-weight: bold; }
-
-        .boxplot-container { height: 350px; background: #111; border: 1px solid #333; border-radius: 6px; padding: 10px; margin-bottom: 15px; position: relative; }
-        canvas#boxPlotCanvas { width: 100%; height: 100%; display: block; }
-        
-        .stat-detail-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; margin-top: 10px; }
-        .stat-detail-table th { background: #1a1a1a; color: #fff; padding: 8px; text-align: center; border-bottom: 2px solid #333; }
-        .stat-detail-table td { padding: 8px; border-bottom: 1px solid #222; text-align: center; color: #ccc; }
+        /* VISTA 3: ESTADÍSTICA */
+        .stats-layout { flex-direction: column; padding: 10px; overflow-y: auto; background: #000; }
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .kpi-card { background: #111; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #222; }
+        .kpi-val { font-size: 0.9rem; font-weight: bold; }
+        .kpi-lbl { font-size: 0.5rem; color: #666; }
 
         /* FOOTER */
-        footer { height: 50px; background: var(--panel); border-top: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
-        .btn-act { padding: 8px 12px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; font-weight: bold; font-size: 0.7rem; }
+        footer { height: 45px; background: var(--panel); border-top: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 5px; flex-shrink: 0; }
+        .btn-foot { padding: 6px 10px; border-radius: 3px; border: 1px solid #444; background: #222; color: #fff; font-weight: bold; font-size: 0.65rem; cursor: pointer; }
+        .btn-primary { background: var(--neon-blue); color: #000; border: none; }
         
-        input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; }
-        #csv-file-input { display: none; }
+        input { background: #000; border: 1px solid #333; color: #fff; padding: 5px; font-size: 0.7rem; }
+        #csv-input { display: none; }
     </style>
 </head>
 <body>
 
     <header>
-        <div>
+        <div class="h-col">
             <div id="abs-clock" class="main-clock">00000.0</div>
-            <div style="font-size:0.6rem; color:#555">SISTEMA SMED V17 (ESTABLE)</div>
+            <div class="sub-clock">SEGUNDOS DÍA</div>
         </div>
-        <div style="text-align:right">
-            <div id="real-time" style="font-size:0.8rem; font-weight:bold; color:#aaa">00:00:00</div>
-            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:2px 5px; margin-top:2px;">FULLSCREEN</button>
+        <div class="h-col h-center">
+            <div id="rem-sec" class="rem-clock">-00000</div>
+            <div id="rem-hms" class="rem-label">FALTAN 00:00:00</div>
+        </div>
+        <div class="h-col h-right">
+            <div id="real-time" class="real-time">00:00:00</div>
+            <div id="date-display" class="date-display">--/--/--</div>
         </div>
     </header>
 
     <nav>
-        <button class="tab-btn active" onclick="showView('capture', this)">Captura</button>
-        <button class="tab-btn" onclick="showView('gantt', this)">Cronología</button>
-        <button class="tab-btn" onclick="showView('sigma', this)">Estadística</button>
+        <button class="tab-btn active" onclick="showTab('capture', this)">1. Registro</button>
+        <button class="tab-btn" onclick="showTab('charts', this)">2. Gráficos</button>
+        <button class="tab-btn" onclick="showTab('stats', this)">3. Datos</button>
     </nav>
 
     <div id="view-capture" class="view-section capture-layout active">
-        <section class="left-list">
+        <section class="left-panel">
             <div class="log-container">
-                <table>
-                    <thead><tr><th>Actividad</th><th>Tipo</th><th>Seg</th><th>Inicio</th></tr></thead>
-                    <tbody id="log-table-body"></tbody>
+                <table id="log-table">
+                    <thead><tr><th>Tarea</th><th>Tipo</th><th>Dur</th><th>Fin</th></tr></thead>
+                    <tbody id="log-body"></tbody>
                 </table>
             </div>
             <div style="padding:5px; background:#111; display:flex; gap:5px; border-top:1px solid #222;">
-                <input type="text" id="new-btn-name" placeholder="Nueva actividad..." style="flex:1; border-radius:4px;">
-                <button onclick="addButton()" style="width:40px; background:var(--neon-blue); border:none; border-radius:4px; font-weight:bold;">+</button>
+                <input type="text" id="new-btn" placeholder="Nueva Tarea..." style="flex:1;">
+                <button onclick="addBtn()" style="background:var(--neon-green); color:#000; border:none; padding:0 10px; font-weight:bold; border-radius:3px;">+</button>
             </div>
         </section>
-        <section class="right-buttons" id="buttons-area"></section>
+        <section class="right-panel" id="btn-area"></section>
     </div>
 
-    <div id="view-gantt" class="view-section gantt-layout">
-        <div class="date-controls">
-            <button class="date-btn" onclick="shiftDate(-1)">◀ Día Anterior</button>
-            <div id="gantt-date-label" style="font-weight:bold; color:var(--neon-blue)">HOY</div>
-            <button class="date-btn" onclick="shiftDate(1)">Siguiente ▶</button>
+    <div id="view-charts" class="view-section dashboard-layout">
+        <div class="chart-container" style="flex:1">
+            <div class="chart-title">Distribución de Tiempos (%)</div>
+            <div style="flex:1; position:relative">
+                <canvas id="pieChart"></canvas>
+            </div>
         </div>
-        <div class="gantt-container">
-            <canvas id="ganttCanvas"></canvas>
-        </div>
-        <div style="font-size:0.6rem; color:#666; text-align:center; padding-top:5px;">
-            Muestra las 24 horas del día seleccionado.
+        <div class="chart-container" style="flex:1.5">
+            <div class="chart-title">Cronología (Gantt)</div>
+            <div style="flex:1; position:relative">
+                <canvas id="barChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <div id="view-sigma" class="view-section sigma-layout">
-        <div class="filter-bar">
-            <button class="filter-btn active" onclick="setBoxFilter('all', this)">VER TODAS</button>
-            <button class="filter-btn" onclick="setBoxFilter('Interna', this)">INTERNAS</button>
-            <button class="filter-btn" onclick="setBoxFilter('Externa', this)">EXTERNAS</button>
+    <div id="view-stats" class="view-section stats-layout">
+        <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-val" id="k-total">0</div><div class="kpi-lbl">TOTAL</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="k-int" style="color:var(--neon-blue)">0</div><div class="kpi-lbl">INT</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="k-ext" style="color:var(--neon-green)">0</div><div class="kpi-lbl">EXT</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="k-muda" style="color:var(--neon-orange)">0</div><div class="kpi-lbl">MUDA</div></div>
         </div>
-
-        <div class="boxplot-container">
-            <canvas id="boxPlotCanvas"></canvas>
-        </div>
-
-        <div class="stat-table-container" style="background:#111; border-radius:6px;">
-            <table class="stat-detail-table">
-                <thead><tr><th>Tarea</th><th>Cant</th><th>Media</th><th>Min</th><th>Max</th></tr></thead>
-                <tbody id="sigma-body"></tbody>
+        
+        <div style="background:#111; padding:10px; border-radius:5px;">
+            <div class="chart-title">Resumen por Actividad</div>
+            <table style="width:100%; text-align:center; font-size:0.7rem; margin-top:5px;">
+                <thead><tr style="color:#888"><th>Tarea</th><th>N</th><th>Media</th><th>Max</th></tr></thead>
+                <tbody id="stats-body"></tbody>
             </table>
         </div>
     </div>
 
-    <input type="file" id="csv-file-input" accept=".csv" multiple onchange="handleFileImport(this)">
+    <input type="file" id="csv-input" accept=".csv" multiple onchange="importCSV(this)">
 
     <footer>
-        <button class="btn-act" style="background:var(--neon-blue); color:#000" onclick="triggerImport()">IMPORTAR</button>
-        <button class="btn-act" onclick="exportData('csv')">CSV</button>
-        <button class="btn-act" onclick="exportData('txt')">TXT</button>
-        <button class="btn-act" style="background:#311; color:#f55; border-color:#522" onclick="hardReset()">RESET</button>
+        <button class="btn-foot" onclick="toggleFS()">FS (F11)</button>
+        <button class="btn-foot btn-primary" onclick="document.getElementById('csv-input').click()">IMPORTAR</button>
+        <button class="btn-foot" onclick="exportData()">EXPORTAR</button>
+        <button class="btn-foot" style="background:#300; color:#f55; border-color:#500" onclick="hardReset()">RESET</button>
     </footer>
 
     <script>
-        // --- CONFIGURACIÓN Y ESTADO ---
+        // --- VARIABLES DE ESTADO ---
         let absTime = 0;
-        // Cambiamos la clave a 'v17' para evitar conflictos con versiones corruptas
-        let logs = JSON.parse(localStorage.getItem('smed_logs_v17')) || [];
-        let btns = JSON.parse(localStorage.getItem('smed_btns_v17')) || ["Troquel Desmontar", "Troquel Montar", "Sello Ajuste", "Limpieza"]; 
-        let activeTasks = {};
-        const C_INT = '#00d4ff'; const C_EXT = '#00ff00'; const C_MUDA = '#ffaa00';
-        
-        let currentBoxFilter = 'all';
-        let ganttViewDate = new Date(); // Fecha actual para el Gantt
+        // Usamos una clave NUEVA para evitar conflictos con versiones rotas
+        let logs = JSON.parse(localStorage.getItem('smed_master_v18_logs')) || [];
+        let btns = JSON.parse(localStorage.getItem('smed_master_v18_btns')) || ["Troquel Desmontar", "Troquel Montar", "Limpieza", "Ajuste"];
+        let activeTasks = {}; // Objeto para manejar multitarea
+        let charts = { pie: null, bar: null };
 
+        // --- INICIO ---
         function init() {
-            renderButtons();
+            renderBtns();
             renderLogs();
             setInterval(tick, 100);
-            window.addEventListener('resize', () => {
-                if(document.getElementById('view-gantt').classList.contains('active')) drawGantt();
-                if(document.getElementById('view-sigma').classList.contains('active')) updateSigma();
-            });
         }
 
+        // --- RELOJES (Lo que pediste arreglar) ---
         function tick() {
-            const d = new Date();
-            absTime = (d.getHours()*3600) + (d.getMinutes()*60) + d.getSeconds() + (d.getMilliseconds()/1000);
+            const now = new Date();
+            // 1. Hora Absoluta en Segundos (con 1 decimal)
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+            const ms = now.getMilliseconds();
+            
+            absTime = (h * 3600) + (m * 60) + s + (ms/1000);
             document.getElementById('abs-clock').textContent = absTime.toFixed(1);
-            document.getElementById('real-time').textContent = d.toLocaleTimeString();
+
+            // 2. Cuenta Regresiva (86400 - Actual)
+            const remaining = 86400 - absTime;
+            document.getElementById('rem-sec').textContent = "-" + remaining.toFixed(0);
+            
+            // Convertir restante a HH:MM:SS
+            const rH = Math.floor(remaining / 3600);
+            const rM = Math.floor((remaining % 3600) / 60);
+            const rS = Math.floor(remaining % 60);
+            document.getElementById('rem-hms').textContent = 
+                `FALTAN ${String(rH).padStart(2,'0')}:${String(rM).padStart(2,'0')}:${String(rS).padStart(2,'0')}`;
+
+            // 3. Reloj Real y Fecha
+            document.getElementById('real-time').textContent = now.toLocaleTimeString();
+            document.getElementById('date-display').textContent = now.toLocaleDateString();
         }
 
-        /* --- LÓGICA DE CAPTURA (ESTABLE V14) --- */
-        function addButton() {
-            const name = document.getElementById('new-btn-name').value.trim();
-            if(!name || btns.includes(name)) return;
-            btns.push(name); saveData(); renderButtons();
-            document.getElementById('new-btn-name').value = "";
-        }
-
-        function renderButtons() {
-            const container = document.getElementById('buttons-area');
-            container.innerHTML = "";
-            btns.forEach(name => {
-                const grp = name.split(' ')[0].toUpperCase();
-                const div = document.createElement('div');
-                div.className = 'smed-btn-box';
-                div.innerHTML = `<button class="smed-btn" onclick="toggleTask(this, '${name}')">${name}<div class="grp-label">${grp}</div></button><button class="del-btn" onclick="delButton('${name}')">×</button>`;
-                container.appendChild(div);
-            });
-        }
-
-        function delButton(name) {
-            if(confirm("¿Borrar botón?")) { btns = btns.filter(b => b !== name); saveData(); renderButtons(); }
+        // --- LÓGICA SMED (BOTONES Y GRUPOS) ---
+        function getGroup(name) {
+            return name.split(' ')[0].toUpperCase();
         }
 
         function toggleTask(btn, name) {
-            const grp = name.split(' ')[0].toUpperCase();
-            // Lógica Excluyente por Grupo (Estilo V14 - Más estable)
-            if(activeTasks[grp] && activeTasks[grp].name === name) {
-                finishTask(grp, btn);
-            } else {
-                if(activeTasks[grp]) {
-                    // Cerrar la tarea anterior del mismo grupo automáticamente
-                    const prevName = activeTasks[grp].name;
-                    const allBtns = document.querySelectorAll('.smed-btn');
-                    let prevBtn = null;
-                    allBtns.forEach(b => { if(b.textContent.includes(prevName)) prevBtn = b; });
-                    if(prevBtn) finishTask(grp, prevBtn);
+            const group = getGroup(name);
+            
+            // A. Si presiono el mismo botón que está activo -> APAGAR
+            if(activeTasks[group] && activeTasks[group].name === name) {
+                stopTask(group, btn);
+            } 
+            // B. Si presiono otro botón del MISMO GRUPO -> APAGAR EL ANTERIOR, ENCENDER ESTE
+            else {
+                if(activeTasks[group]) {
+                    // Buscar el botón visual del anterior para quitarle el estilo
+                    const prevName = activeTasks[group].name;
+                    // (Truco simple para encontrar el botón en el DOM)
+                    renderBtns(); // Re-render rápido para limpiar estados
+                    // Guardamos el anterior
+                    saveLog(activeTasks[group], absTime); 
                 }
-                // Iniciar nueva
-                activeTasks[grp] = { name: name, start: absTime, timestamp: new Date().getTime() };
-                btn.classList.add('active');
+                // Encender el nuevo
+                activeTasks[group] = { name: name, start: absTime };
+                renderBtns(); // Actualizar visualmente
             }
         }
 
-        function finishTask(grp, btn) {
-            if(!activeTasks[grp]) return;
-            const task = activeTasks[grp];
-            const now = new Date();
-            const dur = parseFloat((absTime - task.start).toFixed(1));
-            
-            if(!isNaN(dur) && dur > 0) {
+        function stopTask(group, btn) {
+            if(!activeTasks[group]) return;
+            saveLog(activeTasks[group], absTime);
+            delete activeTasks[group];
+            renderBtns();
+        }
+
+        function saveLog(task, endTime) {
+            const dur = parseFloat((endTime - task.start).toFixed(1));
+            if(dur > 0) {
                 logs.push({
                     name: task.name,
-                    type: "Interna",
+                    type: "Interna", // Por defecto
                     start: task.start.toFixed(1),
-                    end: absTime.toFixed(1),
-                    dur: dur,
-                    dateStr: now.toDateString(), // Para filtrado fácil
-                    timestampStart: task.timestamp, // Para Gantt real
-                    timestampEnd: now.getTime()
+                    end: endTime.toFixed(1),
+                    dur: dur
                 });
-                saveData();
+                persist();
                 renderLogs();
             }
-            delete activeTasks[grp];
-            if(btn) btn.classList.remove('active');
+        }
+
+        // --- INTERFAZ ---
+        function renderBtns() {
+            const area = document.getElementById('btn-area');
+            area.innerHTML = "";
+            btns.forEach(name => {
+                const group = getGroup(name);
+                const isActive = activeTasks[group] && activeTasks[group].name === name;
+                
+                const div = document.createElement('div');
+                div.className = 'smed-btn-box';
+                div.innerHTML = `
+                    <button class="smed-btn ${isActive?'active':''}" onclick="toggleTask(this, '${name}')">
+                        ${name}
+                        <div class="grp-label">${group}</div>
+                    </button>
+                    <button class="del-btn" onclick="delBtn('${name}')">×</button>
+                `;
+                area.appendChild(div);
+            });
+        }
+
+        function addBtn() {
+            const name = document.getElementById('new-btn').value.trim();
+            if(!name || btns.includes(name)) return;
+            btns.push(name); persist(); renderBtns();
+            document.getElementById('new-btn').value = "";
+        }
+
+        function delBtn(name) {
+            if(confirm("¿Eliminar botón?")) { btns = btns.filter(b=>b!==name); persist(); renderBtns(); }
         }
 
         function renderLogs() {
-            const tbody = document.getElementById('log-table-body');
-            // Mostrar últimos 20
-            tbody.innerHTML = logs.slice(-20).reverse().map((l, i) => `<tr><td>${l.name}</td><td>${l.type.substring(0,3)}</td><td style="color:var(--neon-orange); font-weight:bold">${l.dur}</td><td style="color:#555">${l.start}</td></tr>`).join('');
-            const container = document.querySelector('.log-container');
+            const tbody = document.getElementById('log-body');
+            // Mostramos los últimos 20 para no saturar
+            tbody.innerHTML = logs.slice().reverse().map((l, i) => `
+                <tr>
+                    <td>${l.name}</td>
+                    <td>
+                        <select onchange="changeType(${logs.length - 1 - i}, this.value)" style="background:#000; color:#fff; border:none; font-size:0.6rem">
+                            <option ${l.type==='Interna'?'selected':''}>Interna</option>
+                            <option ${l.type==='Externa'?'selected':''}>Externa</option>
+                            <option ${l.type==='Muda'?'selected':''}>Muda</option>
+                        </select>
+                    </td>
+                    <td class="dur-cell">${l.dur}</td>
+                    <td>${l.end}</td>
+                </tr>
+            `).join('');
+            calcStats();
         }
 
-        function saveData() { 
-            localStorage.setItem('smed_logs_v17', JSON.stringify(logs)); 
-            localStorage.setItem('smed_btns_v17', JSON.stringify(btns)); 
+        function changeType(realIndex, val) {
+            logs[realIndex].type = val;
+            persist();
+            calcStats();
         }
 
-        /* --- VISTAS --- */
-        function showView(viewId, btn) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-'+viewId).classList.add('active');
-            btn.classList.add('active');
-            if(viewId === 'gantt') drawGantt();
-            if(viewId === 'sigma') updateSigma();
-        }
+        // --- ESTADÍSTICAS Y GRÁFICOS ---
+        function calcStats() {
+            let t = { Interna:0, Externa:0, Muda:0, Total:0 };
+            let counts = {};
 
-        /* --- CRONOLOGÍA (GANTT) --- */
-        function shiftDate(days) {
-            ganttViewDate.setDate(ganttViewDate.getDate() + days);
-            drawGantt();
-        }
-
-        function drawGantt() {
-            const canvas = document.getElementById('ganttCanvas');
-            const ctx = canvas.getContext('2d');
-            const parent = canvas.parentElement;
-            canvas.width = parent.clientWidth;
-            canvas.height = parent.clientHeight;
-            
-            const w = canvas.width, h = canvas.height;
-            const dateStr = ganttViewDate.toDateString();
-            document.getElementById('gantt-date-label').textContent = dateStr;
-
-            ctx.clearRect(0,0,w,h);
-
-            // Filtrar logs del día seleccionado
-            const dayLogs = logs.filter(l => {
-                // Compatible con logs viejos (usando dateStr) y nuevos (usando timestamp)
-                if(l.dateStr) return l.dateStr === dateStr;
-                return new Date(l.timestampStart).toDateString() === dateStr;
-            });
-
-            // Dibujar Ejes (0h a 24h)
-            ctx.strokeStyle = "#333";
-            ctx.fillStyle = "#666";
-            ctx.font = "10px monospace";
-            const padLeft = 10; const padRight = 10; const padTop = 20;
-            
-            for(let i=0; i<=24; i+=2) {
-                const x = padLeft + (i/24)*(w - padLeft - padRight);
-                ctx.beginPath(); ctx.moveTo(x, padTop); ctx.lineTo(x, h); ctx.stroke();
-                ctx.fillText(i+"h", x-5, 12);
-            }
-
-            if(dayLogs.length === 0) {
-                ctx.fillStyle = "#444"; ctx.font = "14px monospace"; ctx.textAlign="center";
-                ctx.fillText("SIN ACTIVIDAD ESTE DÍA", w/2, h/2);
-                return;
-            }
-
-            // Dibujar Barras
-            // Agrupar verticalmente por nombre de tarea para que no se encimen
-            const tasks = [...new Set(dayLogs.map(l => l.name))];
-            const rowH = (h - padTop - 10) / tasks.length;
-            const barH = Math.min(rowH * 0.6, 30);
-
-            dayLogs.forEach(l => {
-                let startHr, endHr;
-                
-                // Calculamos hora decimal (ej: 14.5 para 2:30pm)
-                if(l.timestampStart) {
-                    const dS = new Date(l.timestampStart);
-                    const dE = new Date(l.timestampEnd);
-                    startHr = dS.getHours() + dS.getMinutes()/60;
-                    endHr = dE.getHours() + dE.getMinutes()/60;
-                } else {
-                    // Fallback para datos simulados o antiguos
-                    const s = parseFloat(l.start);
-                    const e = parseFloat(l.end);
-                    startHr = s / 3600; 
-                    endHr = e / 3600;
-                }
-
-                // Coordenadas
-                const x1 = padLeft + (startHr/24)*(w - padLeft - padRight);
-                const x2 = padLeft + (endHr/24)*(w - padLeft - padRight);
-                const barW = Math.max(x2 - x1, 2); // Mínimo 2px para que se vea
-                
-                const rowIndex = tasks.indexOf(l.name);
-                const y = padTop + (rowIndex * rowH) + (rowH - barH)/2;
-
-                // Color
-                ctx.fillStyle = l.type==='Interna'?C_INT:(l.type==='Externa'?C_EXT:C_MUDA);
-                ctx.fillRect(x1, y, barW, barH);
-                
-                // Texto
-                ctx.fillStyle = "#fff"; ctx.textAlign="left";
-                ctx.fillText(l.name, 10, y - 4);
-            });
-        }
-
-        /* --- ESTADÍSTICA (VELAS) --- */
-        function setBoxFilter(filter, btn) {
-            currentBoxFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateSigma();
-        }
-
-        function updateSigma() {
-            let groups = {};
             logs.forEach(l => {
-                if(currentBoxFilter === 'all' || l.type === currentBoxFilter) {
-                    if(!groups[l.name]) groups[l.name] = [];
-                    groups[l.name].push(parseFloat(l.dur));
+                const d = parseFloat(l.dur);
+                t[l.type] += d;
+                t.Total += d;
+
+                if(!counts[l.name]) counts[l.name] = [];
+                counts[l.name].push(d);
+            });
+
+            // Actualizar KPIs
+            document.getElementById('k-total').textContent = t.Total.toFixed(1);
+            document.getElementById('k-int').textContent = t.Interna.toFixed(1);
+            document.getElementById('k-ext').textContent = t.Externa.toFixed(1);
+            document.getElementById('k-muda').textContent = t.Muda.toFixed(1);
+
+            // Tabla Resumen
+            const tbody = document.getElementById('stats-body');
+            tbody.innerHTML = Object.keys(counts).map(k => {
+                const arr = counts[k];
+                const avg = arr.reduce((a,b)=>a+b,0)/arr.length;
+                return `<tr><td>${k}</td><td>${arr.length}</td><td>${avg.toFixed(1)}</td><td>${Math.max(...arr).toFixed(1)}</td></tr>`;
+            }).join('');
+
+            // Actualizar Gráficos (si la librería cargó)
+            if(typeof Chart !== 'undefined' && document.getElementById('view-charts').classList.contains('active')) {
+                updateCharts(t);
+            }
+        }
+
+        function updateCharts(t) {
+            // Pie
+            const ctxP = document.getElementById('pieChart');
+            if(charts.pie) charts.pie.destroy();
+            charts.pie = new Chart(ctxP, {
+                type: 'doughnut',
+                data: {
+                    labels: ['INT', 'EXT', 'MUDA'],
+                    datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'], borderWidth: 0 }]
+                },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{color:'#fff', font:{size:9}}}} }
+            });
+
+            // Gantt Simplificado (Barra horizontal)
+            const ctxB = document.getElementById('barChart');
+            if(charts.bar) charts.bar.destroy();
+            
+            // Datos para Gantt
+            const dataGantt = logs.map(l => ({
+                x: [parseFloat(l.start), parseFloat(l.end)],
+                y: l.name
+            }));
+
+            charts.bar = new Chart(ctxB, {
+                type: 'bar',
+                data: {
+                    labels: logs.map(l=>l.name),
+                    datasets: [{
+                        label: 'Duración',
+                        data: logs.map(l=>[parseFloat(l.start), parseFloat(l.end)]),
+                        backgroundColor: logs.map(l => l.type==='Interna'?'#00d4ff':(l.type==='Externa'?'#00ff00':'#ffaa00')),
+                        barPercentage: 0.5
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { min: logs.length?parseFloat(logs[0].start):0, ticks:{color:'#666'} },
+                        y: { ticks:{color:'#fff', font:{size:9}} }
+                    },
+                    plugins: { legend: { display:false } }
                 }
             });
-
-            // Tabla
-            const tbody = document.getElementById('sigma-body');
-            tbody.innerHTML = "";
-            let statsData = [];
-
-            Object.keys(groups).forEach(name => {
-                const times = groups[name].sort((a,b)=>a-b);
-                const n = times.length;
-                const sum = times.reduce((a,b)=>a+b,0);
-                const avg = sum / n;
-                const min = times[0];
-                const max = times[n-1];
-                const med = times[Math.floor(n/2)]; // Simple median
-                const q1 = times[Math.floor(n*0.25)];
-                const q3 = times[Math.floor(n*0.75)];
-
-                statsData.push({ name, min, q1, med, q3, max });
-
-                tbody.innerHTML += `<tr><td>${name}</td><td>${n}</td><td style="color:${C_INT}">${avg.toFixed(1)}</td><td>${min.toFixed(1)}</td><td>${max.toFixed(1)}</td></tr>`;
-            });
-
-            drawBoxPlots(statsData);
         }
 
-        function drawBoxPlots(stats) {
-            const canvas = document.getElementById('boxPlotCanvas');
-            const ctx = canvas.getContext('2d');
-            const parent = canvas.parentElement;
-            canvas.width = parent.clientWidth;
-            canvas.height = parent.clientHeight;
-            const w = canvas.width, h = canvas.height;
-
-            ctx.clearRect(0,0,w,h);
-            if(stats.length === 0) return;
-
-            const paddingLeft = 100; const paddingBottom = 20;
-            const plotW = w - paddingLeft - 20;
-            const maxVal = Math.max(...stats.map(s => s.max)) * 1.1 || 10;
-            const rowH = (h - paddingBottom) / stats.length;
-
-            stats.forEach((s, i) => {
-                const y = i * rowH + rowH/2;
-                const toX = (val) => paddingLeft + (val/maxVal)*plotW;
-
-                const xMin = toX(s.min);
-                const xMax = toX(s.max);
-                const xQ1 = toX(s.q1);
-                const xMed = toX(s.med);
-                const xQ3 = toX(s.q3);
-
-                // Nombre
-                ctx.fillStyle="#aaa"; ctx.textAlign="right"; ctx.font="10px monospace";
-                ctx.fillText(s.name.substring(0,14), paddingLeft-10, y+4);
-
-                // Línea Rango
-                ctx.strokeStyle="#555"; ctx.beginPath(); ctx.moveTo(xMin, y); ctx.lineTo(xMax, y); ctx.stroke();
-                
-                // Bigotes (Topes)
-                ctx.beginPath(); ctx.moveTo(xMin, y-5); ctx.lineTo(xMin, y+5); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(xMax, y-5); ctx.lineTo(xMax, y+5); ctx.stroke();
-
-                // Caja (Q1-Q3)
-                ctx.fillStyle="rgba(0,212,255,0.2)"; ctx.fillRect(xQ1, y-10, xQ3-xQ1, 20);
-                ctx.strokeStyle=C_INT; ctx.strokeRect(xQ1, y-10, xQ3-xQ1, 20);
-
-                // Mediana
-                ctx.strokeStyle=C_MUDA; ctx.lineWidth=2; 
-                ctx.beginPath(); ctx.moveTo(xMed, y-10); ctx.lineTo(xMed, y+10); ctx.stroke();
-                ctx.lineWidth=1;
-
-                // --- ETIQUETAS DE DATOS (NUEVO) ---
-                ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.font="9px sans-serif";
-                // Escribir Min y Max debajo
-                ctx.fillText(s.min.toFixed(0), xMin, y+20);
-                ctx.fillText(s.max.toFixed(0), xMax, y+20);
-                // Escribir Mediana arriba
-                ctx.fillStyle=C_MUDA;
-                ctx.fillText(s.med.toFixed(0), xMed, y-14);
-            });
+        // --- UTILIDADES ---
+        function persist() {
+            localStorage.setItem('smed_master_v18_logs', JSON.stringify(logs));
+            localStorage.setItem('smed_master_v18_btns', JSON.stringify(btns));
         }
 
-        /* --- IMPORT/EXPORT --- */
-        function triggerImport() { document.getElementById('csv-file-input').click(); }
-        
-        function handleFileImport(input) {
+        function showTab(id, btn) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-'+id).classList.add('active');
+            btn.classList.add('active');
+            if(id === 'charts') calcStats(); // Forzar redibujado
+        }
+
+        function importCSV(input) {
             const files = input.files;
             if(!files.length) return;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
+            Array.from(files).forEach(f => {
+                const r = new FileReader();
+                r.onload = e => {
                     const lines = e.target.result.split('\n');
                     lines.forEach(line => {
-                        const p = line.replace(/"/g, '').split(',');
-                        if(p.length >= 5 && !isNaN(parseFloat(p[2]))) {
-                            // Detección de formato V16 (con timestamps) o V14 (simple)
-                            // Si el archivo viene de V16, tendrá fechas reales. Si no, usará hora relativa.
-                            const startTs = new Date().getTime(); // Fallback si no hay fecha real
-                            
+                        const p = line.replace(/"/g,'').split(',');
+                        if(p.length >= 3 && !isNaN(parseFloat(p[2]))) {
                             logs.push({
                                 name: p[0].trim(),
                                 type: p[1].trim(),
                                 dur: parseFloat(p[2]),
-                                start: p[3], 
-                                end: p[4],
-                                dateStr: new Date().toDateString(), // Asume hoy si importa viejo
-                                timestampStart: startTs, 
-                                timestampEnd: startTs + (parseFloat(p[2])*1000)
+                                start: p[3] || "0",
+                                end: p[4] || "0"
                             });
                         }
                     });
-                    saveData(); renderLogs();
+                    persist(); renderLogs();
                 };
-                reader.readAsText(file);
+                r.readAsText(f);
             });
+            alert("Datos importados y fusionados.");
         }
 
-        function exportData(format) {
-            if(!logs.length) return alert("Sin datos");
-            let c = "";
-            if(format==='csv') {
-                c = `Tarea,Tipo,Dur,Inicio,Fin\n`;
-                logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
-            } else { logs.forEach(l => c += `[${l.type}] ${l.name}: ${l.dur}s\n`); }
-            
+        function exportData() {
+            let c = "Tarea,Tipo,Duracion,Inicio,Fin\n";
+            logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
+            const blob = new Blob([c], {type:'text/csv'});
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([c], {type:'text/plain'}));
-            a.download = `SMED_STABLE_${new Date().getTime()}.${format}`;
+            a.href = url; a.download = `SMED_V18_${Date.now()}.csv`;
             a.click();
         }
 
-        function hardReset() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
-        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{}); else document.exitFullscreen(); }
+        function hardReset() {
+            if(confirm("¿RESET TOTAL? Se borrarán todos los datos.")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
 
         window.onload = init;
+
     </script>
 </body>
 </html>
