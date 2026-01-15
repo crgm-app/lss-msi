@@ -3,48 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Analytics Pro v11</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <title>SMED Master Suite v12</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; }
+        :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; --panel: #111; }
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; height: 50px; flex-shrink: 0; }
-        .nav-btn { flex: 1; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
-        .nav-btn.active { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); background: #222; }
+        /* HEADER & NAV */
+        header { background: var(--panel); padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; }
+        .main-clock { font-size: 2rem; font-weight: 900; font-family: monospace; color: var(--neon-green); }
+        
+        nav { display: flex; background: #000; border-bottom: 1px solid #333; height: 45px; flex-shrink: 0; }
+        .tab-btn { flex: 1; background: none; border: none; color: #666; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; }
+        .tab-btn.active { color: var(--neon-blue); background: #151515; border-bottom: 3px solid var(--neon-blue); }
 
-        header { background: #111; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; flex-shrink: 0; }
-        .main-clock { font-size: 2.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
+        /* CONTENT AREAS */
+        .view-section { display: none; flex: 1; overflow: hidden; position: relative; }
+        .view-section.active { display: flex; }
 
-        .tab-content { display: none; flex: 1; overflow: hidden; }
-        .tab-content.active { display: flex; }
+        /* --- VISTA 1: CAPTURA --- */
+        .capture-layout { flex-direction: row; width: 100%; }
+        .left-list { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .log-container { flex: 1; overflow-y: auto; background: #000; }
+        .right-buttons { flex: 1; background: #080808; padding: 5px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 
-        /* REGISTRO */
-        .registro-view { flex-direction: row; }
-        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; }
-        .log-section { flex: 1; overflow-y: auto; background: #000; padding: 5px; }
+        /* TABLAS */
         table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; }
-        th { background: #1a1a1a; color: var(--neon-blue); padding: 5px; text-align: left; position: sticky; top: 0; }
-        td { padding: 5px; border-bottom: 1px solid #111; }
-        .control-panel { flex: 0.9; background: #0a0a0a; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+        th { background: #151515; color: var(--neon-blue); padding: 5px; text-align: left; position: sticky; top: 0; z-index: 2; }
+        td { padding: 4px 6px; border-bottom: 1px solid #222; }
+        tr:nth-child(even) { background: #0a0a0a; }
+
+        /* BOTONES SMED */
+        .smed-btn-box { display: flex; height: 55px; border: 1px solid #333; border-radius: 4px; overflow: hidden; background: #151515; flex-shrink: 0; }
+        .smed-btn { flex: 1; background: transparent; color: #ddd; border: none; text-align: left; padding-left: 10px; position: relative; font-weight: 600; font-size: 0.8rem; }
+        .smed-btn.active { background: linear-gradient(90deg, #332200, #151515); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
+        .grp-label { position: absolute; top: 2px; right: 5px; font-size: 0.5rem; color: #555; text-transform: uppercase; }
+        .del-btn { width: 30px; background: #200; color: #f55; border: none; font-size: 1rem; cursor: pointer; }
+
+        /* --- VISTA 2: DASHBOARD (GRÁFICOS) --- */
+        .dashboard-layout { flex-direction: column; padding: 10px; overflow-y: auto; gap: 10px; background: #000; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex-shrink: 0; }
+        .kpi-card { background: #111; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #222; }
+        .kpi-val { font-size: 1.1rem; font-weight: bold; }
+        .kpi-lbl { font-size: 0.55rem; color: #777; text-transform: uppercase; }
+
+        .chart-wrapper { background: #111; border: 1px solid #333; border-radius: 6px; padding: 10px; min-height: 200px; display: flex; flex-direction: column; }
+        .chart-title { font-size: 0.7rem; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* CSS FALLBACK CHARTS (Barras hechas con HTML puro si falla JS) */
+        .css-bar-container { width: 100%; display: flex; height: 30px; margin-bottom: 5px; background: #222; border-radius: 4px; overflow: hidden; }
+        .css-bar-segment { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #000; font-weight: bold; }
         
-        /* ANÁLISIS */
-        .analysis-view { flex-direction: column; padding: 10px; overflow-y: auto; background: #000; gap: 15px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex-shrink: 0; }
-        .stat-card { background: #111; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #222; }
-        .stat-card h4 { font-size: 0.55rem; color: #555; }
-        .chart-box { background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222; min-height: 250px; position: relative; width: 100%; }
+        .css-gantt-row { display: flex; align-items: center; margin-bottom: 4px; height: 25px; }
+        .css-gantt-label { width: 30%; font-size: 0.6rem; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 5px; }
+        .css-gantt-track { width: 70%; background: #111; height: 100%; position: relative; border-radius: 3px; }
+        .css-gantt-bar { position: absolute; height: 100%; top: 0; border-radius: 2px; opacity: 0.8; }
 
-        /* BOTONES */
-        .smed-btn-container { display: flex; height: 55px; border: 1px solid #333; border-radius: 5px; overflow: hidden; margin-bottom: 5px; flex-shrink: 0; }
-        .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 10px; position: relative; font-size: 0.75rem; overflow: hidden; }
-        .smed-btn.active { background: linear-gradient(90deg, #320, #111); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
-        .group-tag { font-size: 0.45rem; color: var(--neon-blue); position: absolute; top: 3px; right: 5px; text-transform: uppercase; }
-        .del-btn { width: 30px; background: #211; color: #f44; border: none; font-size: 1rem; flex-shrink: 0; }
-
-        footer { height: 60px; background: #111; display: flex; gap: 5px; justify-content: center; align-items: center; padding: 0 10px; border-top: 1px solid #333; flex-shrink: 0; }
-        .btn-f { background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; }
+        /* --- VISTA 3: SIX SIGMA --- */
+        .sigma-layout { flex-direction: column; padding: 10px; overflow-y: auto; }
+        .stat-table-container { background: #111; border-radius: 6px; overflow: hidden; margin-bottom: 15px; }
+        
+        /* FOOTER */
+        footer { height: 55px; background: var(--panel); border-top: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
+        .btn-act { padding: 8px 12px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; font-weight: bold; font-size: 0.7rem; }
+        
+        input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; }
     </style>
 </head>
 <body>
@@ -52,226 +78,528 @@
     <header>
         <div>
             <div id="abs-clock" class="main-clock">00000.0</div>
-            <div id="date-info" style="font-size:0.6rem; color:#444">--/--/--</div>
+            <div style="font-size:0.6rem; color:#555">TIEMPO ABSOLUTO (S)</div>
         </div>
-        <button id="fs-btn" onclick="toggleFS()" style="background:#222; border:1px solid #444; color:#666; font-size:8px; padding:5px">PANTALLA COMPLETA</button>
+        <div style="text-align:right">
+            <div id="real-time" style="font-size:0.9rem; font-weight:bold; color:#aaa">00:00:00</div>
+            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:2px 5px; margin-top:2px;">FULLSCREEN</button>
+        </div>
     </header>
 
     <nav>
-        <button class="nav-btn active" id="btn-tab-reg" onclick="switchTab('reg')">Registro</button>
-        <button class="nav-btn" id="btn-tab-ana" onclick="switchTab('ana')">Análisis</button>
+        <button class="tab-btn active" onclick="showView('capture', this)">1. Captura</button>
+        <button class="tab-btn" onclick="showView('dashboard', this)">2. Gráficos</button>
+        <button class="tab-btn" onclick="showView('sigma', this)">3. Estadística</button>
     </nav>
 
-    <div id="tab-reg" class="tab-content active registro-view">
-        <section class="left-panel">
-            <div class="log-section">
+    <div id="view-capture" class="view-section capture-layout active">
+        <section class="left-list">
+            <div class="log-container">
                 <table>
-                    <thead><tr><th>Tarea</th><th>Tipo</th><th>Dur(s)</th><th>Inicio</th></tr></thead>
-                    <tbody id="log-body"></tbody>
+                    <thead><tr><th>Actividad</th><th>Clase</th><th>Seg</th><th>Inicio</th></tr></thead>
+                    <tbody id="log-table-body"></tbody>
                 </table>
             </div>
-            <div style="padding:8px; background:#111; display:flex;">
-                <input type="text" id="new-task" placeholder="Actividad..." style="background:#000; border:1px solid #333; color:#fff; padding:8px; flex:1; border-radius:4px; font-size:0.8rem">
-                <button onclick="addBtn()" style="background:var(--neon-blue); border:none; width:40px; margin-left:5px; border-radius:4px">+</button>
+            <div style="padding:5px; background:#111; display:flex; gap:5px; border-top:1px solid #222;">
+                <input type="text" id="new-btn-name" placeholder="Nueva actividad..." style="flex:1; border-radius:4px;">
+                <button onclick="addButton()" style="width:40px; background:var(--neon-blue); border:none; border-radius:4px; font-weight:bold;">+</button>
             </div>
         </section>
-        <section class="control-panel" id="btn-container"></section>
+        <section class="right-buttons" id="buttons-area"></section>
     </div>
 
-    <div id="tab-ana" class="tab-content analysis-view">
-        <div class="stats-grid">
-            <div class="stat-card"><h4>TOTAL (S)</h4><p id="s-tot">0</p></div>
-            <div class="stat-card"><h4>INT</h4><p id="s-int" style="color:var(--neon-blue)">0</p></div>
-            <div class="stat-card"><h4>EXT</h4><p id="s-ext" style="color:var(--neon-green)">0</p></div>
-            <div class="stat-card"><h4>MUDA</h4><p id="s-mud" style="color:var(--neon-orange)">0</p></div>
+    <div id="view-dashboard" class="view-section dashboard-layout">
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Total (s)</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="kpi-int" style="color:var(--neon-blue)">0</div><div class="kpi-lbl">Interna</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="kpi-ext" style="color:var(--neon-green)">0</div><div class="kpi-lbl">Externa</div></div>
+            <div class="kpi-card"><div class="kpi-val" id="kpi-muda" style="color:var(--neon-orange)">0</div><div class="kpi-lbl">Muda</div></div>
         </div>
-        <div class="chart-box"><canvas id="c-pie"></canvas></div>
-        <div class="chart-box" style="margin-top:10px"><canvas id="c-bar"></canvas></div>
+
+        <div class="chart-wrapper">
+            <div class="chart-title">Distribución de Tiempos</div>
+            <div id="canvas-container-pie" style="position:relative; height:200px; display:none;">
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div id="css-pie-fallback" style="display:flex; flex-direction:column; justify-content:center; height:100%;">
+                <div style="text-align:center; font-size:0.7rem; color:#666; margin-bottom:5px;">Barra de Proporción (Modo Offline)</div>
+                <div class="css-bar-container" id="css-proportion-bar"></div>
+            </div>
+        </div>
+
+        <div class="chart-wrapper">
+            <div class="chart-title">Cronología de Actividades</div>
+            <div id="canvas-container-bar" style="position:relative; height:250px; display:none;">
+                <canvas id="barChart"></canvas>
+            </div>
+            <div id="css-gantt-fallback" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <div id="view-sigma" class="view-section sigma-layout">
+        <div class="chart-title" style="padding:10px 0;">Análisis de Variabilidad (Pareto & Desviación)</div>
+        <div class="stat-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tarea Agrupada</th>
+                        <th>Cant</th>
+                        <th>Media</th>
+                        <th>Min/Max</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="sigma-body"></tbody>
+            </table>
+        </div>
+        <div style="padding:10px; background:#111; border:1px solid #333; border-radius:6px;">
+            <div class="chart-title">Recomendaciones Automáticas</div>
+            <ul id="smed-recommendations" style="font-size:0.75rem; color:#ccc; padding-left:20px; line-height:1.5;"></ul>
+        </div>
     </div>
 
     <footer>
-        <button class="btn-f" style="background:var(--neon-orange); color:#000" onclick="stopAll()">STOP ALL</button>
-        <button class="btn-f" onclick="doExport()">EXPORTAR CSV</button>
-        <button class="btn-f" style="color:#f44" onclick="clearAll()">RESET</button>
+        <button class="btn-act" style="background:var(--neon-orange); color:#000" onclick="stopAll()">PAUSA TOTAL</button>
+        <button class="btn-act" onclick="exportData('csv')">CSV</button>
+        <button class="btn-act" onclick="exportData('txt')">TXT</button>
+        <button class="btn-act" style="background:#311; color:#f55; border-color:#522" onclick="rescueData()">RESCATAR</button>
+        <button class="btn-act" style="background:#000; color:#555" onclick="hardReset()">RESET</button>
     </footer>
 
     <script>
+        // --- NÚCLEO ---
         let absTime = 0;
-        let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btns = JSON.parse(localStorage.getItem('smed_btns')) || ["Maquina Abrir", "Tinta Desmontar"];
+        // Intentamos cargar lo que haya, si falla el parseo, iniciamos vacío
+        let logs = [];
+        let btns = ["Troquel Desmontar", "Troquel Montar", "Sello Ajuste", "Limpieza"]; 
         let activeTasks = {};
-        let pie = null, bar = null;
+        
+        // Colores
+        const C_INT = '#00d4ff'; const C_EXT = '#00ff00'; const C_MUDA = '#ffaa00';
 
-        function update() {
-            const n = new Date();
-            absTime = (n.getHours()*3600)+(n.getMinutes()*60)+n.getSeconds()+(n.getMilliseconds()/1000);
-            document.getElementById('abs-clock').textContent = absTime.toFixed(1);
-            document.getElementById('date-info').textContent = n.toLocaleDateString() + " " + n.toLocaleTimeString();
-        }
-
-        function switchTab(t) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-'+t).classList.add('active');
-            document.getElementById('btn-tab-'+t).classList.add('active');
-            if(t === 'ana') {
-                // Pequeño delay para asegurar que el DOM sea visible antes de dibujar
-                setTimeout(drawCharts, 50);
+        // Inicialización segura
+        function init() {
+            try {
+                const sLogs = localStorage.getItem('smed_logs_v12');
+                if(sLogs) logs = JSON.parse(sLogs);
+                
+                const sBtns = localStorage.getItem('smed_btns_v12');
+                if(sBtns) btns = JSON.parse(sBtns);
+            } catch(e) {
+                console.error("Error leyendo datos antiguos:", e);
+                // No sobrescribimos para no perder datos corruptos que se podrían rescatar
             }
-        }
 
-        function handleAction(btn, name) {
-            const g = name.split(' ')[0].toUpperCase();
-            if(activeTasks[g] === name) {
-                closeTask(name, btn);
-                delete activeTasks[g];
-            } else {
-                if(activeTasks[g]) {
-                    const prev = activeTasks[g];
-                    const pBtn = document.querySelector(`[data-task="${prev}"]`);
-                    if(pBtn) closeTask(prev, pBtn);
-                }
-                activeTasks[g] = name;
-                btn.classList.add('active');
-                btn.dataset.start = absTime;
-            }
-        }
-
-        function closeTask(name, btn) {
-            const s = parseFloat(btn.dataset.start);
-            const d = parseFloat((absTime - s).toFixed(1));
-            logs.push({ name, type: "Interna", start: s.toFixed(1), end: absTime.toFixed(1), dur: d });
-            btn.classList.remove('active');
-            localStorage.setItem('smed_logs', JSON.stringify(logs));
+            renderButtons();
             renderLogs();
+            setInterval(tick, 100);
         }
 
-        function renderLogs() {
-            document.getElementById('log-body').innerHTML = logs.map((l, i) => `
-                <tr><td>${l.name}</td>
-                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs))" style="background:#000; color:#fff; font-size:0.6rem; border:1px solid #333">
-                    <option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option>
-                    <option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option>
-                    <option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option>
-                </select></td>
-                <td style="color:var(--neon-orange)">${l.dur}s</td><td>${l.start}</td></tr>`).join('');
+        function tick() {
+            const d = new Date();
+            absTime = (d.getHours()*3600) + (d.getMinutes()*60) + d.getSeconds() + (d.getMilliseconds()/1000);
+            document.getElementById('abs-clock').textContent = absTime.toFixed(1);
+            document.getElementById('real-time').textContent = d.toLocaleTimeString();
         }
 
-        function drawCharts() {
-            if (typeof Chart === 'undefined') {
-                alert("Error: La librería de gráficos no cargó. Asegúrate de tener conexión al menos una vez para que el navegador la guarde en caché.");
+        // --- GESTIÓN DE BOTONES ---
+        function addButton() {
+            const name = document.getElementById('new-btn-name').value.trim();
+            if(!name || btns.includes(name)) return;
+            btns.push(name);
+            saveData();
+            renderButtons();
+            document.getElementById('new-btn-name').value = "";
+        }
+
+        function renderButtons() {
+            const container = document.getElementById('buttons-area');
+            container.innerHTML = "";
+            btns.forEach(name => {
+                const grp = name.split(' ')[0].toUpperCase();
+                const div = document.createElement('div');
+                div.className = 'smed-btn-box';
+                div.innerHTML = `
+                    <button class="smed-btn" onclick="toggleTask(this, '${name}')">
+                        ${name}
+                        <div class="grp-label">${grp}</div>
+                    </button>
+                    <button class="del-btn" onclick="delButton('${name}')">×</button>
+                `;
+                // Restaurar estado activo si hubo recarga
+                // (Lógica simplificada: si recargas, se pierde el estado "Running" visual pero se puede recalcular si guardamos start time en LS. 
+                // Por simplicidad en V12, asumimos start limpio, pero el botón "Rescue" ayuda).
+                container.appendChild(div);
+            });
+        }
+
+        function delButton(name) {
+            if(confirm("¿Borrar botón?")) {
+                btns = btns.filter(b => b !== name);
+                saveData();
+                renderButtons();
+            }
+        }
+
+        // --- LÓGICA SMED DE GRUPOS ---
+        function toggleTask(btn, name) {
+            const grp = name.split(' ')[0].toUpperCase();
+            
+            // 1. Si es la misma tarea activa -> Cerrar
+            if(activeTasks[grp] && activeTasks[grp].name === name) {
+                finishTask(grp, btn);
                 return;
             }
 
-            const t = { Interna: 0, Externa: 0, Muda: 0 };
-            logs.forEach(l => t[l.type] += l.dur);
-            document.getElementById('s-tot').textContent = (t.Interna+t.Externa+t.Muda).toFixed(1);
-            document.getElementById('s-int').textContent = t.Interna.toFixed(1);
-            document.getElementById('s-ext').textContent = t.Externa.toFixed(1);
-            document.getElementById('s-mud').textContent = t.Muda.toFixed(1);
+            // 2. Si hay otra tarea del mismo grupo -> Cerrar la anterior primero
+            if(activeTasks[grp]) {
+                // Buscamos el botón visual de la tarea anterior
+                const prevName = activeTasks[grp].name;
+                // Truco para encontrar el botón por texto (ya que se generan dinámicamente)
+                const allBtns = document.querySelectorAll('.smed-btn');
+                let prevBtn = null;
+                allBtns.forEach(b => { if(b.textContent.includes(prevName)) prevBtn = b; });
+                
+                if(prevBtn) finishTask(grp, prevBtn);
+            }
 
-            // Pie Chart
-            const ctxPie = document.getElementById('c-pie').getContext('2d');
-            if(pie) pie.destroy();
-            pie = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: { 
-                    labels: ['Int', 'Ext', 'Muda'], 
-                    datasets: [{ 
-                        data: [t.Interna, t.Externa, t.Muda], 
-                        backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'], 
-                        borderWidth: 0 
-                    }] 
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { position: 'right', labels: { color: '#fff', font: { size: 10 } } } 
-                    } 
-                }
-            });
-
-            // Gantt/Bar Chart
-            const ctxBar = document.getElementById('c-bar').getContext('2d');
-            if(bar) bar.destroy();
-            bar = new Chart(ctxBar, {
-                type: 'bar',
-                data: { 
-                    labels: logs.map(l => l.name), 
-                    datasets: [{ 
-                        label: 'Segundos', 
-                        data: logs.map(l => [l.start, l.end]), 
-                        backgroundColor: logs.map(l => l.type==='Interna'?'#00d4ff':(l.type==='Externa'?'#00ff00':'#ffaa00')) 
-                    }] 
-                },
-                options: { 
-                    indexAxis: 'y', 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    scales: { 
-                        x: { ticks: { color: '#666', font: { size: 8 } } }, 
-                        y: { ticks: { color: '#fff', font: { size: 8 } } } 
-                    }, 
-                    plugins: { legend: { display: false } } 
-                }
-            });
+            // 3. Iniciar nueva
+            activeTasks[grp] = { name: name, start: absTime };
+            btn.classList.add('active');
         }
 
-        function addBtn() {
-            const n = document.getElementById('new-task').value.trim();
-            if(!n || btns.includes(n)) return;
-            btns.push(n);
-            localStorage.setItem('smed_btns', JSON.stringify(btns));
-            makeBtn(n);
-            document.getElementById('new-task').value = "";
-        }
+        function finishTask(grp, btn) {
+            if(!activeTasks[grp]) return;
+            const task = activeTasks[grp];
+            const end = absTime;
+            const dur = parseFloat((end - task.start).toFixed(1));
 
-        function makeBtn(n) {
-            const d = document.createElement('div');
-            d.className = 'smed-btn-container';
-            d.innerHTML = `<button class="smed-btn" data-task="${n}"><div class="group-tag">${n.split(' ')[0]}</div>${n} <br><span style="font-size:0.5rem; color:#444">OFF</span></button><button class="del-btn">×</button>`;
-            const b = d.querySelector('.smed-btn');
-            b.onclick = () => handleAction(b, n);
-            d.querySelector('.del-btn').onclick = () => { if(confirm("¿Borrar?")) { btns = btns.filter(x => x !== n); localStorage.setItem('smed_btns', JSON.stringify(btns)); d.remove(); } };
-            document.getElementById('btn-container').appendChild(d);
-        }
-
-        function doExport() {
-            const op = prompt("OP:"), res = prompt("Resp:"), col = prompt("Col:"), are = prompt("Área:");
-            let c = `OP,${op},Resp,${res},Col,${col},Area,${are}\nActividad,Tipo,Dur,Ini,Fin\n`;
-            logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
-            const blob = new Blob([c], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `SMED_OP${op}_${new Date().getTime()}.csv`;
-            a.click();
-        }
-
-        function stopAll() { document.querySelectorAll('.smed-btn.active').forEach(b => handleAction(b, b.dataset.task)); }
-        
-        function clearAll() { 
-            if(confirm("¿RESET TOTAL? Se borrarán todos los datos y gráficos.")) { 
-                localStorage.clear(); 
-                location.reload(); 
-            } 
-        }
-
-        function toggleFS() { 
-            if(!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(e => {
-                    console.error("Error al activar Fullscreen:", e);
+            // Protección contra NaN o tiempos negativos
+            if(!isNaN(dur) && dur > 0) {
+                logs.push({
+                    name: task.name,
+                    type: "Interna", // Default
+                    start: task.start.toFixed(1),
+                    end: end.toFixed(1),
+                    dur: dur
                 });
+                saveData();
+                renderLogs();
+            }
+
+            delete activeTasks[grp];
+            if(btn) btn.classList.remove('active');
+        }
+
+        function stopAll() {
+            // Cierra todas las tareas activas simulando click
+            Object.keys(activeTasks).forEach(grp => {
+                const name = activeTasks[grp].name;
+                const allBtns = document.querySelectorAll('.smed-btn');
+                allBtns.forEach(b => { if(b.textContent.includes(name)) finishTask(grp, b); });
+            });
+            activeTasks = {};
+        }
+
+        // --- REGISTROS Y TABLAS ---
+        function renderLogs() {
+            const tbody = document.getElementById('log-table-body');
+            tbody.innerHTML = logs.map((l, i) => `
+                <tr>
+                    <td>${l.name}</td>
+                    <td>
+                        <select onchange="updateType(${i}, this.value)" style="background:#000; color:#fff; border:1px solid #333; font-size:0.6rem">
+                            <option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option>
+                            <option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option>
+                            <option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option>
+                        </select>
+                    </td>
+                    <td style="color:var(--neon-orange); font-weight:bold">${l.dur}</td>
+                    <td style="color:#555">${l.start}</td>
+                </tr>
+            `).join('');
+            // Scroll al final
+            const container = document.querySelector('.log-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateType(idx, val) {
+            logs[idx].type = val;
+            saveData();
+        }
+
+        function saveData() {
+            localStorage.setItem('smed_logs_v12', JSON.stringify(logs));
+            localStorage.setItem('smed_btns_v12', JSON.stringify(btns));
+        }
+
+        // --- VISTAS Y GRÁFICOS ---
+        let myPie = null;
+        let myBar = null;
+
+        function showView(viewId, btn) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-'+viewId).classList.add('active');
+            btn.classList.add('active');
+
+            if(viewId === 'dashboard') updateDashboard();
+            if(viewId === 'sigma') updateSigma();
+        }
+
+        function updateDashboard() {
+            // Calcular Totales
+            let t = { Interna:0, Externa:0, Muda:0, Total:0 };
+            logs.forEach(l => {
+                const d = parseFloat(l.dur);
+                if(!isNaN(d)) {
+                    t[l.type] += d;
+                    t.Total += d;
+                }
+            });
+
+            document.getElementById('kpi-total').textContent = t.Total.toFixed(1);
+            document.getElementById('kpi-int').textContent = t.Interna.toFixed(1);
+            document.getElementById('kpi-ext').textContent = t.Externa.toFixed(1);
+            document.getElementById('kpi-muda').textContent = t.Muda.toFixed(1);
+
+            // Intentar usar Chart.js
+            if(typeof Chart !== 'undefined') {
+                document.getElementById('canvas-container-pie').style.display = 'block';
+                document.getElementById('css-pie-fallback').style.display = 'none';
+                document.getElementById('canvas-container-bar').style.display = 'block';
+                document.getElementById('css-gantt-fallback').style.display = 'none';
+                
+                renderJSCharts(t);
             } else {
-                document.exitFullscreen();
+                // Fallback a CSS puro
+                document.getElementById('canvas-container-pie').style.display = 'none';
+                document.getElementById('css-pie-fallback').style.display = 'flex';
+                document.getElementById('canvas-container-bar').style.display = 'none';
+                document.getElementById('css-gantt-fallback').style.display = 'block';
+                
+                renderCSSCharts(t);
             }
         }
 
-        window.onload = () => { 
-            btns.forEach(makeBtn); 
-            renderLogs(); 
-            setInterval(update, 100); 
-        };
+        function renderJSCharts(t) {
+            // Pie
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            if(myPie) myPie.destroy();
+            myPie = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Interna', 'Externa', 'Muda'],
+                    datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: [C_INT, C_EXT, C_MUDA], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'right', labels:{color:'#fff'} } } }
+            });
+
+            // Gantt (Barra Horizontal)
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            if(myBar) myBar.destroy();
+            
+            // Preparamos datos flotantes para Gantt
+            const dataGantt = logs.map(l => ({ x: [parseFloat(l.start), parseFloat(l.end)], y: l.name }));
+            const colorsGantt = logs.map(l => l.type==='Interna'?C_INT:(l.type==='Externa'?C_EXT:C_MUDA));
+
+            myBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: logs.map(l => l.name),
+                    datasets: [{
+                        label: 'Línea de Tiempo',
+                        data: logs.map(l => [parseFloat(l.start), parseFloat(l.end)]),
+                        backgroundColor: colorsGantt,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { min: logs.length?parseFloat(logs[0].start):0, ticks: { color:'#666'} },
+                        y: { ticks: { color:'#fff', font:{size:9} } }
+                    },
+                    plugins: { legend: { display:false } }
+                }
+            });
+        }
+
+        function renderCSSCharts(t) {
+            // 1. Barra de Proporción CSS
+            const bar = document.getElementById('css-proportion-bar');
+            bar.innerHTML = '';
+            if(t.Total > 0) {
+                if(t.Interna>0) bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Interna/t.Total)*100}%; background:${C_INT}">INT</div>`;
+                if(t.Externa>0) bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Externa/t.Total)*100}%; background:${C_EXT}">EXT</div>`;
+                if(t.Muda>0)    bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Muda/t.Total)*100}%; background:${C_MUDA}">MUDA</div>`;
+            } else {
+                bar.innerHTML = '<div style="width:100%; text-align:center; color:#555; font-size:0.6rem; padding-top:8px;">Sin datos</div>';
+            }
+
+            // 2. Gantt CSS
+            const gantt = document.getElementById('css-gantt-fallback');
+            gantt.innerHTML = '';
+            if(logs.length === 0) return;
+
+            const minStart = parseFloat(logs[0].start);
+            const lastLog = logs[logs.length-1];
+            const maxEnd = parseFloat(lastLog.end);
+            const totalRange = maxEnd - minStart;
+
+            logs.forEach(l => {
+                const s = parseFloat(l.start);
+                const e = parseFloat(l.end);
+                const d = parseFloat(l.dur);
+                
+                // Calcular posición y ancho relativo
+                const leftPct = ((s - minStart) / totalRange) * 100;
+                const widthPct = (d / totalRange) * 100;
+                const col = l.type==='Interna'?C_INT:(l.type==='Externa'?C_EXT:C_MUDA);
+
+                gantt.innerHTML += `
+                    <div class="css-gantt-row">
+                        <div class="css-gantt-label">${l.name}</div>
+                        <div class="css-gantt-track">
+                            <div class="css-gantt-bar" style="left:${leftPct}%; width:${widthPct}%; background:${col}"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- ESTADÍSTICA SIX SIGMA ---
+        function updateSigma() {
+            // Agrupar por nombre de tarea
+            let groups = {};
+            logs.forEach(l => {
+                if(!groups[l.name]) groups[l.name] = [];
+                groups[l.name].push(parseFloat(l.dur));
+            });
+
+            const tbody = document.getElementById('sigma-body');
+            tbody.innerHTML = "";
+            let recommendations = [];
+
+            Object.keys(groups).forEach(name => {
+                const times = groups[name];
+                const n = times.length;
+                const sum = times.reduce((a,b)=>a+b,0);
+                const avg = sum / n;
+                const min = Math.min(...times);
+                const max = Math.max(...times);
+                
+                // Variabilidad
+                const variance = times.reduce((a,b)=>a+Math.pow(b-avg,2),0) / n;
+                const stdDev = Math.sqrt(variance);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="color:#fff">${name}</td>
+                        <td>${n}</td>
+                        <td style="color:var(--neon-blue)">${avg.toFixed(1)}s</td>
+                        <td style="font-size:0.6rem">${min.toFixed(1)} / ${max.toFixed(1)}</td>
+                        <td style="font-weight:bold">${sum.toFixed(1)}s</td>
+                    </tr>
+                `;
+
+                // Análisis inteligente
+                if(stdDev > (avg * 0.2)) {
+                    recommendations.push(`⚠️ <b>${name}:</b> Alta variabilidad (Desv: ${stdDev.toFixed(1)}). Estandarizar procedimiento.`);
+                }
+                if(sum > (parseFloat(document.getElementById('kpi-total').textContent)*0.2)) {
+                    recommendations.push(`📊 <b>${name}:</b> Representa una carga significativa del tiempo total (Pareto). Enfocar mejoras aquí.`);
+                }
+            });
+
+            document.getElementById('smed-recommendations').innerHTML = recommendations.map(r => `<li>${r}</li>`).join('');
+        }
+
+        // --- UTILIDADES ---
+        function exportData(format) {
+            if(logs.length === 0) return alert("Sin datos");
+            const op = prompt("OP:") || "X";
+            const resp = prompt("Responsable:") || "X";
+            
+            let c = "";
+            if(format==='csv') {
+                c = `REPORTE SMED\nOP,${op},Resp,${resp},Fecha,${new Date().toLocaleDateString()}\n\nTarea,Tipo,Duracion,Inicio,Fin\n`;
+                logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
+            } else {
+                c = `SMED LOG - OP:${op}\n----------------\n`;
+                logs.forEach(l => c += `[${l.type}] ${l.name}: ${l.dur}s\n`);
+            }
+            
+            const b = new Blob([c], {type:'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = `SMED_${op}.${format}`;
+            a.click();
+        }
+
+        // --- FUNCIÓN DE RESCATE (REPARA NaNs) ---
+        function rescueData() {
+            if(!confirm("Esta función buscará datos corruptos y tratará de arreglarlos. ¿Seguir?")) return;
+            
+            let recoveredCount = 0;
+            // 1. Filtrar registros inválidos
+            const originalLength = logs.length;
+            logs = logs.filter(l => {
+                const d = parseFloat(l.dur);
+                return !isNaN(d) && d > 0 && l.name !== "undefined";
+            });
+
+            // 2. Intentar buscar en versiones anteriores de localStorage (v6, v7...)
+            // Esto es un intento "forense"
+            const oldKeys = ['smed_logs', 'logs'];
+            oldKeys.forEach(k => {
+                const oldData = localStorage.getItem(k);
+                if(oldData) {
+                    try {
+                        const parsed = JSON.parse(oldData);
+                        if(Array.isArray(parsed)) {
+                            parsed.forEach(p => {
+                                if(!isNaN(parseFloat(p.dur || p.duration))) {
+                                    // Verificar que no sea duplicado exacto
+                                    if(!logs.some(existing => existing.start == p.start)) {
+                                        logs.push({
+                                            name: p.name || "Recuperado",
+                                            type: p.type || "Interna",
+                                            start: parseFloat(p.start || 0).toFixed(1),
+                                            end: parseFloat(p.end || 0).toFixed(1),
+                                            dur: parseFloat(p.dur || p.duration).toFixed(1)
+                                        });
+                                        recoveredCount++;
+                                    }
+                                }
+                            });
+                        }
+                    } catch(e){}
+                }
+            });
+
+            saveData();
+            renderLogs();
+            alert(`Proceso terminado.\nRegistros válidos actuales: ${logs.length}\nRecuperados de versiones viejas: ${recoveredCount}`);
+        }
+
+        function hardReset() {
+            if(confirm("ATENCIÓN: Se borrarán TODOS los datos para siempre. ¿Confirmar?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function toggleFS() {
+            if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>console.log(e));
+            else document.exitFullscreen();
+        }
+
+        // Arranque
+        window.onload = init;
+
     </script>
 </body>
 </html>
