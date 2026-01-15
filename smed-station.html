@@ -3,35 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Industrial Analytics</title>
+    <title>SMED Analytics Pro Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --neon-green: #00ff00; --neon-blue: #00d4ff; --neon-orange: #ffaa00; --bg-dark: #050505; }
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
-        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        header { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; }
-        .main-clock { font-size: 3rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
-        .info-right { text-align: right; font-size: 0.75rem; color: #888; }
+        /* Navegación por pestañas */
+        nav { display: flex; background: #1a1a1a; border-bottom: 2px solid #333; }
+        .nav-btn { flex: 1; padding: 15px; border: none; background: none; color: #888; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .nav-btn.active { color: var(--neon-blue); border-bottom: 3px solid var(--neon-blue); background: #222; }
 
-        main { flex: 1; display: flex; overflow: hidden; }
-        .left-panel { flex: 1.4; display: flex; flex-direction: column; border-right: 2px solid #222; }
-        .log-section { flex: 2; overflow-y: auto; background: #000; padding: 5px; }
-        
-        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.75rem; }
-        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; z-index: 10; }
+        header { background: #111; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .main-clock { font-size: 2.5rem; font-weight: 900; font-family: monospace; color: var(--neon-green); line-height: 1; }
+
+        .tab-content { display: none; flex: 1; overflow: hidden; }
+        .tab-content.active { display: flex; }
+
+        /* VISTA REGISTRO (Mismo diseño anterior) */
+        .registro-view { flex-direction: row; }
+        .left-panel { flex: 1.3; display: flex; flex-direction: column; border-right: 2px solid #222; }
+        .log-section { flex: 1; overflow-y: auto; background: #000; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; }
+        th { background: #1a1a1a; color: var(--neon-blue); padding: 8px; text-align: left; position: sticky; top: 0; }
         td { padding: 6px; border-bottom: 1px solid #111; }
-        select { background: #111; color: #fff; border: 1px solid #444; font-size: 0.7rem; }
+        .control-panel { flex: 1; background: #0a0a0a; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        
+        /* VISTA ANÁLISIS */
+        .analysis-view { flex-direction: column; padding: 20px; overflow-y: auto; background: #000; gap: 30px; }
+        .chart-container { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; min-height: 300px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+        .stat-card { background: #1a1a1a; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #222; }
+        .stat-card h4 { font-size: 0.7rem; color: #666; margin-bottom: 5px; }
+        .stat-card p { font-size: 1.2rem; font-weight: bold; }
 
-        .control-panel { flex: 1; background: #0a0a0a; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .smed-btn-container { display: flex; align-items: stretch; height: 65px; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+        /* BOTONES SMED */
+        .smed-btn-container { display: flex; height: 60px; border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-bottom: 5px; }
         .smed-btn { flex: 1; background: #1a1a1a; color: #fff; border: none; font-weight: bold; text-align: left; padding-left: 12px; position: relative; }
         .smed-btn.active { background: linear-gradient(90deg, #332200, #1a1a1a); color: var(--neon-orange); border-left: 4px solid var(--neon-orange); }
         .group-tag { font-size: 0.5rem; color: var(--neon-blue); text-transform: uppercase; position: absolute; top: 5px; right: 10px; }
-        .del-btn { width: 40px; background: #221111; color: #ff5555; border: none; cursor: pointer; }
 
-        footer { height: 70px; background: #111; display: flex; gap: 8px; justify-content: center; align-items: center; padding: 0 10px; }
-        .btn-pause { background: var(--neon-orange); color: #000; padding: 10px; flex: 1; border: none; font-weight: bold; border-radius: 5px; }
-        .btn-exp { background: #222; color: #fff; border: 1px solid #444; padding: 10px; font-size: 0.7rem; border-radius: 5px; font-weight: bold; }
+        footer { height: 60px; background: #111; display: flex; gap: 8px; justify-content: center; align-items: center; padding: 0 10px; border-top: 2px solid #333; }
+        .btn-action { background: #222; color: #fff; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; font-weight: bold; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -41,54 +55,78 @@
             <div id="abs-clock" class="main-clock">00000.0</div>
             <div id="date-display" style="font-size:0.7rem; color:#444">--/--/--</div>
         </div>
-        <div class="info-right">
-            <div id="real-clock" style="color:var(--neon-blue); font-family: monospace;">00:00:00</div>
-            <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:3px; margin-top:5px">PANTALLA COMPLETA</button>
-        </div>
+        <button onclick="toggleFS()" style="background:none; border:1px solid #333; color:#555; font-size:9px; padding:5px">F11</button>
     </header>
 
-    <main>
+    <nav>
+        <button class="nav-btn active" onclick="switchTab('registro', this)">Captura de Datos</button>
+        <button class="nav-btn" onclick="switchTab('analisis', this); updateCharts();">Gráficos & Análisis</button>
+    </nav>
+
+    <div id="registro" class="tab-content active registro-view">
         <section class="left-panel">
             <div class="log-section">
                 <table>
-                    <thead><tr><th>Tarea</th><th>Tipo</th><th>Dur(s)</th><th>Grupo</th></tr></thead>
+                    <thead><tr><th>Tarea</th><th>Tipo</th><th>Dur(s)</th><th>Inicio</th></tr></thead>
                     <tbody id="log-body"></tbody>
                 </table>
             </div>
-            <div style="padding:10px; background:#111; display:flex; border-top:1px solid #333">
-                <input type="text" id="new-task-name" placeholder="Ej: Troquel Limpiar" style="background:#000; border:1px solid #444; color:#fff; padding:10px; flex:1; border-radius:5px; margin-right:5px">
+            <div style="padding:10px; background:#111; display:flex;">
+                <input type="text" id="new-task-name" placeholder="Nueva actividad..." style="background:#000; border:1px solid #444; color:#fff; padding:10px; flex:1; border-radius:5px; margin-right:5px">
                 <button onclick="addNewButton()" style="padding:10px; background:var(--neon-blue); border:none; width:50px; border-radius:5px; font-weight:bold">+</button>
             </div>
         </section>
         <section class="control-panel" id="button-container"></section>
-    </main>
+    </div>
+
+    <div id="analisis" class="tab-content analysis-view">
+        <div class="stats-grid">
+            <div class="stat-card"><h4>TOTAL (s)</h4><p id="stat-total">0</p></div>
+            <div class="stat-card"><h4>INTERNO</h4><p id="stat-int" style="color:var(--neon-blue)">0</p></div>
+            <div class="stat-card"><h4>EXTERNO</h4><p id="stat-ext" style="color:var(--neon-green)">0</p></div>
+            <div class="stat-card"><h4>MUDA</h4><p id="stat-muda" style="color:var(--neon-orange)">0</p></div>
+        </div>
+
+        <div class="chart-container">
+            <h4 style="color:#666; margin-bottom:10px; font-size:0.8rem">DISTRIBUCIÓN DE TIEMPOS (%)</h4>
+            <canvas id="pieChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h4 style="color:#666; margin-bottom:10px; font-size:0.8rem">LÍNEA DE TIEMPO CRONOLÓGICA (GANTT)</h4>
+            <canvas id="timelineChart"></canvas>
+        </div>
+    </div>
 
     <footer>
-        <button class="btn-pause" onclick="pauseAllActive()">STOP ALL</button>
-        <button class="btn-exp" onclick="exportData('csv')">CSV</button>
-        <button class="btn-exp" onclick="exportData('txt')">TXT</button>
-        <button class="btn-exp" style="color:#f55" onclick="fullReset()">RESET</button>
+        <button class="btn-action" style="background:var(--neon-orange); color:#000" onclick="pauseAll()">STOP ALL</button>
+        <button class="btn-action" onclick="exportData('csv')">CSV</button>
+        <button class="btn-action" style="color:#f55" onclick="fullReset()">RESET</button>
     </footer>
 
     <script>
         let currentAbsTime = 0;
         let logs = JSON.parse(localStorage.getItem('smed_logs')) || [];
-        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Montar", "Sello Ajuste"];
-        let activeTasksByGroup = {}; 
+        let btnNames = JSON.parse(localStorage.getItem('smed_buttons')) || ["Troquel Montar", "Sello Limpiar"];
+        let activeTasksByGroup = {};
+        let pieChart, timelineChart;
 
         function updateClocks() {
             const now = new Date();
-            const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds(), ms = now.getMilliseconds();
-            currentAbsTime = (h * 3600) + (m * 60) + s + (Math.floor(ms / 100) / 10);
+            currentAbsTime = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds() + (now.getMilliseconds() / 1000);
             document.getElementById('abs-clock').textContent = currentAbsTime.toFixed(1);
-            document.getElementById('real-clock').textContent = now.toLocaleTimeString();
             document.getElementById('date-display').textContent = now.toLocaleDateString();
         }
 
-        function getGroupName(name) { return name.split(' ')[0].toUpperCase(); }
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
 
         function handleAction(btn, taskName) {
-            const group = getGroupName(taskName);
+            const group = taskName.split(' ')[0].toUpperCase();
             if (activeTasksByGroup[group] === taskName) {
                 confirmClose(taskName, btn);
                 delete activeTasksByGroup[group];
@@ -107,9 +145,8 @@
 
         function confirmClose(name, btn) {
             const start = parseFloat(btn.dataset.startTime);
-            if (isNaN(start)) return;
             const duration = (currentAbsTime - start).toFixed(1);
-            logs.push({ name, group: getGroupName(name), type: "Interna", start: start.toFixed(1), end: currentAbsTime.toFixed(1), duration });
+            logs.push({ name, group: name.split(' ')[0].toUpperCase(), type: "Interna", start: start.toFixed(1), end: currentAbsTime.toFixed(1), duration: parseFloat(duration) });
             btn.classList.remove('active');
             btn.querySelector('.status').textContent = "ULT: " + duration + "s";
             localStorage.setItem('smed_logs', JSON.stringify(logs));
@@ -118,17 +155,60 @@
 
         function renderLogs() {
             document.getElementById('log-body').innerHTML = logs.map((e, i) => `
-                <tr>
-                    <td>${e.name}</td>
-                    <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs));">
-                        <option value="Interna" ${e.type==='Interna'?'selected':''}>Int</option>
-                        <option value="Externa" ${e.type==='Externa'?'selected':''}>Ext</option>
-                        <option value="Muda" ${e.type==='Muda'?'selected':''}>Muda</option>
-                    </select></td>
-                    <td style="color:var(--neon-orange); font-weight:bold">${e.duration}s</td>
-                    <td style="font-size:0.5rem; color:#444">${e.group}</td>
-                </tr>`).join('');
+                <tr><td>${e.name}</td>
+                <td><select onchange="logs[${i}].type=this.value; localStorage.setItem('smed_logs', JSON.stringify(logs));">
+                    <option value="Interna" ${e.type==='Interna'?'selected':''}>Int</option>
+                    <option value="Externa" ${e.type==='Externa'?'selected':''}>Ext</option>
+                    <option value="Muda" ${e.type==='Muda'?'selected':''}>Muda</option>
+                </select></td>
+                <td style="color:var(--neon-orange); font-weight:bold">${e.duration}s</td>
+                <td>${e.start}</td></tr>`).join('');
             document.querySelector('.log-section').scrollTop = 99999;
+        }
+
+        function updateCharts() {
+            const totals = { Interna: 0, Externa: 0, Muda: 0 };
+            logs.forEach(l => totals[l.type] += l.duration);
+            
+            document.getElementById('stat-total').textContent = (totals.Interna + totals.Externa + totals.Muda).toFixed(1);
+            document.getElementById('stat-int').textContent = totals.Interna.toFixed(1);
+            document.getElementById('stat-ext').textContent = totals.Externa.toFixed(1);
+            document.getElementById('stat-muda').textContent = totals.Muda.toFixed(1);
+
+            if(pieChart) pieChart.destroy();
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Interna', 'Externa', 'Muda'],
+                    datasets: [{
+                        data: [totals.Interna, totals.Externa, totals.Muda],
+                        backgroundColor: ['#00d4ff', '#00ff00', '#ffaa00'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { position: 'right', labels: { color: '#fff' } } } }
+            });
+
+            if(timelineChart) timelineChart.destroy();
+            timelineChart = new Chart(document.getElementById('timelineChart'), {
+                type: 'bar',
+                data: {
+                    labels: logs.map(l => l.name),
+                    datasets: [{
+                        label: 'Duración (s)',
+                        data: logs.map(l => [l.start, l.end]),
+                        backgroundColor: logs.map(l => l.type === 'Interna' ? '#00d4ff' : (l.type === 'Externa' ? '#00ff00' : '#ffaa00'))
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: { 
+                        x: { min: logs.length > 0 ? Math.min(...logs.map(l => l.start)) - 10 : 0, ticks: { color: '#666' } },
+                        y: { ticks: { color: '#fff' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
 
         function addNewButton() {
@@ -141,39 +221,16 @@
         }
 
         function createButtonElement(name) {
-            const container = document.getElementById('button-container');
-            const group = getGroupName(name);
             const div = document.createElement('div');
             div.className = 'smed-btn-container';
-            div.innerHTML = `<button class="smed-btn" data-task="${name}"><div class="group-tag">${group}</div>${name}<br><span class="status" style="font-size:0.6rem; color:#666">OFF</span></button><button class="del-btn">×</button>`;
-            const btn = div.querySelector('.smed-btn');
-            btn.onclick = () => handleAction(btn, name);
-            div.querySelector('.del-btn').onclick = () => { if(confirm("¿Eliminar?")) { btnNames = btnNames.filter(n => n !== name); localStorage.setItem('smed_buttons', JSON.stringify(btnNames)); div.remove(); } };
-            container.appendChild(div);
+            div.innerHTML = `<button class="smed-btn" data-task="${name}"><div class="group-tag">${name.split(' ')[0]}</div>${name}<br><span class="status" style="font-size:0.6rem; color:#666">OFF</span></button><button class="del-btn" onclick="this.parentElement.remove()">×</button>`;
+            div.querySelector('.smed-btn').onclick = () => handleAction(div.querySelector('.smed-btn'), name);
+            document.getElementById('button-container').appendChild(div);
         }
 
-        function pauseAllActive() { document.querySelectorAll('.smed-btn.active').forEach(btn => confirmClose(btn.dataset.task, btn)); activeTasksByGroup = {}; }
-
-        function exportData(format) {
-            if(logs.length === 0) return alert("Sin datos.");
-            const resp = prompt("Responsable:"), op = prompt("OP:"), col = prompt("Colores:"), area = prompt("Área (ft2/m2):"), turno = prompt("Turno:");
-            if(!resp || !op) return alert("Responsable y OP obligatorios");
-            
-            let content = `REPORTE SMED\nOP: ${op} | Colores: ${col} | Area: ${area}\nResp: ${resp} | Turno: ${turno} | Fecha: ${new Date().toLocaleDateString()}\n\n`;
-            if(format === 'csv') {
-                content = `OP,${op},Colores,${col},Area,${area},Resp,${resp},Turno,${turno}\n\nActividad,Tipo,Duracion,Inicio,Fin\n`;
-                logs.forEach(l => content += `${l.name},${l.type},${l.duration},${l.start},${l.end}\n`);
-            } else {
-                logs.forEach(l => content += `[${l.type}] ${l.name}: ${l.duration}s\n`);
-            }
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
-            a.download = `SMED_OP${op}_${format.toUpperCase()}.${format}`;
-            a.click();
-        }
-
-        function fullReset() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
-        function toggleFS() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        function pauseAll() { document.querySelectorAll('.smed-btn.active').forEach(btn => confirmClose(btn.dataset.task, btn)); activeTasksByGroup = {}; }
+        function fullReset() { if(confirm("¿RESET TOTAL?")) { localStorage.clear(); location.reload(); } }
+        function toggleFS() { document.documentElement.requestFullscreen(); }
 
         window.onload = () => { btnNames.forEach(createButtonElement); renderLogs(); setInterval(updateClocks, 100); };
     </script>
