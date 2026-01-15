@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMED Master Suite v12</title>
+    <title>SMED Master Hub v13</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -12,7 +12,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
         body { background-color: var(--bg-dark); color: #fff; font-family: 'Segoe UI', Roboto, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* HEADER & NAV */
         header { background: var(--panel); padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; }
         .main-clock { font-size: 2rem; font-weight: 900; font-family: monospace; color: var(--neon-green); }
         
@@ -20,30 +19,27 @@
         .tab-btn { flex: 1; background: none; border: none; color: #666; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; }
         .tab-btn.active { color: var(--neon-blue); background: #151515; border-bottom: 3px solid var(--neon-blue); }
 
-        /* CONTENT AREAS */
         .view-section { display: none; flex: 1; overflow: hidden; position: relative; }
         .view-section.active { display: flex; }
 
-        /* --- VISTA 1: CAPTURA --- */
+        /* VISTA 1: CAPTURA */
         .capture-layout { flex-direction: row; width: 100%; }
         .left-list { flex: 1.4; display: flex; flex-direction: column; border-right: 1px solid #333; }
         .log-container { flex: 1; overflow-y: auto; background: #000; }
         .right-buttons { flex: 1; background: #080808; padding: 5px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 
-        /* TABLAS */
         table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 0.7rem; }
         th { background: #151515; color: var(--neon-blue); padding: 5px; text-align: left; position: sticky; top: 0; z-index: 2; }
         td { padding: 4px 6px; border-bottom: 1px solid #222; }
         tr:nth-child(even) { background: #0a0a0a; }
 
-        /* BOTONES SMED */
         .smed-btn-box { display: flex; height: 55px; border: 1px solid #333; border-radius: 4px; overflow: hidden; background: #151515; flex-shrink: 0; }
         .smed-btn { flex: 1; background: transparent; color: #ddd; border: none; text-align: left; padding-left: 10px; position: relative; font-weight: 600; font-size: 0.8rem; }
         .smed-btn.active { background: linear-gradient(90deg, #332200, #151515); color: var(--neon-orange); border-left: 3px solid var(--neon-orange); }
         .grp-label { position: absolute; top: 2px; right: 5px; font-size: 0.5rem; color: #555; text-transform: uppercase; }
         .del-btn { width: 30px; background: #200; color: #f55; border: none; font-size: 1rem; cursor: pointer; }
 
-        /* --- VISTA 2: DASHBOARD (GRÁFICOS) --- */
+        /* VISTA 2: DASHBOARD */
         .dashboard-layout { flex-direction: column; padding: 10px; overflow-y: auto; gap: 10px; background: #000; }
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex-shrink: 0; }
         .kpi-card { background: #111; padding: 8px; border-radius: 4px; text-align: center; border: 1px solid #222; }
@@ -53,24 +49,25 @@
         .chart-wrapper { background: #111; border: 1px solid #333; border-radius: 6px; padding: 10px; min-height: 200px; display: flex; flex-direction: column; }
         .chart-title { font-size: 0.7rem; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* CSS FALLBACK CHARTS (Barras hechas con HTML puro si falla JS) */
+        /* CSS FALLBACK */
         .css-bar-container { width: 100%; display: flex; height: 30px; margin-bottom: 5px; background: #222; border-radius: 4px; overflow: hidden; }
         .css-bar-segment { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #000; font-weight: bold; }
-        
         .css-gantt-row { display: flex; align-items: center; margin-bottom: 4px; height: 25px; }
         .css-gantt-label { width: 30%; font-size: 0.6rem; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 5px; }
         .css-gantt-track { width: 70%; background: #111; height: 100%; position: relative; border-radius: 3px; }
         .css-gantt-bar { position: absolute; height: 100%; top: 0; border-radius: 2px; opacity: 0.8; }
 
-        /* --- VISTA 3: SIX SIGMA --- */
+        /* VISTA 3: SIX SIGMA */
         .sigma-layout { flex-direction: column; padding: 10px; overflow-y: auto; }
         .stat-table-container { background: #111; border-radius: 6px; overflow: hidden; margin-bottom: 15px; }
         
-        /* FOOTER */
         footer { height: 55px; background: var(--panel); border-top: 1px solid #333; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
         .btn-act { padding: 8px 12px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff; font-weight: bold; font-size: 0.7rem; }
         
         input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; }
+        
+        /* INPUT DE IMPORTACIÓN OCULTO */
+        #csv-file-input { display: none; }
     </style>
 </head>
 <body>
@@ -122,13 +119,12 @@
                 <canvas id="pieChart"></canvas>
             </div>
             <div id="css-pie-fallback" style="display:flex; flex-direction:column; justify-content:center; height:100%;">
-                <div style="text-align:center; font-size:0.7rem; color:#666; margin-bottom:5px;">Barra de Proporción (Modo Offline)</div>
                 <div class="css-bar-container" id="css-proportion-bar"></div>
             </div>
         </div>
 
         <div class="chart-wrapper">
-            <div class="chart-title">Cronología de Actividades</div>
+            <div class="chart-title">Cronología de Actividades (Gantt)</div>
             <div id="canvas-container-bar" style="position:relative; height:250px; display:none;">
                 <canvas id="barChart"></canvas>
             </div>
@@ -141,55 +137,41 @@
         <div class="stat-table-container">
             <table>
                 <thead>
-                    <tr>
-                        <th>Tarea Agrupada</th>
-                        <th>Cant</th>
-                        <th>Media</th>
-                        <th>Min/Max</th>
-                        <th>Total</th>
-                    </tr>
+                    <tr><th>Tarea</th><th>Cant</th><th>Media</th><th>Min/Max</th><th>Total</th></tr>
                 </thead>
                 <tbody id="sigma-body"></tbody>
             </table>
         </div>
         <div style="padding:10px; background:#111; border:1px solid #333; border-radius:6px;">
-            <div class="chart-title">Recomendaciones Automáticas</div>
+            <div class="chart-title">Insights de Datos</div>
             <ul id="smed-recommendations" style="font-size:0.75rem; color:#ccc; padding-left:20px; line-height:1.5;"></ul>
         </div>
     </div>
 
+    <input type="file" id="csv-file-input" accept=".csv" multiple onchange="handleFileImport(this)">
+
     <footer>
-        <button class="btn-act" style="background:var(--neon-orange); color:#000" onclick="stopAll()">PAUSA TOTAL</button>
-        <button class="btn-act" onclick="exportData('csv')">CSV</button>
-        <button class="btn-act" onclick="exportData('txt')">TXT</button>
-        <button class="btn-act" style="background:#311; color:#f55; border-color:#522" onclick="rescueData()">RESCATAR</button>
+        <button class="btn-act" style="background:var(--neon-blue); color:#000" onclick="triggerImport()">IMPORTAR CSV</button>
+        <button class="btn-act" onclick="exportData('csv')">EXP CSV</button>
+        <button class="btn-act" onclick="exportData('txt')">EXP TXT</button>
+        <button class="btn-act" style="background:#311; color:#f55; border-color:#522" onclick="rescueData()">FIX</button>
         <button class="btn-act" style="background:#000; color:#555" onclick="hardReset()">RESET</button>
     </footer>
 
     <script>
-        // --- NÚCLEO ---
         let absTime = 0;
-        // Intentamos cargar lo que haya, si falla el parseo, iniciamos vacío
         let logs = [];
         let btns = ["Troquel Desmontar", "Troquel Montar", "Sello Ajuste", "Limpieza"]; 
         let activeTasks = {};
-        
-        // Colores
         const C_INT = '#00d4ff'; const C_EXT = '#00ff00'; const C_MUDA = '#ffaa00';
 
-        // Inicialización segura
         function init() {
             try {
-                const sLogs = localStorage.getItem('smed_logs_v12');
+                const sLogs = localStorage.getItem('smed_logs_v13');
                 if(sLogs) logs = JSON.parse(sLogs);
-                
-                const sBtns = localStorage.getItem('smed_btns_v12');
+                const sBtns = localStorage.getItem('smed_btns_v13');
                 if(sBtns) btns = JSON.parse(sBtns);
-            } catch(e) {
-                console.error("Error leyendo datos antiguos:", e);
-                // No sobrescribimos para no perder datos corruptos que se podrían rescatar
-            }
-
+            } catch(e) {}
             renderButtons();
             renderLogs();
             setInterval(tick, 100);
@@ -202,7 +184,76 @@
             document.getElementById('real-time').textContent = d.toLocaleTimeString();
         }
 
-        // --- GESTIÓN DE BOTONES ---
+        /* --- IMPORTACIÓN MASIVA --- */
+        function triggerImport() {
+            document.getElementById('csv-file-input').click();
+        }
+
+        function handleFileImport(input) {
+            const files = input.files;
+            if(!files.length) return;
+
+            let loadedCount = 0;
+            let newRecords = 0;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const lines = text.split('\n');
+                    
+                    // Detectar formato
+                    lines.forEach(line => {
+                        // Limpiar comillas y espacios
+                        const cleanLine = line.replace(/"/g, '').trim();
+                        if(!cleanLine) return;
+
+                        const parts = cleanLine.split(',');
+                        // Formato V12/13: Nombre, Tipo, Duracion, Inicio, Fin (o similar)
+                        // Buscamos líneas que tengan al menos 5 columnas y donde la 3ra sea numérica (duración)
+                        if(parts.length >= 5) {
+                            const name = parts[0].trim();
+                            const type = parts[1].trim();
+                            const dur = parseFloat(parts[2]);
+                            const start = parseFloat(parts[3]);
+                            const end = parseFloat(parts[4]);
+
+                            // Validar que sea un registro de datos válido y no un encabezado
+                            if(!isNaN(dur) && !isNaN(start) && name !== "Tarea" && name !== "Actividad") {
+                                // DEDUPLICACIÓN: Usamos (Start + Name) como llave única
+                                const exists = logs.some(l => 
+                                    Math.abs(parseFloat(l.start) - start) < 0.1 && l.name === name
+                                );
+
+                                if(!exists) {
+                                    logs.push({
+                                        name: name,
+                                        type: (type === 'Int' || type === 'Interna') ? 'Interna' : (type === 'Ext' || type === 'Externa' ? 'Externa' : 'Muda'),
+                                        dur: dur,
+                                        start: start.toFixed(1),
+                                        end: end.toFixed(1)
+                                    });
+                                    newRecords++;
+                                }
+                            }
+                        }
+                    });
+
+                    loadedCount++;
+                    if(loadedCount === files.length) {
+                        // Finalizar proceso
+                        logs.sort((a,b) => parseFloat(a.start) - parseFloat(b.start));
+                        saveData();
+                        renderLogs();
+                        alert(`Importación completa.\nArchivos procesados: ${files.length}\nRegistros nuevos agregados: ${newRecords}`);
+                        input.value = ''; // Limpiar input
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        /* --- BOTONES Y TAREAS --- */
         function addButton() {
             const name = document.getElementById('new-btn-name').value.trim();
             if(!name || btns.includes(name)) return;
@@ -219,16 +270,7 @@
                 const grp = name.split(' ')[0].toUpperCase();
                 const div = document.createElement('div');
                 div.className = 'smed-btn-box';
-                div.innerHTML = `
-                    <button class="smed-btn" onclick="toggleTask(this, '${name}')">
-                        ${name}
-                        <div class="grp-label">${grp}</div>
-                    </button>
-                    <button class="del-btn" onclick="delButton('${name}')">×</button>
-                `;
-                // Restaurar estado activo si hubo recarga
-                // (Lógica simplificada: si recargas, se pierde el estado "Running" visual pero se puede recalcular si guardamos start time en LS. 
-                // Por simplicidad en V12, asumimos start limpio, pero el botón "Rescue" ayuda).
+                div.innerHTML = `<button class="smed-btn" onclick="toggleTask(this, '${name}')">${name}<div class="grp-label">${grp}</div></button><button class="del-btn" onclick="delButton('${name}')">×</button>`;
                 container.appendChild(div);
             });
         }
@@ -241,365 +283,146 @@
             }
         }
 
-        // --- LÓGICA SMED DE GRUPOS ---
         function toggleTask(btn, name) {
             const grp = name.split(' ')[0].toUpperCase();
-            
-            // 1. Si es la misma tarea activa -> Cerrar
             if(activeTasks[grp] && activeTasks[grp].name === name) {
                 finishTask(grp, btn);
-                return;
+            } else {
+                if(activeTasks[grp]) {
+                    const prevName = activeTasks[grp].name;
+                    const allBtns = document.querySelectorAll('.smed-btn');
+                    let prevBtn = null;
+                    allBtns.forEach(b => { if(b.textContent.includes(prevName)) prevBtn = b; });
+                    if(prevBtn) finishTask(grp, prevBtn);
+                }
+                activeTasks[grp] = { name: name, start: absTime };
+                btn.classList.add('active');
             }
-
-            // 2. Si hay otra tarea del mismo grupo -> Cerrar la anterior primero
-            if(activeTasks[grp]) {
-                // Buscamos el botón visual de la tarea anterior
-                const prevName = activeTasks[grp].name;
-                // Truco para encontrar el botón por texto (ya que se generan dinámicamente)
-                const allBtns = document.querySelectorAll('.smed-btn');
-                let prevBtn = null;
-                allBtns.forEach(b => { if(b.textContent.includes(prevName)) prevBtn = b; });
-                
-                if(prevBtn) finishTask(grp, prevBtn);
-            }
-
-            // 3. Iniciar nueva
-            activeTasks[grp] = { name: name, start: absTime };
-            btn.classList.add('active');
         }
 
         function finishTask(grp, btn) {
             if(!activeTasks[grp]) return;
             const task = activeTasks[grp];
-            const end = absTime;
-            const dur = parseFloat((end - task.start).toFixed(1));
-
-            // Protección contra NaN o tiempos negativos
+            const dur = parseFloat((absTime - task.start).toFixed(1));
             if(!isNaN(dur) && dur > 0) {
-                logs.push({
-                    name: task.name,
-                    type: "Interna", // Default
-                    start: task.start.toFixed(1),
-                    end: end.toFixed(1),
-                    dur: dur
-                });
+                logs.push({ name: task.name, type: "Interna", start: task.start.toFixed(1), end: absTime.toFixed(1), dur: dur });
                 saveData();
                 renderLogs();
             }
-
             delete activeTasks[grp];
             if(btn) btn.classList.remove('active');
         }
 
-        function stopAll() {
-            // Cierra todas las tareas activas simulando click
-            Object.keys(activeTasks).forEach(grp => {
-                const name = activeTasks[grp].name;
-                const allBtns = document.querySelectorAll('.smed-btn');
-                allBtns.forEach(b => { if(b.textContent.includes(name)) finishTask(grp, b); });
-            });
-            activeTasks = {};
-        }
-
-        // --- REGISTROS Y TABLAS ---
         function renderLogs() {
             const tbody = document.getElementById('log-table-body');
-            tbody.innerHTML = logs.map((l, i) => `
-                <tr>
-                    <td>${l.name}</td>
-                    <td>
-                        <select onchange="updateType(${i}, this.value)" style="background:#000; color:#fff; border:1px solid #333; font-size:0.6rem">
-                            <option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option>
-                            <option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option>
-                            <option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option>
-                        </select>
-                    </td>
-                    <td style="color:var(--neon-orange); font-weight:bold">${l.dur}</td>
-                    <td style="color:#555">${l.start}</td>
-                </tr>
-            `).join('');
-            // Scroll al final
+            tbody.innerHTML = logs.map((l, i) => `<tr><td>${l.name}</td><td><select onchange="updateType(${i}, this.value)" style="background:#000; color:#fff; border:1px solid #333; font-size:0.6rem"><option value="Interna" ${l.type==='Interna'?'selected':''}>Int</option><option value="Externa" ${l.type==='Externa'?'selected':''}>Ext</option><option value="Muda" ${l.type==='Muda'?'selected':''}>Muda</option></select></td><td style="color:var(--neon-orange); font-weight:bold">${l.dur}</td><td style="color:#555">${l.start}</td></tr>`).join('');
             const container = document.querySelector('.log-container');
             container.scrollTop = container.scrollHeight;
         }
 
-        function updateType(idx, val) {
-            logs[idx].type = val;
-            saveData();
-        }
+        function updateType(idx, val) { logs[idx].type = val; saveData(); }
+        function saveData() { localStorage.setItem('smed_logs_v13', JSON.stringify(logs)); localStorage.setItem('smed_btns_v13', JSON.stringify(btns)); }
 
-        function saveData() {
-            localStorage.setItem('smed_logs_v12', JSON.stringify(logs));
-            localStorage.setItem('smed_btns_v12', JSON.stringify(btns));
-        }
-
-        // --- VISTAS Y GRÁFICOS ---
-        let myPie = null;
-        let myBar = null;
-
+        /* --- VISUALIZACIÓN --- */
+        let myPie = null, myBar = null;
         function showView(viewId, btn) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('view-'+viewId).classList.add('active');
             btn.classList.add('active');
-
             if(viewId === 'dashboard') updateDashboard();
             if(viewId === 'sigma') updateSigma();
         }
 
         function updateDashboard() {
-            // Calcular Totales
             let t = { Interna:0, Externa:0, Muda:0, Total:0 };
-            logs.forEach(l => {
-                const d = parseFloat(l.dur);
-                if(!isNaN(d)) {
-                    t[l.type] += d;
-                    t.Total += d;
-                }
-            });
-
+            logs.forEach(l => { const d = parseFloat(l.dur); if(!isNaN(d)) { t[l.type] += d; t.Total += d; } });
             document.getElementById('kpi-total').textContent = t.Total.toFixed(1);
             document.getElementById('kpi-int').textContent = t.Interna.toFixed(1);
             document.getElementById('kpi-ext').textContent = t.Externa.toFixed(1);
             document.getElementById('kpi-muda').textContent = t.Muda.toFixed(1);
 
-            // Intentar usar Chart.js
             if(typeof Chart !== 'undefined') {
-                document.getElementById('canvas-container-pie').style.display = 'block';
-                document.getElementById('css-pie-fallback').style.display = 'none';
-                document.getElementById('canvas-container-bar').style.display = 'block';
-                document.getElementById('css-gantt-fallback').style.display = 'none';
-                
+                document.getElementById('canvas-container-pie').style.display = 'block'; document.getElementById('css-pie-fallback').style.display = 'none';
+                document.getElementById('canvas-container-bar').style.display = 'block'; document.getElementById('css-gantt-fallback').style.display = 'none';
                 renderJSCharts(t);
             } else {
-                // Fallback a CSS puro
-                document.getElementById('canvas-container-pie').style.display = 'none';
-                document.getElementById('css-pie-fallback').style.display = 'flex';
-                document.getElementById('canvas-container-bar').style.display = 'none';
-                document.getElementById('css-gantt-fallback').style.display = 'block';
-                
+                document.getElementById('canvas-container-pie').style.display = 'none'; document.getElementById('css-pie-fallback').style.display = 'flex';
+                document.getElementById('canvas-container-bar').style.display = 'none'; document.getElementById('css-gantt-fallback').style.display = 'block';
                 renderCSSCharts(t);
             }
         }
 
         function renderJSCharts(t) {
-            // Pie
             const ctxPie = document.getElementById('pieChart').getContext('2d');
             if(myPie) myPie.destroy();
-            myPie = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Interna', 'Externa', 'Muda'],
-                    datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: [C_INT, C_EXT, C_MUDA], borderWidth: 0 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'right', labels:{color:'#fff'} } } }
-            });
+            myPie = new Chart(ctxPie, { type: 'doughnut', data: { labels: ['Interna', 'Externa', 'Muda'], datasets: [{ data: [t.Interna, t.Externa, t.Muda], backgroundColor: [C_INT, C_EXT, C_MUDA], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position:'right', labels:{color:'#fff'} } } } });
 
-            // Gantt (Barra Horizontal)
             const ctxBar = document.getElementById('barChart').getContext('2d');
             if(myBar) myBar.destroy();
-            
-            // Preparamos datos flotantes para Gantt
-            const dataGantt = logs.map(l => ({ x: [parseFloat(l.start), parseFloat(l.end)], y: l.name }));
             const colorsGantt = logs.map(l => l.type==='Interna'?C_INT:(l.type==='Externa'?C_EXT:C_MUDA));
-
-            myBar = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: logs.map(l => l.name),
-                    datasets: [{
-                        label: 'Línea de Tiempo',
-                        data: logs.map(l => [parseFloat(l.start), parseFloat(l.end)]),
-                        backgroundColor: colorsGantt,
-                        barPercentage: 0.5
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { min: logs.length?parseFloat(logs[0].start):0, ticks: { color:'#666'} },
-                        y: { ticks: { color:'#fff', font:{size:9} } }
-                    },
-                    plugins: { legend: { display:false } }
-                }
-            });
+            myBar = new Chart(ctxBar, { type: 'bar', data: { labels: logs.map(l => l.name), datasets: [{ label: 'Línea de Tiempo', data: logs.map(l => [parseFloat(l.start), parseFloat(l.end)]), backgroundColor: colorsGantt, barPercentage: 0.5 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { min: logs.length?parseFloat(logs[0].start):0, ticks: { color:'#666'} }, y: { ticks: { color:'#fff', font:{size:9} } } }, plugins: { legend: { display:false } } } });
         }
 
         function renderCSSCharts(t) {
-            // 1. Barra de Proporción CSS
-            const bar = document.getElementById('css-proportion-bar');
-            bar.innerHTML = '';
+            const bar = document.getElementById('css-proportion-bar'); bar.innerHTML = '';
             if(t.Total > 0) {
                 if(t.Interna>0) bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Interna/t.Total)*100}%; background:${C_INT}">INT</div>`;
                 if(t.Externa>0) bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Externa/t.Total)*100}%; background:${C_EXT}">EXT</div>`;
                 if(t.Muda>0)    bar.innerHTML += `<div class="css-bar-segment" style="width:${(t.Muda/t.Total)*100}%; background:${C_MUDA}">MUDA</div>`;
-            } else {
-                bar.innerHTML = '<div style="width:100%; text-align:center; color:#555; font-size:0.6rem; padding-top:8px;">Sin datos</div>';
-            }
+            } else { bar.innerHTML = '<div style="width:100%; text-align:center; color:#555; font-size:0.6rem; padding-top:8px;">Sin datos</div>'; }
 
-            // 2. Gantt CSS
-            const gantt = document.getElementById('css-gantt-fallback');
-            gantt.innerHTML = '';
+            const gantt = document.getElementById('css-gantt-fallback'); gantt.innerHTML = '';
             if(logs.length === 0) return;
-
-            const minStart = parseFloat(logs[0].start);
-            const lastLog = logs[logs.length-1];
-            const maxEnd = parseFloat(lastLog.end);
-            const totalRange = maxEnd - minStart;
-
+            const minStart = parseFloat(logs[0].start); const totalRange = parseFloat(logs[logs.length-1].end) - minStart;
             logs.forEach(l => {
-                const s = parseFloat(l.start);
-                const e = parseFloat(l.end);
-                const d = parseFloat(l.dur);
-                
-                // Calcular posición y ancho relativo
-                const leftPct = ((s - minStart) / totalRange) * 100;
-                const widthPct = (d / totalRange) * 100;
+                const leftPct = ((parseFloat(l.start) - minStart) / totalRange) * 100;
+                const widthPct = (parseFloat(l.dur) / totalRange) * 100;
                 const col = l.type==='Interna'?C_INT:(l.type==='Externa'?C_EXT:C_MUDA);
-
-                gantt.innerHTML += `
-                    <div class="css-gantt-row">
-                        <div class="css-gantt-label">${l.name}</div>
-                        <div class="css-gantt-track">
-                            <div class="css-gantt-bar" style="left:${leftPct}%; width:${widthPct}%; background:${col}"></div>
-                        </div>
-                    </div>
-                `;
+                gantt.innerHTML += `<div class="css-gantt-row"><div class="css-gantt-label">${l.name}</div><div class="css-gantt-track"><div class="css-gantt-bar" style="left:${leftPct}%; width:${widthPct}%; background:${col}"></div></div></div>`;
             });
         }
 
-        // --- ESTADÍSTICA SIX SIGMA ---
         function updateSigma() {
-            // Agrupar por nombre de tarea
             let groups = {};
-            logs.forEach(l => {
-                if(!groups[l.name]) groups[l.name] = [];
-                groups[l.name].push(parseFloat(l.dur));
-            });
-
-            const tbody = document.getElementById('sigma-body');
-            tbody.innerHTML = "";
+            logs.forEach(l => { if(!groups[l.name]) groups[l.name] = []; groups[l.name].push(parseFloat(l.dur)); });
+            const tbody = document.getElementById('sigma-body'); tbody.innerHTML = "";
             let recommendations = [];
-
             Object.keys(groups).forEach(name => {
-                const times = groups[name];
-                const n = times.length;
-                const sum = times.reduce((a,b)=>a+b,0);
-                const avg = sum / n;
-                const min = Math.min(...times);
-                const max = Math.max(...times);
-                
-                // Variabilidad
-                const variance = times.reduce((a,b)=>a+Math.pow(b-avg,2),0) / n;
-                const stdDev = Math.sqrt(variance);
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="color:#fff">${name}</td>
-                        <td>${n}</td>
-                        <td style="color:var(--neon-blue)">${avg.toFixed(1)}s</td>
-                        <td style="font-size:0.6rem">${min.toFixed(1)} / ${max.toFixed(1)}</td>
-                        <td style="font-weight:bold">${sum.toFixed(1)}s</td>
-                    </tr>
-                `;
-
-                // Análisis inteligente
-                if(stdDev > (avg * 0.2)) {
-                    recommendations.push(`⚠️ <b>${name}:</b> Alta variabilidad (Desv: ${stdDev.toFixed(1)}). Estandarizar procedimiento.`);
-                }
-                if(sum > (parseFloat(document.getElementById('kpi-total').textContent)*0.2)) {
-                    recommendations.push(`📊 <b>${name}:</b> Representa una carga significativa del tiempo total (Pareto). Enfocar mejoras aquí.`);
-                }
+                const times = groups[name]; const n = times.length; const sum = times.reduce((a,b)=>a+b,0); const avg = sum / n;
+                const min = Math.min(...times); const max = Math.max(...times);
+                const variance = times.reduce((a,b)=>a+Math.pow(b-avg,2),0) / n; const stdDev = Math.sqrt(variance);
+                tbody.innerHTML += `<tr><td style="color:#fff">${name}</td><td>${n}</td><td style="color:var(--neon-blue)">${avg.toFixed(1)}s</td><td style="font-size:0.6rem">${min.toFixed(1)} / ${max.toFixed(1)}</td><td style="font-weight:bold">${sum.toFixed(1)}s</td></tr>`;
+                if(stdDev > (avg * 0.2)) recommendations.push(`⚠️ <b>${name}:</b> Alta variabilidad (Desv: ${stdDev.toFixed(1)}).`);
+                if(sum > (parseFloat(document.getElementById('kpi-total').textContent)*0.2)) recommendations.push(`📊 <b>${name}:</b> Carga significativa del tiempo total (Pareto).`);
             });
-
             document.getElementById('smed-recommendations').innerHTML = recommendations.map(r => `<li>${r}</li>`).join('');
         }
 
-        // --- UTILIDADES ---
         function exportData(format) {
             if(logs.length === 0) return alert("Sin datos");
-            const op = prompt("OP:") || "X";
-            const resp = prompt("Responsable:") || "X";
-            
+            const op = prompt("OP:") || "X"; const resp = prompt("Resp:") || "X";
             let c = "";
             if(format==='csv') {
-                c = `REPORTE SMED\nOP,${op},Resp,${resp},Fecha,${new Date().toLocaleDateString()}\n\nTarea,Tipo,Duracion,Inicio,Fin\n`;
+                c = `REPORTE SMED CONSOLIDADO\nOP,${op},Resp,${resp},Fecha,${new Date().toLocaleDateString()}\n\nTarea,Tipo,Duracion,Inicio,Fin\n`;
                 logs.forEach(l => c += `"${l.name}","${l.type}",${l.dur},${l.start},${l.end}\n`);
             } else {
-                c = `SMED LOG - OP:${op}\n----------------\n`;
-                logs.forEach(l => c += `[${l.type}] ${l.name}: ${l.dur}s\n`);
+                c = `SMED LOG - OP:${op}\n----------------\n`; logs.forEach(l => c += `[${l.type}] ${l.name}: ${l.dur}s\n`);
             }
-            
-            const b = new Blob([c], {type:'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(b);
-            a.download = `SMED_${op}.${format}`;
-            a.click();
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c], {type:'text/plain'})); a.download = `SMED_${op}.${format}`; a.click();
         }
 
-        // --- FUNCIÓN DE RESCATE (REPARA NaNs) ---
         function rescueData() {
-            if(!confirm("Esta función buscará datos corruptos y tratará de arreglarlos. ¿Seguir?")) return;
-            
-            let recoveredCount = 0;
-            // 1. Filtrar registros inválidos
-            const originalLength = logs.length;
-            logs = logs.filter(l => {
-                const d = parseFloat(l.dur);
-                return !isNaN(d) && d > 0 && l.name !== "undefined";
-            });
-
-            // 2. Intentar buscar en versiones anteriores de localStorage (v6, v7...)
-            // Esto es un intento "forense"
-            const oldKeys = ['smed_logs', 'logs'];
-            oldKeys.forEach(k => {
-                const oldData = localStorage.getItem(k);
-                if(oldData) {
-                    try {
-                        const parsed = JSON.parse(oldData);
-                        if(Array.isArray(parsed)) {
-                            parsed.forEach(p => {
-                                if(!isNaN(parseFloat(p.dur || p.duration))) {
-                                    // Verificar que no sea duplicado exacto
-                                    if(!logs.some(existing => existing.start == p.start)) {
-                                        logs.push({
-                                            name: p.name || "Recuperado",
-                                            type: p.type || "Interna",
-                                            start: parseFloat(p.start || 0).toFixed(1),
-                                            end: parseFloat(p.end || 0).toFixed(1),
-                                            dur: parseFloat(p.dur || p.duration).toFixed(1)
-                                        });
-                                        recoveredCount++;
-                                    }
-                                }
-                            });
-                        }
-                    } catch(e){}
-                }
-            });
-
-            saveData();
-            renderLogs();
-            alert(`Proceso terminado.\nRegistros válidos actuales: ${logs.length}\nRecuperados de versiones viejas: ${recoveredCount}`);
+            if(!confirm("Reparar base de datos?")) return;
+            const originalL = logs.length;
+            logs = logs.filter(l => !isNaN(parseFloat(l.dur)) && l.dur > 0);
+            alert(`Reparado. Registros válidos: ${logs.length} (Eliminados: ${originalL - logs.length})`);
+            saveData(); renderLogs();
         }
 
-        function hardReset() {
-            if(confirm("ATENCIÓN: Se borrarán TODOS los datos para siempre. ¿Confirmar?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
-
-        function toggleFS() {
-            if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>console.log(e));
-            else document.exitFullscreen();
-        }
-
-        // Arranque
+        function hardReset() { if(confirm("Borrar todo?")) { localStorage.clear(); location.reload(); } }
+        function toggleFS() { if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{}); else document.exitFullscreen(); }
         window.onload = init;
-
     </script>
 </body>
 </html>
