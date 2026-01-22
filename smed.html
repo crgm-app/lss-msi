@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronómetro Industrial Analytics</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: #141414;
+            --text-muted: #666;
+            --text-bright: #e0e0e0;
+            --primary-sec: #00ff9d;
+            --secondary-time: #00d4ff;
+            --accent-lap: #fff;
+            --danger: #ff4444;
+            --border: #2a2a2a;
+            --tab-active: #222;
+        }
+
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-bright);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            margin: 0;
+            font-size: 12px;
+        }
+
+        /* --- TABS --- */
+        .tab-nav {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 10px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .tab-btn.active {
+            background: var(--tab-active);
+            color: var(--primary-sec);
+            border-bottom: 2px solid var(--primary-sec);
+        }
+
+        .view-section { display: none; width: 100%; max-width: 600px; gap: 8px; flex-direction: column; }
+        .view-section.active { display: flex; }
+
+        /* --- ESTILOS GENERALES --- */
+        h2 { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 5px 0; font-weight: normal; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 2px;}
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+        .row:last-child { border-bottom: none; }
+
+        .sec-display { font-size: 1.2rem; color: var(--primary-sec); font-weight: bold; line-height: 1.1; }
+        .sec-display-huge { font-size: 2.5rem; color: var(--primary-sec); font-weight: bold; text-align: center; line-height: 1; margin: 5px 0; }
+        .time-display { font-size: 0.8rem; color: var(--secondary-time); text-align: right; }
+        .label { font-size: 0.65rem; color: var(--text-muted); display: block; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 2px; }
+        th, td { border: 1px solid #333; padding: 2px 5px; text-align: right; }
+        th { background-color: #1f1f1f; text-align: center; color: #888; font-weight: normal; }
+        td:first-child { text-align: left; color: #aaa; }
+        td.col-sec { color: var(--primary-sec); font-weight: bold; }
+        td.col-time { color: var(--secondary-time); }
+
+        /* --- BOTONES DE ACCIÓN --- */
+        .toolbar {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: #222; border: 1px solid #444; color: #ccc;
+            padding: 4px 8px; cursor: pointer; font-family: inherit; font-size: 0.75rem; border-radius: 3px;
+        }
+        .btn:hover { background: #333; color: #fff; }
+        .btn-primary { border-color: var(--primary-sec); color: var(--primary-sec); }
+        .btn-primary:hover { background: var(--primary-sec); color: #000; }
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+
+        /* --- LISTA DE LAPS --- */
+        .lap-list-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+            margin-top: 5px;
+        }
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid #222;
+            font-size: 0.8rem;
+        }
+        .lap-input {
+            background: transparent; border: none; color: #888;
+            font-family: inherit; font-size: 0.8rem; width: 70px;
+            border-bottom: 1px dotted #333;
+        }
+        .lap-input:focus { outline: none; border-bottom: 1px solid var(--primary-sec); color: #fff; }
+        
+        .lap-data-group { display: flex; gap: 8px; align-items: baseline; }
+        .lap-abs { color: #555; font-size: 0.7rem; font-family: monospace; }
+        .lap-delta { color: var(--accent-lap); font-weight: bold; width: 50px; text-align: right;}
+        .btn-del-lap { background: none; border: none; color: #555; cursor: pointer; margin-left: 5px; font-weight: bold;}
+        .btn-del-lap:hover { color: var(--danger); }
+
+        /* --- ESTADÍSTICAS (GRAFICOS) --- */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .stat-box { background: #1a1a1a; padding: 5px; border: 1px solid #333; border-radius: 3px;}
+        .stat-label { font-size: 0.65rem; color: #666; display: block;}
+        .stat-val { font-size: 0.9rem; color: var(--primary-sec); font-weight: bold;}
+
+        /* Contenedor Gráfico */
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            background: #111;
+            border: 1px solid #333;
+            margin-top: 10px;
+        }
+        /* Box Plot (Vela) HTML/CSS */
+        .boxplot-track {
+            position: relative;
+            height: 40px;
+            width: 90%;
+            margin: 20px auto;
+            border-bottom: 1px solid #333;
+        }
+        .bp-line { position: absolute; top: 50%; height: 2px; background: #555; transform: translateY(-50%); }
+        .bp-box { position: absolute; top: 20%; height: 60%; background: rgba(0, 255, 157, 0.2); border: 1px solid var(--primary-sec); }
+        .bp-median { position: absolute; top: 10%; height: 80%; width: 2px; background: #fff; }
+        .bp-whisker { position: absolute; top: 30%; height: 40%; width: 2px; background: #555; }
+        .bp-label { position: absolute; top: 110%; font-size: 0.6rem; color: #666; transform: translateX(-50%); }
+
+        /* SVG Curva */
+        svg { width: 100%; height: 100%; }
+        path { fill: none; stroke: var(--secondary-time); stroke-width: 2; }
+        .area-fill { fill: rgba(0, 212, 255, 0.1); stroke: none; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('main')">Reloj & Laps</button>
+        <button class="tab-btn" onclick="switchTab('stats')">Gráficos & Stats</button>
+    </div>
+
+    <div id="tab-main" class="view-section active">
+        
+        <div class="card">
+            <h2>Tiempo Real</h2>
+            <div class="sec-display-huge" id="mainSeconds">00000.0</div>
+            <div style="text-align: center; margin-bottom: 8px;">
+                <span class="time-display" style="font-size: 1rem;" id="mainTime">00:00:00</span>
+            </div>
+
+            <div style="display:flex; justify-content:center; margin-bottom:10px;">
+                <button class="btn btn-primary" style="padding: 8px 20px; font-size: 0.9rem;" onclick="addLap()">+ MARCAR HITO</button>
+            </div>
+
+            <div class="toolbar">
+                <button class="btn" onclick="exportCSV()">Exportar CSV</button>
+                <button class="btn" onclick="document.getElementById('fileInput').click()">Importar CSV</button>
+                <button class="btn btn-danger" onclick="clearAllLaps()">Borrar Todo</button>
+                <input type="file" id="fileInput" accept=".csv" style="display: none;" onchange="importCSV(this)">
+            </div>
+            
+            <div class="lap-list-container" id="lapList">
+                </div>
+        </div>
+
+        <div class="card">
+            <h2>Bloques de 10 Minutos</h2>
+            <div class="row">
+                <div><span class="label">Actual</span><div class="sec-display" id="currTenSec">00000.0</div></div>
+                <div style="text-align: right;"><span class="label">Hora</span><div class="time-display" id="currTenTime">00:00</div></div>
+            </div>
+            <div class="row">
+                <div><span class="label">Siguiente</span><div class="sec-display" id="nextTenSec">00000.0</div></div>
+                <div style="text-align: right;"><span class="label">Hora</span><div class="time-display" id="nextTenTime">00:00</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Cuenta Regresiva</h2>
+            <div class="row">
+                <div><span class="label">Prox. 10-Min</span><div class="sec-display" style="color: #ffaa00;" id="remTen">0.0</div></div>
+                <div><span class="label">Prox. Hora</span><div class="sec-display" style="color: #ff5555;" id="remHour">0.0</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Tabla Técnica</h2>
+            <table>
+                <thead><tr><th>Concepto</th><th>Valor</th><th>Ref.</th></tr></thead>
+                <tbody>
+                    <tr><td>Inicio Hora Actual</td><td class="col-sec" id="p6_hourStartSec"></td><td class="col-time" id="p6_hourStartTime"></td></tr>
+                    <tr style="background-color: #222;"><td>TIEMPO REAL</td><td class="col-sec" style="color: #fff;" id="p6_realTimeSec"></td><td class="col-time" style="color: #fff;" id="p6_realTime"></td></tr>
+                    <tr><td>Inicio Hora Sig.</td><td class="col-sec" id="p6_hourNextSec"></td><td class="col-time" id="p6_hourNextTime"></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-stats" class="view-section">
+        <div class="card">
+            <h2>Análisis de Quartiles (Datos basados en Deltas)</h2>
+            
+            <div class="stats-summary" id="statsBox">
+                <div class="stat-box"><span class="stat-label">Min</span><span class="stat-val" id="st-min">--</span></div>
+                <div class="stat-box"><span class="stat-label">Q1 (25%)</span><span class="stat-val" id="st-q1">--</span></div>
+                <div class="stat-box"><span class="stat-label">Mediana</span><span class="stat-val" id="st-med">--</span></div>
+                <div class="stat-box"><span class="stat-label">Q3 (75%)</span><span class="stat-val" id="st-q3">--</span></div>
+                <div class="stat-box"><span class="stat-label">Max</span><span class="stat-val" id="st-max">--</span></div>
+            </div>
+
+            <h2>Visualización: Box Plot (Vela)</h2>
+            <div id="boxPlotContainer" style="height: 80px; position: relative; background: #111; border: 1px solid #333;">
+                <div style="text-align: center; padding-top: 30px; color: #444;" id="noDataMsg">No hay datos suficientes</div>
+            </div>
+
+            <h2 style="margin-top: 20px;">Curva de Distribución (Campana)</h2>
+            <div class="chart-container">
+                <svg id="bellCurve" viewBox="0 0 300 150" preserveAspectRatio="none">
+                    </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UTILIDADES ---
+        const pad = (n) => n.toString().padStart(2, '0');
+        const getDaySeconds = (d) => (d.getHours() * 3600) + (d.getMinutes() * 60) + d.getSeconds() + (d.getMilliseconds() / 1000);
+        const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        const formatHMS = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+        // --- ESTADO & PERSISTENCIA ---
+        let laps = [];
+        let lastLapTimestamp = Date.now();
+
+        // Cargar al inicio
+        function loadData() {
+            const stored = localStorage.getItem('industrial_clock_laps');
+            if (stored) {
+                laps = JSON.parse(stored);
+                // Recuperar la última referencia de tiempo si existe un lap reciente
+                if (laps.length > 0) {
+                    lastLapTimestamp = laps[0].id; // El id es el timestamp
+                }
+            }
+            renderLaps();
+            calculateStats();
+        }
+
+        function saveData() {
+            localStorage.setItem('industrial_clock_laps', JSON.stringify(laps));
+            calculateStats(); // Recalcular stats al guardar
+        }
+
+        // --- GESTIÓN DE LAPS ---
+        function addLap() {
+            const now = new Date();
+            const nowTimestamp = Date.now();
+            
+            // Si es el primer lap absoluto y no hay datos previos, el delta es 0 o desde carga
+            // Para consistencia en stopwatch, calculamos desde el último Hito marcado
+            let diffSeconds = (nowTimestamp - lastLapTimestamp) / 1000;
+            // Evitar deltas negativos o gigantes si se recarga la página mucho después
+            if (diffSeconds > 86400 || diffSeconds < 0) diffSeconds = 0; 
+            
+            // Si es el PRIMER dato de la lista vacía, el delta suele ser 0 para marcar inicio
+            if (laps.length === 0) diffSeconds = 0;
+
+            const absSeconds = getDaySeconds(now).toFixed(1);
+
+            lastLapTimestamp = nowTimestamp;
+
+            const newLap = {
+                id: nowTimestamp,
+                deltaVal: parseFloat(diffSeconds.toFixed(1)), // Guardamos como número para stats
+                abs: `[${absSeconds}]`,
+                name: `Lap ${laps.length + 1}`
+            };
+            
+            laps.unshift(newLap);
+            renderLaps();
+            saveData();
+        }
+
+        function deleteLap(id) {
+            if(!confirm("¿Borrar este registro?")) return;
+            laps = laps.filter(l => l.id !== id);
+            renderLaps();
+            saveData();
+        }
+
+        function clearAllLaps() {
+            if(!confirm("¿ESTÁS SEGURO? Se borrarán todos los datos.")) return;
+            laps = [];
+            lastLapTimestamp = Date.now(); // Reiniciar contador
+            renderLaps();
+            saveData();
+        }
+
+        function updateLapName(id, newName) {
+            const lap = laps.find(l => l.id === id);
+            if (lap) {
+                lap.name = newName;
+                saveData();
+            }
+        }
+
+        function renderLaps() {
+            const container = document.getElementById('lapList');
+            container.innerHTML = '';
+
+            laps.forEach(lap => {
+                const row = document.createElement('div');
+                row.className = 'lap-item';
+                
+                // Input Nombre
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'lap-input';
+                input.value = lap.name;
+                input.oninput = (e) => updateLapName(lap.id, e.target.value);
+
+                // Grupo Datos
+                const dataGroup = document.createElement('div');
+                dataGroup.className = 'lap-data-group';
+
+                const absSpan = document.createElement('span');
+                absSpan.className = 'lap-abs';
+                absSpan.innerText = lap.abs;
+
+                const deltaSpan = document.createElement('span');
+                deltaSpan.className = 'lap-delta';
+                deltaSpan.innerText = `+${lap.deltaVal}s`;
+
+                // Botón Borrar (X)
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-del-lap';
+                delBtn.innerText = 'x';
+                delBtn.onclick = () => deleteLap(lap.id);
+
+                dataGroup.appendChild(absSpan);
+                dataGroup.appendChild(deltaSpan);
+                dataGroup.appendChild(delBtn);
+
+                row.appendChild(input);
+                row.appendChild(dataGroup);
+                container.appendChild(row);
+            });
+        }
+
+        // --- IMPORTAR / EXPORTAR CSV ---
+        function exportCSV() {
+            if(laps.length === 0) { alert("No hay datos para exportar"); return; }
+            
+            let csvContent = "data:text/csv;charset=utf-8,ID_Timestamp,Nombre,Delta_Segundos,Absoluto\n";
+            laps.forEach(row => {
+                csvContent += `${row.id},${row.name},${row.deltaVal},${row.abs}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "cronometro_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function importCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').slice(1); // Ignorar header
+                
+                const importedLaps = [];
+                rows.forEach(row => {
+                    if(row.trim() === '') return;
+                    const cols = row.split(',');
+                    if(cols.length >= 4) {
+                        importedLaps.push({
+                            id: parseInt(cols[0]), // ID Original
+                            name: cols[1],
+                            deltaVal: parseFloat(cols[2]),
+                            abs: cols[3].trim() // Limpiar saltos de línea
+                        });
+                    }
+                });
+
+                // Combinar o reemplazar. Aquí reemplazamos para evitar duplicados masivos.
+                if(confirm(`Se han encontrado ${importedLaps.length} registros. ¿Reemplazar datos actuales?`)) {
+                    laps = importedLaps;
+                    saveData();
+                    renderLaps();
+                }
+                input.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
+
+        // --- ESTADÍSTICAS & GRAFICOS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            
+            if(tabId === 'main') {
+                document.querySelector('.tab-btn:first-child').classList.add('active');
+                document.getElementById('tab-main').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:last-child').classList.add('active');
+                document.getElementById('tab-stats').classList.add('active');
+                calculateStats(); // Recalcular al mostrar
+            }
+        }
+
+        function calculateStats() {
+            // Filtrar datos válidos (ignoramos deltas de 0 si son solo marcadores de inicio)
+            const values = laps.map(l => l.deltaVal).filter(v => v > 0).sort((a, b) => a - b);
+            
+            if (values.length < 2) {
+                document.getElementById('noDataMsg').style.display = 'block';
+                document.getElementById('bellCurve').innerHTML = '';
+                // Limpiar valores
+                ['min','q1','med','q3','max'].forEach(id => document.getElementById(`st-${id}`).innerText = '--');
+                return; 
+            }
+
+            document.getElementById('noDataMsg').style.display = 'none';
+
+            // Quartiles
+            const q1Pos = Math.floor(values.length * 0.25);
+            const medPos = Math.floor(values.length * 0.50);
+            const q3Pos = Math.floor(values.length * 0.75);
+
+            const min = values[0];
+            const max = values[values.length - 1];
+            const q1 = values[q1Pos];
+            const med = values[medPos];
+            const q3 = values[q3Pos];
+
+            document.getElementById('st-min').innerText = min;
+            document.getElementById('st-q1').innerText = q1;
+            document.getElementById('st-med').innerText = med;
+            document.getElementById('st-q3').innerText = q3;
+            document.getElementById('st-max').innerText = max;
+
+            drawBoxPlot(min, q1, med, q3, max);
+            drawBellCurve(values);
+        }
+
+        function drawBoxPlot(min, q1, med, q3, max) {
+            const container = document.getElementById('boxPlotContainer');
+            // Limpiar contenido previo (excepto mensaje de error)
+            container.innerHTML = '<div style="text-align: center; padding-top: 30px; color: #444; display:none;" id="noDataMsg">No hay datos</div>';
+            
+            // Escala simple: (val - minTotal) / (maxTotal - minTotal) * 100%
+            // Usamos min y max globales para escalar, agregando un poco de margen (pad)
+            const range = max - min || 1;
+            
+            const getPct = (val) => ((val - min) / range) * 90 + 5; // 5% padding a los lados
+
+            const pMin = getPct(min);
+            const pQ1 = getPct(q1);
+            const pMed = getPct(med);
+            const pQ3 = getPct(q3);
+            const pMax = getPct(max);
+
+            const html = `
+                <div class="boxplot-track">
+                    <div class="bp-whisker" style="left: ${pMin}%;"></div>
+                    <div class="bp-line" style="left: ${pMin}%; width: ${pQ1 - pMin}%;"></div>
+                    
+                    <div class="bp-box" style="left: ${pQ1}%; width: ${pQ3 - pQ1}%;"></div>
+                    
+                    <div class="bp-median" style="left: ${pMed}%;"></div>
+                    
+                    <div class="bp-line" style="left: ${pQ3}%; width: ${pMax - pQ3}%;"></div>
+                    <div class="bp-whisker" style="left: ${pMax}%;"></div>
+
+                    <div class="bp-label" style="left: ${pMin}%; top: 110%;">${min}</div>
+                    <div class="bp-label" style="left: ${pMed}%; top: -30%; color: #fff;">${med}</div>
+                    <div class="bp-label" style="left: ${pMax}%; top: 110%;">${max}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function drawBellCurve(values) {
+            // Media y Desviación Estándar
+            const n = values.length;
+            const mean = values.reduce((a, b) => a + b, 0) / n;
+            const stdDev = Math.sqrt(values.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / n) || 1;
+
+            const svg = document.getElementById('bellCurve');
+            
+            // Generar puntos para la curva
+            // Rango X: Media +/- 3 desviaciones estándar (cubre 99.7% datos)
+            const startX = Math.min(...values) - (stdDev); // Un poco antes del mínimo real
+            const endX = Math.max(...values) + (stdDev);   // Un poco después del máximo real
+            const step = (endX - startX) / 50;
+            
+            let points = [];
+            let maxY = 0;
+
+            for (let x = startX; x <= endX; x += step) {
+                // Función densidad probabilidad normal
+                const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+                if (y > maxY) maxY = y;
+                points.push({x, y});
+            }
+
+            // Mapear a coordenadas SVG (0,0 es top-left, 300,150 es bottom-right)
+            const width = 300;
+            const height = 150;
+            const padding = 20;
+
+            const mapX = (val) => ((val - startX) / (endX - startX)) * (width - 2*padding) + padding;
+            const mapY = (val) => height - padding - ((val / maxY) * (height - 2*padding));
+
+            let d = `M ${mapX(points[0].x)} ${mapY(points[0].y)}`;
+            points.forEach(p => {
+                d += ` L ${mapX(p.x)} ${mapY(p.y)}`;
+            });
+
+            // Cerrar el path para rellenar
+            const dFill = d + ` L ${mapX(points[points.length-1].x)} ${height} L ${mapX(points[0].x)} ${height} Z`;
+
+            svg.innerHTML = `
+                <path d="${dFill}" class="area-fill" />
+                <path d="${d}" stroke="#00d4ff" fill="none" />
+                <line x1="${mapX(mean)}" y1="${height-20}" x2="${mapX(mean)}" y2="${20}" stroke="#fff" stroke-dasharray="4" opacity="0.5" />
+                <text x="${mapX(mean)}" y="15" fill="#fff" font-size="10" text-anchor="middle">μ ${mean.toFixed(1)}</text>
+            `;
+        }
+
+
+        // --- LOOP PRINCIPAL RELOJ (SIN CAMBIOS) ---
+        function updateClock() {
+            const now = new Date();
+            const h = now.getHours(); const m = now.getMinutes();
+            
+            const secNow = getDaySeconds(now);
+            
+            // Render Principal
+            document.getElementById('mainSeconds').innerText = secNow.toFixed(1);
+            document.getElementById('mainTime').innerText = formatHMS(now);
+
+            // Cálculos técnicos (Simplificados para rendimiento)
+            const tenBlock = Math.floor(m / 10) * 10;
+            const dCurrTen = new Date(now); dCurrTen.setMinutes(tenBlock, 0, 0);
+            const dNextTen = new Date(dCurrTen); dNextTen.setMinutes(tenBlock + 10);
+            
+            const dCurrHour = new Date(now); dCurrHour.setMinutes(0,0,0);
+            const dNextHour = new Date(dCurrHour); dNextHour.setHours(h + 1);
+
+            document.getElementById('currTenSec').innerText = getDaySeconds(dCurrTen).toFixed(1);
+            document.getElementById('currTenTime').innerText = formatHM(dCurrTen);
+            document.getElementById('nextTenSec').innerText = getDaySeconds(dNextTen).toFixed(1);
+            document.getElementById('nextTenTime').innerText = formatHM(dNextTen);
+
+            document.getElementById('remTen').innerText = ((dNextTen - now)/1000).toFixed(1);
+            document.getElementById('remHour').innerText = ((dNextHour - now)/1000).toFixed(1);
+
+            document.getElementById('p6_hourStartSec').innerText = getDaySeconds(dCurrHour).toFixed(1);
+            document.getElementById('p6_hourStartTime').innerText = formatHM(dCurrHour);
+            document.getElementById('p6_realTimeSec').innerText = secNow.toFixed(1);
+            document.getElementById('p6_realTime').innerText = formatHMS(now);
+            document.getElementById('p6_hourNextSec').innerText = getDaySeconds(dNextHour).toFixed(1);
+            document.getElementById('p6_hourNextTime').innerText = formatHM(dNextHour);
+        }
+
+        // INIT
+        loadData();
+        setInterval(updateClock, 50);
+        updateClock();
+
+    </script>
+</body>
+</html>
