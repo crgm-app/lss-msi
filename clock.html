@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reloj Métrico de Precisión</title>
+    <title>Reloj Métrico de Precisión v2</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -57,11 +57,18 @@
             flex-direction: column;
         }
 
-        .label { font-size: 0.7rem; color: #aaa; }
-        .value { font-size: 1.1rem; font-weight: bold; color: var(--highlight); }
-        .value-sec { font-size: 1rem; color: var(--highlight-sec); }
+        /* Alineación central para ciertos datos */
+        .center-content {
+            align-items: center;
+            text-align: center;
+        }
 
-        /* Estilos específicos para la tabla del Punto 6 */
+        .label { font-size: 0.7rem; color: #aaa; margin-bottom: 2px;}
+        .value { font-size: 1.3rem; font-weight: bold; color: var(--highlight); line-height: 1.2;}
+        .value-sec { font-size: 1rem; color: var(--highlight-sec); font-weight: normal;}
+        .sub-value { font-size: 0.9rem; color: #888; }
+
+        /* Tablas */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -75,7 +82,7 @@
         }
         th { background-color: #2c2c2c; }
         
-        .big-time { font-size: 2rem; text-align: center; color: #fff; margin: 10px 0; }
+        .big-time { font-size: 2.5rem; text-align: center; color: #fff; margin: 10px 0; letter-spacing: 2px;}
     </style>
 </head>
 <body>
@@ -86,11 +93,11 @@
         
         <div class="card">
             <h2>1. Hora Actual</h2>
-            <div class="big-time" id="currentTime">00:00:00.000</div>
+            <div class="big-time" id="currentTime">00:00:00.0</div>
             <div class="row" style="justify-content: center;">
-                <div class="data-point" style="align-items: center;">
-                    <span class="label">Total Segundos del día (con milésimas)</span>
-                    <span class="value-sec" id="currentTotalSeconds">0.000</span>
+                <div class="data-point center-content">
+                    <span class="label">Total Segundos (del día)</span>
+                    <span class="value-sec" id="currentTotalSeconds">0.0</span>
                 </div>
             </div>
         </div>
@@ -99,24 +106,38 @@
             <h2>2. Intervalos de 10 Minutos</h2>
             <div class="row">
                 <div class="data-point">
-                    <span class="label">10-Min Anterior</span>
+                    <span class="label">10-Min Actual (Inicio)</span>
                     <span class="value" id="prevTenMin">00:00</span>
-                </div>
-                <div class="data-point">
+                    <span class="value-sec" id="prevTenSecVal">0.0</span> </div>
+                <div class="data-point" style="align-items: flex-end; text-align: right;">
                     <span class="label">10-Min Siguiente</span>
                     <span class="value" id="nextTenMin">00:00</span>
+                    <span class="value-sec" id="nextTenSecVal">0.0</span> </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>4 y 5. Tiempo Restante (Cuenta Regresiva)</h2>
+            <div class="row">
+                <div class="data-point">
+                    <span class="label">Para siguiente 10-Min</span>
+                    <span class="value" id="remainTenMin">0.0</span>
+                </div>
+                <div class="data-point" style="align-items: flex-end;">
+                    <span class="label">Para siguiente Hora en Punto</span>
+                    <span class="value" id="remainHour">0.0</span>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>3. Intervalos de Hora en Punto (y en segundos)</h2>
+            <h2>3. Intervalos de Hora</h2>
             <table>
                 <thead>
                     <tr>
                         <th>Estado</th>
                         <th>Hora (HH:MM)</th>
-                        <th>Total Segundos</th>
+                        <th>En Segundos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -140,21 +161,7 @@
         </div>
 
         <div class="card">
-            <h2>4 y 5. Cuenta Regresiva (Restante)</h2>
-            <div class="row">
-                <div class="data-point">
-                    <span class="label">Para siguiente 10-Min</span>
-                    <span class="value" id="remainTenMin">0.000</span>
-                </div>
-                <div class="data-point">
-                    <span class="label">Para siguiente Hora en Punto</span>
-                    <span class="value" id="remainHour">0.000</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>6. Vista Detallada (Ejemplo Solicitado)</h2>
+            <h2>6. Vista Detallada (Resumen)</h2>
             <table>
                 <tr>
                     <th>Concepto</th>
@@ -169,23 +176,23 @@
                     <td id="p6_currHourSec"></td>
                 </tr>
                 <tr>
-                    <td>Hora y 10min actual (Anterior/Actual)</td>
+                    <td>Hora y 10min actual (HH:MM)</td>
                     <td id="p6_currTenTime"></td>
                 </tr>
                 <tr>
-                    <td>Hora y 10min actual (en seg y mil)</td>
+                    <td>Hora y 10min actual (en seg)</td>
                     <td id="p6_currTenSec"></td>
                 </tr>
                 <tr>
-                    <td>Hora ACTUAL (seg y mil)</td>
+                    <td>Hora ACTUAL (seg y décima)</td>
                     <td id="p6_actualSec"></td>
                 </tr>
                 <tr>
-                    <td>Hora y 10min siguiente</td>
+                    <td>Hora y 10min siguiente (HH:MM)</td>
                     <td id="p6_nextTenTime"></td>
                 </tr>
                 <tr>
-                    <td>Hora y 10min siguiente (seg y mil)</td>
+                    <td>Hora y 10min siguiente (en seg)</td>
                     <td id="p6_nextTenSec"></td>
                 </tr>
                 <tr>
@@ -202,11 +209,12 @@
     </div>
 
     <script>
-        // Función auxiliar para formatear números con ceros a la izquierda (ej: 09)
+        // Formatear ceros a la izquierda
         const pad = (num, size = 2) => num.toString().padStart(size, '0');
-        const padMs = (num) => num.toString().padStart(3, '0');
+        // Formatear milésimas (aunque solo mostraremos 1 decimal visualmente, el cálculo interno sigue siendo preciso)
+        const padMs = (num) => num.toString().padStart(3, '0').substring(0, 1); // Solo tomamos el primer dígito para la décima
 
-        // Función para obtener segundos totales del día desde las 00:00
+        // Obtener segundos totales del día
         const getTotalSeconds = (dateObj) => {
             return (dateObj.getHours() * 3600) + 
                    (dateObj.getMinutes() * 60) + 
@@ -214,96 +222,81 @@
                    (dateObj.getMilliseconds() / 1000);
         };
 
-        // Formateador simple de hora HH:MM
         const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        // Formateador HH:MM:SS
         const formatHMS = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
         function updateClock() {
             const now = new Date();
             
-            // --- CÁLCULOS BÁSICOS ---
-            
-            // 1. Hora Actual
+            // --- CÁLCULOS ---
             const h = now.getHours();
             const m = now.getMinutes();
             const s = now.getSeconds();
             const ms = now.getMilliseconds();
             
-            // Objetos fecha auxiliares para cálculos
-            
-            // Hora en punto actual (ej: 10:00:00)
-            const dCurrHour = new Date(now); dCurrHour.setMinutes(0, 0, 0);
-            
-            // Hora en punto anterior (ej: 09:00:00)
-            const dPrevHour = new Date(dCurrHour); dPrevHour.setHours(h - 1);
+            // Definir objetos de fecha clave
+            const dCurrHour = new Date(now); dCurrHour.setMinutes(0, 0, 0); // Hora en punto actual
+            const dPrevHour = new Date(dCurrHour); dPrevHour.setHours(h - 1); // Hora anterior
+            const dNextHour = new Date(dCurrHour); dNextHour.setHours(h + 1); // Hora siguiente
 
-            // Hora en punto siguiente (ej: 11:00:00)
-            const dNextHour = new Date(dCurrHour); dNextHour.setHours(h + 1);
-
-            // Intervalo de 10 minutos
-            // Calcular el "suelo" de los 10 minutos (ej: si son 10:24 -> 10:20)
+            // Bloques de 10 minutos
             const tenMinBlock = Math.floor(m / 10) * 10;
-            
-            const dCurrTen = new Date(now); 
-            dCurrTen.setMinutes(tenMinBlock, 0, 0); // 10 min actual/anterior
-            
-            const dPrevTen = new Date(dCurrTen); 
-            dPrevTen.setMinutes(tenMinBlock - 10); // 10 min anterior real
+            const dCurrTen = new Date(now); dCurrTen.setMinutes(tenMinBlock, 0, 0); // 10 min actual
+            const dNextTen = new Date(dCurrTen); dNextTen.setMinutes(tenMinBlock + 10); // 10 min siguiente
 
-            const dNextTen = new Date(dCurrTen); 
-            dNextTen.setMinutes(tenMinBlock + 10); // 10 min siguiente
-
-            // --- ACTUALIZACIÓN DEL DOM ---
-
-            // Punto 1: Hora actual y total segundos
-            document.getElementById('currentTime').innerText = `${formatHMS(now)}.${padMs(ms)}`;
+            // Cálculos en segundos
             const nowTotalSec = getTotalSeconds(now);
-            document.getElementById('currentTotalSeconds').innerText = nowTotalSec.toFixed(3);
+            const currTenTotalSec = getTotalSeconds(dCurrTen);
+            const nextTenTotalSec = getTotalSeconds(dNextTen);
+            const diffTen = (dNextTen - now) / 1000;
+            const diffHour = (dNextHour - now) / 1000;
 
-            // Punto 2: Minuto 10 anterior y siguiente
-            // Nota: Interpretamos "Minuto 10 anterior" como el bloque actual (ej: 20) si estamos en 23.
-            // Si quieres estrictamente el anterior al bloque actual, usa dPrevTen. Aquí uso el bloque actual start y next start.
+            // --- RENDERIZADO (Con toFixed(1)) ---
+
+            // 1. Hora Actual
+            // Tomamos solo la primera décima de segundo para cumplir el requerimiento
+            document.getElementById('currentTime').innerText = `${formatHMS(now)}.${Math.floor(ms/100)}`; 
+            document.getElementById('currentTotalSeconds').innerText = nowTotalSec.toFixed(1);
+
+            // 2. Intervalos 10 Min (Con valor en segundos agregado)
             document.getElementById('prevTenMin').innerText = formatHM(dCurrTen); 
-            document.getElementById('nextTenMin').innerText = formatHM(dNextTen);
+            document.getElementById('prevTenSecVal').innerText = currTenTotalSec.toFixed(1); // NUEVO
 
-            // Punto 3: Horas en punto
+            document.getElementById('nextTenMin').innerText = formatHM(dNextTen);
+            document.getElementById('nextTenSecVal').innerText = nextTenTotalSec.toFixed(1); // NUEVO
+
+            // 4 y 5. Restante (Movidio de lugar)
+            document.getElementById('remainTenMin').innerText = diffTen.toFixed(1) + " s";
+            document.getElementById('remainHour').innerText = diffHour.toFixed(1) + " s";
+
+            // 3. Horas en punto
             document.getElementById('prevHourTime').innerText = formatHM(dPrevHour);
-            document.getElementById('prevHourSec').innerText = getTotalSeconds(dPrevHour).toFixed(0);
+            document.getElementById('prevHourSec').innerText = getTotalSeconds(dPrevHour).toFixed(1);
 
             document.getElementById('currHourTime').innerText = formatHM(dCurrHour);
-            document.getElementById('currHourSec').innerText = getTotalSeconds(dCurrHour).toFixed(0);
+            document.getElementById('currHourSec').innerText = getTotalSeconds(dCurrHour).toFixed(1);
 
             document.getElementById('nextHourTime').innerText = formatHM(dNextHour);
-            document.getElementById('nextHourSec').innerText = getTotalSeconds(dNextHour).toFixed(0);
+            document.getElementById('nextHourSec').innerText = getTotalSeconds(dNextHour).toFixed(1);
 
-            // Punto 4: Segundos restantes para siguiente decimo minuto
-            const diffTen = (dNextTen - now) / 1000;
-            document.getElementById('remainTenMin').innerText = diffTen.toFixed(3) + " s";
-
-            // Punto 5: Segundos restantes para siguiente hora
-            const diffHour = (dNextHour - now) / 1000;
-            document.getElementById('remainHour').innerText = diffHour.toFixed(3) + " s";
-
-            // Punto 6: Ejemplo Resumen
-            document.getElementById('p6_currHour').innerText = formatHM(dCurrHour); // Hora en punto actual
-            document.getElementById('p6_currHourSec').innerText = getTotalSeconds(dCurrHour).toFixed(0); // Hora actual en segundos
+            // 6. Resumen
+            document.getElementById('p6_currHour').innerText = formatHM(dCurrHour);
+            document.getElementById('p6_currHourSec').innerText = getTotalSeconds(dCurrHour).toFixed(1);
             
-            document.getElementById('p6_currTenTime').innerText = formatHM(dCurrTen); // Hora y diez minutos en punto
-            document.getElementById('p6_currTenSec').innerText = getTotalSeconds(dCurrTen).toFixed(3); // ... en segundos y milésimas
+            document.getElementById('p6_currTenTime').innerText = formatHM(dCurrTen);
+            document.getElementById('p6_currTenSec').innerText = currTenTotalSec.toFixed(1);
             
-            document.getElementById('p6_actualSec').innerText = nowTotalSec.toFixed(3); // Hora actual en seg y mil
+            document.getElementById('p6_actualSec').innerText = nowTotalSec.toFixed(1);
             
-            document.getElementById('p6_nextTenTime').innerText = formatHM(dNextTen); // Hora y min decimo siguiente
-            document.getElementById('p6_nextTenSec').innerText = getTotalSeconds(dNextTen).toFixed(3); // ... en segundos y mil
+            document.getElementById('p6_nextTenTime').innerText = formatHM(dNextTen);
+            document.getElementById('p6_nextTenSec').innerText = nextTenTotalSec.toFixed(1);
 
-            document.getElementById('p6_nextHourTime').innerText = formatHM(dNextHour); // Hora punto siguiente
-            document.getElementById('p6_nextHourSec').innerText = getTotalSeconds(dNextHour).toFixed(0); // Hora punto sig en segundos
+            document.getElementById('p6_nextHourTime').innerText = formatHM(dNextHour);
+            document.getElementById('p6_nextHourSec').innerText = getTotalSeconds(dNextHour).toFixed(1);
         }
 
-        // Actualizar cada 50ms para ver las milésimas fluidas
         setInterval(updateClock, 50);
-        updateClock(); // Primera llamada inmediata
+        updateClock();
     </script>
 </body>
 </html>
