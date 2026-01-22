@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cronómetro Industrial Pro</title>
+    <title>Reloj con Cronómetro Industrial Pro</title>
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -12,7 +12,7 @@
             --text-bright: #ddd;
             --primary-sec: #00ff9d;
             --secondary-time: #00d4ff;
-            --accent-lap: #e0e0e0; /* Color blanco para los laps */
+            --accent-lap: #fff;
             --border: #2a2a2a;
         }
 
@@ -90,7 +90,7 @@
         .btn-lap:active { transform: translateY(1px); }
 
         .lap-list-container {
-            max-height: 120px;
+            max-height: 150px; /* Un poco más de altura para ver mejor */
             overflow-y: auto;
             border-top: 1px solid var(--border);
             margin-top: 5px;
@@ -109,13 +109,29 @@
             color: #888;
             font-family: inherit;
             font-size: 0.8rem;
-            width: 100px;
+            width: 80px; /* Reducido un poco para dar espacio a los números */
             border-bottom: 1px dotted #333;
         }
         .lap-input:focus { outline: none; border-bottom: 1px solid var(--primary-sec); color: #fff; }
         
-        .lap-val { color: var(--accent-lap); font-weight: bold; }
-        .lap-total { font-size: 0.7rem; color: #444; margin-right: 5px; } /* Muestra el absoluto en gris pequeño */
+        /* Estilos nuevos para los datos del Lap */
+        .lap-data-group {
+            text-align: right;
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+        }
+        .lap-abs { 
+            color: #555; 
+            font-size: 0.75rem; 
+            font-family: monospace; 
+        }
+        .lap-delta { 
+            color: var(--accent-lap); 
+            font-weight: bold; 
+            width: 55px; /* Ancho fijo para alinear */
+            display: inline-block;
+        }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #111; }
@@ -134,7 +150,7 @@
             </div>
 
             <div class="lap-controls">
-                <button class="btn-lap" onclick="addLap()">+ Marcar Delta</button>
+                <button class="btn-lap" onclick="addLap()">+ Marcar Hito</button>
             </div>
             
             <div class="lap-list-container" id="lapList">
@@ -195,24 +211,27 @@
         const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
         const formatHMS = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
-        // --- LÓGICA DE LAPS (DELTA) ---
+        // --- LÓGICA DE LAPS (DELTA + ABSOLUTO) ---
         let laps = [];
-        // Guardamos el momento exacto (timestamp) de carga de página para calcular el primer delta
         let lastLapTimestamp = Date.now(); 
 
         function addLap() {
-            const nowTimestamp = Date.now(); // Marca de tiempo actual en ms
+            const now = new Date();
+            const nowTimestamp = Date.now();
             
-            // Calculamos diferencia en segundos desde la última marca (o desde carga de página si es el primero)
+            // 1. Calcular el Delta (Diferencia)
             const diffSeconds = (nowTimestamp - lastLapTimestamp) / 1000;
             
-            // Actualizamos la marca de referencia para la próxima vez
+            // 2. Obtener el Absoluto del momento actual
+            const absSeconds = getDaySeconds(now).toFixed(1);
+
+            // Actualizar referencia
             lastLapTimestamp = nowTimestamp;
 
-            // Creamos el lap
             const newLap = {
                 id: nowTimestamp,
-                val: `+${diffSeconds.toFixed(1)} s`, // Formato delta
+                delta: `+${diffSeconds.toFixed(1)}s`, // Valor Diferencia
+                abs: `[${absSeconds}]`,                // Valor Absoluto
                 name: `Lap ${laps.length + 1}`
             };
             
@@ -233,18 +252,30 @@
                 const row = document.createElement('div');
                 row.className = 'lap-item';
                 
+                // Input Nombre (Izquierda)
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'lap-input';
                 input.value = lap.name;
                 input.oninput = (e) => updateLapName(lap.id, e.target.value);
 
-                const timeSpan = document.createElement('span');
-                timeSpan.className = 'lap-val';
-                timeSpan.innerText = lap.val;
+                // Grupo de Datos (Derecha)
+                const dataGroup = document.createElement('div');
+                dataGroup.className = 'lap-data-group';
+
+                const absSpan = document.createElement('span');
+                absSpan.className = 'lap-abs';
+                absSpan.innerText = lap.abs; // Absoluto en gris
+
+                const deltaSpan = document.createElement('span');
+                deltaSpan.className = 'lap-delta';
+                deltaSpan.innerText = lap.delta; // Delta en blanco
+
+                dataGroup.appendChild(absSpan);
+                dataGroup.appendChild(deltaSpan);
 
                 row.appendChild(input);
-                row.appendChild(timeSpan);
+                row.appendChild(dataGroup);
                 container.appendChild(row);
             });
         }
