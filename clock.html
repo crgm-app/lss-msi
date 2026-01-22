@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cronómetro Industrial Compacto</title>
+    <title>Cronómetro Industrial Pro</title>
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -12,7 +12,7 @@
             --text-bright: #ddd;
             --primary-sec: #00ff9d;
             --secondary-time: #00d4ff;
-            --accent: #ff0055;
+            --accent-lap: #e0e0e0; /* Color blanco para los laps */
             --border: #2a2a2a;
         }
 
@@ -25,23 +25,23 @@
             align-items: center;
             padding: 10px;
             margin: 0;
-            font-size: 12px; /* Base más pequeña */
+            font-size: 12px;
         }
 
         h2 { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 5px 0; font-weight: normal; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 2px;}
 
         .container {
             display: grid;
-            grid-template-columns: 1fr; /* Una columna por defecto */
-            gap: 8px; /* Gap reducido */
+            grid-template-columns: 1fr;
+            gap: 8px;
             width: 100%;
-            max-width: 600px; /* Ancho máximo reducido para compacidad */
+            max-width: 600px;
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 8px 12px; /* Padding reducido */
+            padding: 8px 12px;
             border-radius: 4px;
         }
 
@@ -55,13 +55,11 @@
         }
         .row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-        /* TIPOGRAFÍA COMPACTA */
         .sec-display { font-size: 1.2rem; color: var(--primary-sec); font-weight: bold; line-height: 1.1; }
         .sec-display-huge { font-size: 2.5rem; color: var(--primary-sec); font-weight: bold; text-align: center; line-height: 1; margin: 5px 0; }
         .time-display { font-size: 0.8rem; color: var(--secondary-time); text-align: right; }
         .label { font-size: 0.65rem; color: var(--text-muted); display: block; }
         
-        /* TABLAS COMPACTAS */
         table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 2px; }
         th, td { border: 1px solid #333; padding: 2px 5px; text-align: right; }
         th { background-color: #1f1f1f; text-align: center; color: #888; font-weight: normal; }
@@ -70,7 +68,7 @@
         td.col-sec { color: var(--primary-sec); font-weight: bold; }
         td.col-time { color: var(--secondary-time); }
 
-        /* ESTILOS PARA LA SECCIÓN DE LAPS */
+        /* SECCIÓN DE LAPS (AJUSTADA) */
         .lap-controls {
             display: flex;
             justify-content: center;
@@ -86,41 +84,42 @@
             cursor: pointer;
             text-transform: uppercase;
             border-radius: 3px;
+            transition: all 0.1s;
         }
         .btn-lap:hover { background-color: var(--primary-sec); color: #000; }
         .btn-lap:active { transform: translateY(1px); }
 
         .lap-list-container {
-            max-height: 120px; /* Altura máxima antes de scroll */
+            max-height: 120px;
             overflow-y: auto;
             border-top: 1px solid var(--border);
+            margin-top: 5px;
         }
         .lap-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #222;
             font-size: 0.8rem;
         }
         .lap-input {
             background: transparent;
             border: none;
-            color: #fff;
+            color: #888;
             font-family: inherit;
             font-size: 0.8rem;
-            width: 120px;
-            border-bottom: 1px dotted #444;
+            width: 100px;
+            border-bottom: 1px dotted #333;
         }
-        .lap-input:focus { outline: none; border-bottom: 1px solid var(--primary-sec); }
-        .lap-time { color: var(--primary-sec); font-weight: bold; }
+        .lap-input:focus { outline: none; border-bottom: 1px solid var(--primary-sec); color: #fff; }
+        
+        .lap-val { color: var(--accent-lap); font-weight: bold; }
+        .lap-total { font-size: 0.7rem; color: #444; margin-right: 5px; } /* Muestra el absoluto en gris pequeño */
 
-        /* SCROLLBAR PERSONALIZADO */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -128,15 +127,16 @@
     <div class="container">
         
         <div class="card">
-            <h2>1. Tiempo Real & Laps</h2>
+            <h2>1. Tiempo Real & Delta Laps</h2>
             <div class="sec-display-huge" id="mainSeconds">00000.0</div>
             <div style="text-align: center; margin-bottom: 8px;">
                 <span class="time-display" style="font-size: 1rem;" id="mainTime">00:00:00</span>
             </div>
 
             <div class="lap-controls">
-                <button class="btn-lap" onclick="addLap()">+ Marcar Lap</button>
+                <button class="btn-lap" onclick="addLap()">+ Marcar Delta</button>
             </div>
+            
             <div class="lap-list-container" id="lapList">
                 </div>
         </div>
@@ -195,50 +195,52 @@
         const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
         const formatHMS = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
-        // --- LÓGICA DE LAPS ---
+        // --- LÓGICA DE LAPS (DELTA) ---
         let laps = [];
+        // Guardamos el momento exacto (timestamp) de carga de página para calcular el primer delta
+        let lastLapTimestamp = Date.now(); 
 
         function addLap() {
-            const now = new Date();
-            const secVal = getDaySeconds(now).toFixed(1);
+            const nowTimestamp = Date.now(); // Marca de tiempo actual en ms
             
+            // Calculamos diferencia en segundos desde la última marca (o desde carga de página si es el primero)
+            const diffSeconds = (nowTimestamp - lastLapTimestamp) / 1000;
+            
+            // Actualizamos la marca de referencia para la próxima vez
+            lastLapTimestamp = nowTimestamp;
+
             // Creamos el lap
             const newLap = {
-                id: Date.now(), // ID único
-                val: secVal,
+                id: nowTimestamp,
+                val: `+${diffSeconds.toFixed(1)} s`, // Formato delta
                 name: `Lap ${laps.length + 1}`
             };
             
-            // Agregamos al principio del array (el más nuevo arriba)
             laps.unshift(newLap);
             renderLaps();
         }
 
         function updateLapName(id, newName) {
             const lap = laps.find(l => l.id === id);
-            if (lap) {
-                lap.name = newName;
-            }
+            if (lap) lap.name = newName;
         }
 
         function renderLaps() {
             const container = document.getElementById('lapList');
-            container.innerHTML = ''; // Limpiar
+            container.innerHTML = '';
 
             laps.forEach(lap => {
                 const row = document.createElement('div');
                 row.className = 'lap-item';
                 
-                // Input para nombre
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'lap-input';
                 input.value = lap.name;
-                input.oninput = (e) => updateLapName(lap.id, e.target.value); // Guardar cambio al escribir
+                input.oninput = (e) => updateLapName(lap.id, e.target.value);
 
-                // Valor tiempo
                 const timeSpan = document.createElement('span');
-                timeSpan.className = 'lap-time';
+                timeSpan.className = 'lap-val';
                 timeSpan.innerText = lap.val;
 
                 row.appendChild(input);
@@ -253,7 +255,6 @@
             const h = now.getHours();
             const m = now.getMinutes();
             
-            // Fechas
             const dCurrHour = new Date(now); dCurrHour.setMinutes(0,0,0);
             const dPrevHour = new Date(dCurrHour); dPrevHour.setHours(h - 1);
             const dNextHour = new Date(dCurrHour); dNextHour.setHours(h + 1);
@@ -262,7 +263,6 @@
             const dCurrTen = new Date(now); dCurrTen.setMinutes(tenBlock, 0, 0);
             const dNextTen = new Date(dCurrTen); dNextTen.setMinutes(tenBlock + 10);
 
-            // Segundos
             const secNow = getDaySeconds(now);
             const secCurrHour = getDaySeconds(dCurrHour);
             const secPrevHour = getDaySeconds(dPrevHour);
@@ -270,11 +270,9 @@
             const secCurrTen = getDaySeconds(dCurrTen);
             const secNextTen = getDaySeconds(dNextTen);
 
-            // Restantes
             const diffTen = (dNextTen - now) / 1000;
             const diffHour = (dNextHour - now) / 1000;
 
-            // Render DOM
             document.getElementById('mainSeconds').innerText = secNow.toFixed(1);
             document.getElementById('mainTime').innerText = formatHMS(now);
 
