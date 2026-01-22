@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cronómetro Industrial (Segundos)</title>
+    <title>Cronómetro Industrial Compacto</title>
     <style>
         :root {
-            --bg-color: #0f0f0f;
-            --card-bg: #1a1a1a;
-            --text-muted: #666;
-            --text-bright: #e0e0e0;
-            --primary-sec: #00ff9d; /* Verde neón para segundos */
-            --secondary-time: #00d4ff; /* Azul para hora humana */
-            --border: #333;
+            --bg-color: #0a0a0a;
+            --card-bg: #141414;
+            --text-muted: #555;
+            --text-bright: #ddd;
+            --primary-sec: #00ff9d;
+            --secondary-time: #00d4ff;
+            --accent: #ff0055;
+            --border: #2a2a2a;
         }
 
         body {
@@ -22,181 +23,166 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 10px;
             margin: 0;
+            font-size: 12px; /* Base más pequeña */
         }
 
-        h1 { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid var(--border); width: 100%; max-width: 800px; text-align: center; padding-bottom: 10px; }
-        h2 { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 10px 0; font-weight: normal; text-transform: uppercase; }
+        h2 { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 5px 0; font-weight: normal; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 2px;}
 
         .container {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+            grid-template-columns: 1fr; /* Una columna por defecto */
+            gap: 8px; /* Gap reducido */
             width: 100%;
-            max-width: 800px;
+            max-width: 600px; /* Ancho máximo reducido para compacidad */
         }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 15px;
-            border-radius: 6px;
+            padding: 8px 12px; /* Padding reducido */
+            border-radius: 4px;
         }
 
         .row {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             border-bottom: 1px solid #222;
-            padding-bottom: 5px;
+            padding-bottom: 2px;
         }
         .row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 
-        /* ESTILOS DE FUENTE */
-        .sec-display { font-size: 1.6rem; color: var(--primary-sec); font-weight: bold; }
-        .sec-display-huge { font-size: 3.5rem; color: var(--primary-sec); font-weight: bold; text-align: center; line-height: 1; margin: 10px 0; }
-        .time-display { font-size: 0.9rem; color: var(--secondary-time); text-align: right; }
-        .label { font-size: 0.75rem; color: var(--text-muted); display: block; }
-        .label-main { text-align: center; color: var(--text-muted); font-size: 0.8rem; }
-
-        /* TABLAS */
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 5px; }
-        th, td { border: 1px solid #333; padding: 6px 10px; text-align: right; }
-        th { background-color: #252525; text-align: center; color: #aaa; font-weight: normal; }
-        td:first-child { text-align: left; color: #ccc; }
+        /* TIPOGRAFÍA COMPACTA */
+        .sec-display { font-size: 1.2rem; color: var(--primary-sec); font-weight: bold; line-height: 1.1; }
+        .sec-display-huge { font-size: 2.5rem; color: var(--primary-sec); font-weight: bold; text-align: center; line-height: 1; margin: 5px 0; }
+        .time-display { font-size: 0.8rem; color: var(--secondary-time); text-align: right; }
+        .label { font-size: 0.65rem; color: var(--text-muted); display: block; }
         
-        td.col-sec { color: var(--primary-sec); font-weight: bold; font-size: 1rem;}
-        td.col-time { color: var(--secondary-time); font-size: 0.8rem; }
+        /* TABLAS COMPACTAS */
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 2px; }
+        th, td { border: 1px solid #333; padding: 2px 5px; text-align: right; }
+        th { background-color: #1f1f1f; text-align: center; color: #888; font-weight: normal; }
+        td:first-child { text-align: left; color: #aaa; }
+        
+        td.col-sec { color: var(--primary-sec); font-weight: bold; }
+        td.col-time { color: var(--secondary-time); }
+
+        /* ESTILOS PARA LA SECCIÓN DE LAPS */
+        .lap-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .btn-lap {
+            background-color: #222;
+            color: var(--primary-sec);
+            border: 1px solid var(--primary-sec);
+            padding: 4px 12px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            border-radius: 3px;
+        }
+        .btn-lap:hover { background-color: var(--primary-sec); color: #000; }
+        .btn-lap:active { transform: translateY(1px); }
+
+        .lap-list-container {
+            max-height: 120px; /* Altura máxima antes de scroll */
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+        }
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            border-bottom: 1px solid #222;
+            font-size: 0.8rem;
+        }
+        .lap-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            width: 120px;
+            border-bottom: 1px dotted #444;
+        }
+        .lap-input:focus { outline: none; border-bottom: 1px solid var(--primary-sec); }
+        .lap-time { color: var(--primary-sec); font-weight: bold; }
+
+        /* SCROLLBAR PERSONALIZADO */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
 
     </style>
 </head>
 <body>
 
-    <h1>Monitor de Tiempo Absoluto (Segundos)</h1>
-
     <div class="container">
         
         <div class="card">
-            <h2>1. Tiempo Real Actual</h2>
-            <div class="label-main">SEGUNDOS DEL DÍA (Transcurridos)</div>
+            <h2>1. Tiempo Real & Laps</h2>
             <div class="sec-display-huge" id="mainSeconds">00000.0</div>
-            
-            <div style="text-align: center; margin-top: 5px;">
-                <span class="label">Hora Estándar (HH:MM:SS)</span>
-                <span class="time-display" style="font-size: 1.2rem;" id="mainTime">00:00:00</span>
+            <div style="text-align: center; margin-bottom: 8px;">
+                <span class="time-display" style="font-size: 1rem;" id="mainTime">00:00:00</span>
+            </div>
+
+            <div class="lap-controls">
+                <button class="btn-lap" onclick="addLap()">+ Marcar Lap</button>
+            </div>
+            <div class="lap-list-container" id="lapList">
+                </div>
+        </div>
+
+        <div class="card">
+            <h2>2. Intervalos 10 Min</h2>
+            <div class="row">
+                <div><span class="label">Actual</span><div class="sec-display" id="currTenSec">00000.0</div></div>
+                <div style="text-align: right;"><span class="label">Hora</span><div class="time-display" id="currTenTime">00:00</div></div>
+            </div>
+            <div class="row">
+                <div><span class="label">Siguiente</span><div class="sec-display" id="nextTenSec">00000.0</div></div>
+                <div style="text-align: right;"><span class="label">Hora</span><div class="time-display" id="nextTenTime">00:00</div></div>
             </div>
         </div>
 
         <div class="card">
-            <h2>2. Intervalos de 10 Minutos</h2>
+            <h2>4 y 5. Restante</h2>
             <div class="row">
-                <div>
-                    <span class="label">Inicio 10-Min Actual</span>
-                    <div class="sec-display" id="currTenSec">00000.0</div>
-                </div>
-                <div style="text-align: right;">
-                    <span class="label">Hora Estándar</span>
-                    <div class="time-display" id="currTenTime">00:00</div>
-                </div>
-            </div>
-            <div class="row">
-                <div>
-                    <span class="label">Inicio 10-Min Siguiente</span>
-                    <div class="sec-display" id="nextTenSec">00000.0</div>
-                </div>
-                <div style="text-align: right;">
-                    <span class="label">Hora Estándar</span>
-                    <div class="time-display" id="nextTenTime">00:00</div>
-                </div>
+                <div><span class="label">Para prox. 10-Min</span><div class="sec-display" style="color: #ffaa00;" id="remTen">0.0</div></div>
+                <div><span class="label">Para prox. Hora</span><div class="sec-display" style="color: #ff5555;" id="remHour">0.0</div></div>
             </div>
         </div>
 
         <div class="card">
-            <h2>4 y 5. Tiempo Restante (Countdown)</h2>
-            <div class="row">
-                <div>
-                    <span class="label">Para siguiente 10-Min</span>
-                    <div class="sec-display" style="color: #ffaa00;" id="remTen">0.0</div>
-                </div>
-                <div>
-                    <span class="label">Para siguiente Hora</span>
-                    <div class="sec-display" style="color: #ff5555;" id="remHour">0.0</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>3. Hitos de Hora en Punto</h2>
+            <h2>3. Hitos de Hora</h2>
             <table>
-                <thead>
-                    <tr>
-                        <th>Hito</th>
-                        <th>Segundos (Absoluto)</th>
-                        <th>Hora</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Hito</th><th>Segundos</th><th>Hora</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>Hora Anterior</td>
-                        <td class="col-sec" id="prevHourSec">--</td>
-                        <td class="col-time" id="prevHourTime">--</td>
-                    </tr>
-                    <tr>
-                        <td>Hora Actual (Inicio)</td>
-                        <td class="col-sec" id="currHourSec">--</td>
-                        <td class="col-time" id="currHourTime">--</td>
-                    </tr>
-                    <tr>
-                        <td>Hora Siguiente</td>
-                        <td class="col-sec" id="nextHourSec">--</td>
-                        <td class="col-time" id="nextHourTime">--</td>
-                    </tr>
+                    <tr><td>Anterior</td><td class="col-sec" id="prevHourSec">--</td><td class="col-time" id="prevHourTime">--</td></tr>
+                    <tr><td>Actual</td><td class="col-sec" id="currHourSec">--</td><td class="col-time" id="currHourTime">--</td></tr>
+                    <tr><td>Siguiente</td><td class="col-sec" id="nextHourSec">--</td><td class="col-time" id="nextHourTime">--</td></tr>
                 </tbody>
             </table>
         </div>
 
         <div class="card">
-            <h2>6. Tabla de Control Detallada</h2>
+            <h2>6. Control Detallado</h2>
             <table>
-                <thead>
-                    <tr>
-                        <th>Concepto</th>
-                        <th>Valor (Segundos)</th>
-                        <th>Ref. (Hora)</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Concepto</th><th>Valor (Seg)</th><th>Ref.</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td>Inicio Hora Actual (Estático)</td>
-                        <td class="col-sec" id="p6_hourStartSec"></td>
-                        <td class="col-time" id="p6_hourStartTime"></td>
-                    </tr>
-
-                    <tr>
-                        <td>Inicio 10-Min Actual</td>
-                        <td class="col-sec" id="p6_tenStartSec"></td>
-                        <td class="col-time" id="p6_tenStartTime"></td>
-                    </tr>
-
-                    <tr style="background-color: #222;">
-                        <td>TIEMPO REAL (Dinámico)</td>
-                        <td class="col-sec" style="color: #fff;" id="p6_realTimeSec"></td>
-                        <td class="col-time" style="color: #fff;" id="p6_realTime"></td>
-                    </tr>
-                    
-                    <tr>
-                        <td>Inicio 10-Min Siguiente</td>
-                        <td class="col-sec" id="p6_tenNextSec"></td>
-                        <td class="col-time" id="p6_tenNextTime"></td>
-                    </tr>
-
-                    <tr>
-                        <td>Inicio Hora Siguiente</td>
-                        <td class="col-sec" id="p6_hourNextSec"></td>
-                        <td class="col-time" id="p6_hourNextTime"></td>
-                    </tr>
+                    <tr><td>Inicio Hora Actual</td><td class="col-sec" id="p6_hourStartSec"></td><td class="col-time" id="p6_hourStartTime"></td></tr>
+                    <tr><td>Inicio 10-Min Actual</td><td class="col-sec" id="p6_tenStartSec"></td><td class="col-time" id="p6_tenStartTime"></td></tr>
+                    <tr style="background-color: #222;"><td>TIEMPO REAL</td><td class="col-sec" style="color: #fff;" id="p6_realTimeSec"></td><td class="col-time" style="color: #fff;" id="p6_realTime"></td></tr>
+                    <tr><td>Inicio 10-Min Sig.</td><td class="col-sec" id="p6_tenNextSec"></td><td class="col-time" id="p6_tenNextTime"></td></tr>
+                    <tr><td>Inicio Hora Sig.</td><td class="col-sec" id="p6_hourNextSec"></td><td class="col-time" id="p6_hourNextTime"></td></tr>
                 </tbody>
             </table>
         </div>
@@ -205,33 +191,78 @@
 
     <script>
         const pad = (n) => n.toString().padStart(2, '0');
-        
-        const getDaySeconds = (d) => {
-            return (d.getHours() * 3600) + 
-                   (d.getMinutes() * 60) + 
-                   d.getSeconds() + 
-                   (d.getMilliseconds() / 1000);
-        };
-
+        const getDaySeconds = (d) => (d.getHours() * 3600) + (d.getMinutes() * 60) + d.getSeconds() + (d.getMilliseconds() / 1000);
         const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
         const formatHMS = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 
+        // --- LÓGICA DE LAPS ---
+        let laps = [];
+
+        function addLap() {
+            const now = new Date();
+            const secVal = getDaySeconds(now).toFixed(1);
+            
+            // Creamos el lap
+            const newLap = {
+                id: Date.now(), // ID único
+                val: secVal,
+                name: `Lap ${laps.length + 1}`
+            };
+            
+            // Agregamos al principio del array (el más nuevo arriba)
+            laps.unshift(newLap);
+            renderLaps();
+        }
+
+        function updateLapName(id, newName) {
+            const lap = laps.find(l => l.id === id);
+            if (lap) {
+                lap.name = newName;
+            }
+        }
+
+        function renderLaps() {
+            const container = document.getElementById('lapList');
+            container.innerHTML = ''; // Limpiar
+
+            laps.forEach(lap => {
+                const row = document.createElement('div');
+                row.className = 'lap-item';
+                
+                // Input para nombre
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'lap-input';
+                input.value = lap.name;
+                input.oninput = (e) => updateLapName(lap.id, e.target.value); // Guardar cambio al escribir
+
+                // Valor tiempo
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'lap-time';
+                timeSpan.innerText = lap.val;
+
+                row.appendChild(input);
+                row.appendChild(timeSpan);
+                container.appendChild(row);
+            });
+        }
+
+        // --- LÓGICA DE RELOJ ---
         function update() {
             const now = new Date();
             const h = now.getHours();
             const m = now.getMinutes();
             
-            // Inicios de Hora
+            // Fechas
             const dCurrHour = new Date(now); dCurrHour.setMinutes(0,0,0);
             const dPrevHour = new Date(dCurrHour); dPrevHour.setHours(h - 1);
             const dNextHour = new Date(dCurrHour); dNextHour.setHours(h + 1);
 
-            // Inicios de 10 Minutos
             const tenBlock = Math.floor(m / 10) * 10;
             const dCurrTen = new Date(now); dCurrTen.setMinutes(tenBlock, 0, 0);
             const dNextTen = new Date(dCurrTen); dNextTen.setMinutes(tenBlock + 10);
 
-            // Segundos Absolutos
+            // Segundos
             const secNow = getDaySeconds(now);
             const secCurrHour = getDaySeconds(dCurrHour);
             const secPrevHour = getDaySeconds(dPrevHour);
@@ -243,23 +274,18 @@
             const diffTen = (dNextTen - now) / 1000;
             const diffHour = (dNextHour - now) / 1000;
 
-            // --- ACTUALIZACIÓN DE VALORES ---
-
-            // Panel 1
+            // Render DOM
             document.getElementById('mainSeconds').innerText = secNow.toFixed(1);
             document.getElementById('mainTime').innerText = formatHMS(now);
 
-            // Panel 2
             document.getElementById('currTenSec').innerText = secCurrTen.toFixed(1);
             document.getElementById('currTenTime').innerText = formatHM(dCurrTen);
             document.getElementById('nextTenSec').innerText = secNextTen.toFixed(1);
             document.getElementById('nextTenTime').innerText = formatHM(dNextTen);
 
-            // Panel 4/5
             document.getElementById('remTen').innerText = diffTen.toFixed(1);
             document.getElementById('remHour').innerText = diffHour.toFixed(1);
 
-            // Panel 3
             document.getElementById('prevHourSec').innerText = secPrevHour.toFixed(1);
             document.getElementById('prevHourTime').innerText = formatHM(dPrevHour);
             document.getElementById('currHourSec').innerText = secCurrHour.toFixed(1);
@@ -267,19 +293,14 @@
             document.getElementById('nextHourSec').innerText = secNextHour.toFixed(1);
             document.getElementById('nextHourTime').innerText = formatHM(dNextHour);
 
-            // Panel 6 (Tabla Detallada)
             document.getElementById('p6_hourStartSec').innerText = secCurrHour.toFixed(1);
             document.getElementById('p6_hourStartTime').innerText = formatHM(dCurrHour);
-
             document.getElementById('p6_tenStartSec').innerText = secCurrTen.toFixed(1);
             document.getElementById('p6_tenStartTime').innerText = formatHM(dCurrTen);
-
             document.getElementById('p6_realTimeSec').innerText = secNow.toFixed(1);
-            document.getElementById('p6_realTime').innerText = formatHMS(now); 
-
+            document.getElementById('p6_realTime').innerText = formatHMS(now);
             document.getElementById('p6_tenNextSec').innerText = secNextTen.toFixed(1);
             document.getElementById('p6_tenNextTime').innerText = formatHM(dNextTen);
-
             document.getElementById('p6_hourNextSec').innerText = secNextHour.toFixed(1);
             document.getElementById('p6_hourNextTime').innerText = formatHM(dNextHour);
         }
