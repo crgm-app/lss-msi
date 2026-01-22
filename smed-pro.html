@@ -1,0 +1,569 @@
+import React, { useState, useMemo } from 'react';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Download, Upload, Trash2, Database, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
+
+const CATEGORIAS = [
+  'Preparación',
+  'Ajuste Interno',
+  'Ajuste Externo',
+  'Verificación',
+  'Limpieza',
+  'Muda (Desperdicio)',
+  'Espera',
+  'Transporte',
+  'Movimiento',
+  'Defectos'
+];
+
+const COLORES = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'];
+
+export default function SMEDAnalyzer() {
+  const [registros, setRegistros] = useState([]);
+  const [nuevoRegistro, setNuevoRegistro] = useState({
+    fecha: new Date().toISOString().split('T')[0],
+    orden: '',
+    operador: '',
+    categoria: CATEGORIAS[0],
+    actividad: '',
+    tiempoMinutos: '',
+    observaciones: ''
+  });
+  const [filtroCategoria, setFiltroCategoria] = useState('Todas');
+  const [vistaAnalisis, setVistaAnalisis] = useState('general');
+
+  const agregarRegistro = () => {
+    if (!nuevoRegistro.actividad || !nuevoRegistro.tiempoMinutos) {
+      alert('Complete actividad y tiempo');
+      return;
+    }
+    
+    const registro = {
+      ...nuevoRegistro,
+      id: Date.now(),
+      tiempoMinutos: parseFloat(nuevoRegistro.tiempoMinutos)
+    };
+    
+    setRegistros([...registros, registro]);
+    setNuevoRegistro({
+      fecha: new Date().toISOString().split('T')[0],
+      orden: '',
+      operador: '',
+      categoria: CATEGORIAS[0],
+      actividad: '',
+      tiempoMinutos: '',
+      observaciones: ''
+    });
+  };
+
+  const exportarCSV = () => {
+    if (registros.length === 0) {
+      alert('No hay datos para exportar');
+      return;
+    }
+
+    const headers = ['ID', 'Fecha', 'Orden', 'Operador', 'Categoría', 'Actividad', 'Tiempo (min)', 'Observaciones'];
+    const rows = registros.map(r => [
+      r.id,
+      r.fecha,
+      r.orden,
+      r.operador,
+      r.categoria,
+      r.actividad,
+      r.tiempoMinutos,
+      r.observaciones
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `SMED_Analisis_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  const importarCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target.result;
+        const lines = text.split('\n').filter(line => line.trim());
+        const data = lines.slice(1).map(line => {
+          const values = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.replace(/^"|"$/g, ''));
+          return {
+            id: parseInt(values[0]) || Date.now() + Math.random(),
+            fecha: values[1] || '',
+            orden: values[2] || '',
+            operador: values[3] || '',
+            categoria: values[4] || CATEGORIAS[0],
+            actividad: values[5] || '',
+            tiempoMinutos: parseFloat(values[6]) || 0,
+            observaciones: values[7] || ''
+          };
+        });
+        setRegistros(data);
+        alert(`${data.length} registros importados exitosamente`);
+      } catch (error) {
+        alert('Error al importar CSV. Verifique el formato.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const limpiarTodo = () => {
+    if (window.confirm('¿Está seguro de eliminar todos los registros?')) {
+      setRegistros([]);
+    }
+  };
+
+  const corregirDatos = () => {
+    const corregidos = registros.map(r => ({
+      ...r,
+      tiempoMinutos: parseFloat(r.tiempoMinutos) || 0,
+      fecha: r.fecha || new Date().toISOString().split('T')[0],
+      categoria: CATEGORIAS.includes(r.categoria) ? r.categoria : CATEGORIAS[0]
+    }));
+    setRegistros(corregidos);
+    alert('Datos corregidos y actualizados');
+  };
+
+  const registrosFiltrados = useMemo(() => {
+    return filtroCategoria === 'Todas' 
+      ? registros 
+      : registros.filter(r => r.categoria === filtroCategoria);
+  }, [registros, filtroCategoria]);
+
+  const datosGrafico = useMemo(() => {
+    const agrupado = {};
+    registrosFiltrados.forEach(r => {
+      if (!agrupado[r.categoria]) {
+        agrupado[r.categoria] = 0;
+      }
+      agrupado[r.categoria] += r.tiempoMinutos;
+    });
+    return Object.entries(agrupado).map(([nombre, valor]) => ({
+      nombre,
+      valor: Math.round(valor * 100) / 100
+    }));
+  }, [registrosFiltrados]);
+
+  const estadisticas = useMemo(() => {
+    const tiempoTotal = registrosFiltrados.reduce((sum, r) => sum + r.tiempoMinutos, 0);
+    const tiempoMuda = registrosFiltrados
+      .filter(r => r.categoria === 'Muda (Desperdicio)')
+      .reduce((sum, r) => sum + r.tiempoMinutos, 0);
+    const tiempoValor = tiempoTotal - tiempoMuda;
+    const promedio = registrosFiltrados.length > 0 ? tiempoTotal / registrosFiltrados.length : 0;
+
+    return {
+      total: Math.round(tiempoTotal * 100) / 100,
+      muda: Math.round(tiempoMuda * 100) / 100,
+      valor: Math.round(tiempoValor * 100) / 100,
+      promedio: Math.round(promedio * 100) / 100,
+      eficiencia: tiempoTotal > 0 ? Math.round((tiempoValor / tiempoTotal) * 10000) / 100 : 0,
+      registros: registrosFiltrados.length
+    };
+  }, [registrosFiltrados]);
+
+  const analisisLean = useMemo(() => {
+    const tiempoTotal = estadisticas.total;
+    const tiempoMuda = estadisticas.muda;
+    
+    // Análisis Financiero
+    const costoHora = 500; // GTQ por hora
+    const costoMuda = (tiempoMuda / 60) * costoHora;
+    const ahorrosPotenciales = costoMuda * 0.5; // 50% reducción objetivo
+    
+    // Análisis Operacional
+    const tiempoAjusteInterno = registrosFiltrados
+      .filter(r => r.categoria === 'Ajuste Interno')
+      .reduce((sum, r) => sum + r.tiempoMinutos, 0);
+    const tiempoAjusteExterno = registrosFiltrados
+      .filter(r => r.categoria === 'Ajuste Externo')
+      .reduce((sum, r) => sum + r.tiempoMinutos, 0);
+    
+    // Análisis Estadístico
+    const tiempos = registrosFiltrados.map(r => r.tiempoMinutos);
+    const media = tiempos.length > 0 ? tiempos.reduce((a, b) => a + b, 0) / tiempos.length : 0;
+    const varianza = tiempos.length > 0 
+      ? tiempos.reduce((sum, t) => sum + Math.pow(t - media, 2), 0) / tiempos.length 
+      : 0;
+    const desviacion = Math.sqrt(varianza);
+    const cv = media > 0 ? (desviacion / media) * 100 : 0;
+
+    return {
+      financiero: {
+        costoMuda: Math.round(costoMuda),
+        ahorrosPotenciales: Math.round(ahorrosPotenciales),
+        roi: Math.round((ahorrosPotenciales / (costoMuda || 1)) * 100)
+      },
+      gerencial: {
+        eficienciaActual: estadisticas.eficiencia,
+        metaEficiencia: 95,
+        brecha: Math.round((95 - estadisticas.eficiencia) * 100) / 100
+      },
+      operacional: {
+        tiempoAjusteInterno: Math.round(tiempoAjusteInterno * 100) / 100,
+        tiempoAjusteExterno: Math.round(tiempoAjusteExterno * 100) / 100,
+        ratioInEx: tiempoAjusteExterno > 0 ? Math.round((tiempoAjusteInterno / tiempoAjusteExterno) * 100) / 100 : 0
+      },
+      estadistico: {
+        media: Math.round(media * 100) / 100,
+        desviacion: Math.round(desviacion * 100) / 100,
+        cv: Math.round(cv * 100) / 100,
+        min: tiempos.length > 0 ? Math.min(...tiempos) : 0,
+        max: tiempos.length > 0 ? Math.max(...tiempos) : 0
+      }
+    };
+  }, [registrosFiltrados, estadisticas]);
+
+  const renderVistaAnalisis = () => {
+    switch(vistaAnalisis) {
+      case 'financiero':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-green-700">Vista Financiera</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-red-50 p-4 rounded">
+                <p className="text-sm text-gray-600">Costo de Mudas</p>
+                <p className="text-2xl font-bold text-red-600">Q{analisisLean.financiero.costoMuda}</p>
+              </div>
+              <div className="bg-green-50 p-4 rounded">
+                <p className="text-sm text-gray-600">Ahorros Potenciales</p>
+                <p className="text-2xl font-bold text-green-600">Q{analisisLean.financiero.ahorrosPotenciales}</p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded col-span-2">
+                <p className="text-sm text-gray-600">ROI Estimado</p>
+                <p className="text-2xl font-bold text-blue-600">{analisisLean.financiero.roi}%</p>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-yellow-50 rounded">
+              <p className="font-semibold text-yellow-800">💡 Recomendación Financiera:</p>
+              <p className="text-sm">Reducir mudas en 50% generaría ahorros de Q{analisisLean.financiero.ahorrosPotenciales}/cambio de formato.</p>
+            </div>
+          </div>
+        );
+      
+      case 'gerencial':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-purple-700">Vista Gerencial</h3>
+            <div className="space-y-4">
+              <div className="bg-purple-50 p-4 rounded">
+                <p className="text-sm text-gray-600">Eficiencia Actual vs Meta</p>
+                <div className="flex items-end gap-4 mt-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Actual</p>
+                    <p className="text-3xl font-bold text-purple-600">{analisisLean.gerencial.eficienciaActual}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Meta</p>
+                    <p className="text-3xl font-bold text-green-600">{analisisLean.gerencial.metaEficiencia}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Brecha</p>
+                    <p className="text-3xl font-bold text-red-600">{analisisLean.gerencial.brecha}%</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-blue-50 rounded">
+                <p className="font-semibold text-blue-800">📊 KPIs Gerenciales:</p>
+                <ul className="text-sm mt-2 space-y-1">
+                  <li>✓ Tiempo promedio de cambio: {estadisticas.promedio} min</li>
+                  <li>✓ Total de cambios analizados: {estadisticas.registros}</li>
+                  <li>✓ Tiempo de valor agregado: {estadisticas.valor} min</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'operacional':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-orange-700">Vista Operacional</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-orange-50 p-4 rounded">
+                <p className="text-sm text-gray-600">Ajuste Interno</p>
+                <p className="text-2xl font-bold text-orange-600">{analisisLean.operacional.tiempoAjusteInterno} min</p>
+              </div>
+              <div className="bg-cyan-50 p-4 rounded">
+                <p className="text-sm text-gray-600">Ajuste Externo</p>
+                <p className="text-2xl font-bold text-cyan-600">{analisisLean.operacional.tiempoAjusteExterno} min</p>
+              </div>
+              <div className="bg-indigo-50 p-4 rounded col-span-2">
+                <p className="text-sm text-gray-600">Ratio Interno/Externo</p>
+                <p className="text-2xl font-bold text-indigo-600">{analisisLean.operacional.ratioInEx}</p>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-green-50 rounded">
+              <p className="font-semibold text-green-800">🎯 Estrategia SMED:</p>
+              <p className="text-sm">Convertir actividades internas a externas. Objetivo: reducir ratio a 0.5 o menos.</p>
+            </div>
+          </div>
+        );
+      
+      case 'estadistico':
+        return (
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-xl font-bold mb-4 text-indigo-700">Vista Estadística Avanzada</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-indigo-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Media (μ)</p>
+                <p className="text-xl font-bold text-indigo-600">{analisisLean.estadistico.media} min</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Desv. Est. (σ)</p>
+                <p className="text-xl font-bold text-purple-600">{analisisLean.estadistico.desviacion} min</p>
+              </div>
+              <div className="bg-pink-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Coef. Var. (CV)</p>
+                <p className="text-xl font-bold text-pink-600">{analisisLean.estadistico.cv}%</p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Mínimo</p>
+                <p className="text-xl font-bold text-blue-600">{analisisLean.estadistico.min} min</p>
+              </div>
+              <div className="bg-red-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Máximo</p>
+                <p className="text-xl font-bold text-red-600">{analisisLean.estadistico.max} min</p>
+              </div>
+              <div className="bg-teal-50 p-4 rounded">
+                <p className="text-xs text-gray-600">Rango</p>
+                <p className="text-xl font-bold text-teal-600">{analisisLean.estadistico.max - analisisLean.estadistico.min} min</p>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-yellow-50 rounded">
+              <p className="font-semibold text-yellow-800">📈 Análisis Six Sigma:</p>
+              <p className="text-sm">
+                CV {analisisLean.estadistico.cv < 15 ? '< 15%: Proceso ESTABLE ✓' : 
+                    analisisLean.estadistico.cv < 30 ? '15-30%: Proceso MODERADO ⚠' : 
+                    '> 30%: Proceso INESTABLE ✗'}
+              </p>
+              <p className="text-sm mt-1">
+                Capacidad del proceso: {analisisLean.estadistico.cv < 20 ? 'Alta' : 
+                                        analisisLean.estadistico.cv < 35 ? 'Media' : 'Baja'}
+              </p>
+            </div>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="text-blue-600" size={20} />
+                <p className="text-sm text-gray-600">Tiempo Total</p>
+              </div>
+              <p className="text-3xl font-bold text-blue-600">{estadisticas.total} min</p>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="text-red-600" size={20} />
+                <p className="text-sm text-gray-600">Mudas (Desperdicio)</p>
+              </div>
+              <p className="text-3xl font-bold text-red-600">{estadisticas.muda} min</p>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="text-green-600" size={20} />
+                <p className="text-sm text-gray-600">Eficiencia</p>
+              </div>
+              <p className="text-3xl font-bold text-green-600">{estadisticas.eficiencia}%</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg mb-6">
+          <h1 className="text-3xl font-bold mb-2">Análisis SMED - Planta Corrugadora</h1>
+          <p className="text-blue-100">Sistema de análisis de tiempos de cambio de formato con metodología Lean Manufacturing</p>
+        </div>
+
+        {/* Controles */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button onClick={exportarCSV} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+              <Download size={16} /> Exportar CSV
+            </button>
+            <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
+              <Upload size={16} /> Importar CSV
+              <input type="file" accept=".csv" onChange={importarCSV} className="hidden" />
+            </label>
+            <button onClick={corregirDatos} className="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+              <Database size={16} /> Corregir Datos
+            </button>
+            <button onClick={limpiarTodo} className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+              <Trash2 size={16} /> Limpiar Todo
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Filtrar por Categoría</label>
+              <select 
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option>Todas</option>
+                {CATEGORIAS.map(cat => <option key={cat}>{cat}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Vista de Análisis</label>
+              <select 
+                value={vistaAnalisis}
+                onChange={(e) => setVistaAnalisis(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="general">General</option>
+                <option value="financiero">Financiero</option>
+                <option value="gerencial">Gerencial</option>
+                <option value="operacional">Operacional</option>
+                <option value="estadistico">Estadístico</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Análisis */}
+        <div className="mb-6">
+          {renderVistaAnalisis()}
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="font-bold mb-4">Distribución por Categoría</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={datosGrafico}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="valor" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h3 className="font-bold mb-4">Proporción de Tiempos</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={datosGrafico} dataKey="valor" nameKey="nombre" cx="50%" cy="50%" outerRadius={100} label>
+                  {datosGrafico.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORES[index % COLORES.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Formulario */}
+        <div className="bg-white p-6 rounded-lg shadow mb-6">
+          <h2 className="text-xl font-bold mb-4">Registrar Nueva Actividad</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input
+              type="date"
+              value={nuevoRegistro.fecha}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, fecha: e.target.value})}
+              className="border rounded px-3 py-2"
+            />
+            <input
+              type="text"
+              placeholder="N° Orden"
+              value={nuevoRegistro.orden}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, orden: e.target.value})}
+              className="border rounded px-3 py-2"
+            />
+            <input
+              type="text"
+              placeholder="Operador"
+              value={nuevoRegistro.operador}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, operador: e.target.value})}
+              className="border rounded px-3 py-2"
+            />
+            <select
+              value={nuevoRegistro.categoria}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, categoria: e.target.value})}
+              className="border rounded px-3 py-2"
+            >
+              {CATEGORIAS.map(cat => <option key={cat}>{cat}</option>)}
+            </select>
+            <input
+              type="text"
+              placeholder="Descripción Actividad"
+              value={nuevoRegistro.actividad}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, actividad: e.target.value})}
+              className="border rounded px-3 py-2 md:col-span-2"
+            />
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Tiempo (min)"
+              value={nuevoRegistro.tiempoMinutos}
+              onChange={(e) => setNuevoRegistro({...nuevoRegistro, tiempoMinutos: e.target.value})}
+              className="border rounded px-3 py-2"
+            />
+            <button
+              onClick={agregarRegistro}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+
+        {/* Tabla de registros */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-4">Registros ({registrosFiltrados.length})</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-2 text-left">Fecha</th>
+                  <th className="p-2 text-left">Orden</th>
+                  <th className="p-2 text-left">Operador</th>
+                  <th className="p-2 text-left">Categoría</th>
+                  <th className="p-2 text-left">Actividad</th>
+                  <th className="p-2 text-right">Tiempo</th>
+                  <th className="p-2 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {registrosFiltrados.map(reg => (
+                  <tr key={reg.id} className="border-b hover:bg-gray-50">
+                    <td className="p-2">{reg.fecha}</td>
+                    <td className="p-2">{reg.orden}</td>
+                    <td className="p-2">{reg.operador}</td>
+                    <td className="p-2">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        {reg.categoria}
+                      </span>
+                    </td>
+                    <td className="p-2">{reg.actividad}</td>
+                    <td className="p-2 text-right font-medium">{reg.tiempoMinutos} min</td>
+                    <td className="p-2 text-center">
+                      <button
+                        onClick={() => setRegistros(registros.filter(r => r.id !== reg.id))}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr
