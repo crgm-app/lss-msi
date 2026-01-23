@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj de Segundos</title>
+    <style>
+        /* Estilos Generales */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a; /* Fondo oscuro */
+            font-family: 'Courier New', Courier, monospace; /* Fuente tipo digital */
+            color: white;
+        }
+
+        /* El contenedor del reloj (El círculo exterior con el gradiente) */
+        .reloj-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            /* El gradiente cónico crea el efecto de progreso circular */
+            background: conic-gradient(
+                #00ff88 var(--progreso), 
+                #333 0deg
+            );
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.2);
+        }
+
+        /* El círculo interior (para ocultar el centro del gradiente y crear el anillo) */
+        .reloj-interior {
+            width: 280px;
+            height: 280px;
+            background-color: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* El número grande de segundos */
+        #contador-segundos {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        /* La etiqueta de texto debajo */
+        .etiqueta {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        /* Mostrar la hora normal pequeña abajo como referencia */
+        .hora-referencia {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="reloj-container" id="reloj">
+        <div class="reloj-interior">
+            <div id="contador-segundos">0</div>
+            <div class="etiqueta">Segundos del día</div>
+            <div class="hora-referencia" id="hora-normal">00:00:00</div>
+        </div>
+    </div>
+
+    <script>
+        function actualizarReloj() {
+            const ahora = new Date();
+            
+            // 1. Obtener horas, minutos y segundos actuales
+            const horas = ahora.getHours();
+            const minutos = ahora.getMinutes();
+            const segundos = ahora.getSeconds();
+
+            // 2. Calcular el total de segundos transcurridos desde medianoche
+            // (Horas * 3600) + (Minutos * 60) + Segundos
+            const totalSegundos = (horas * 3600) + (minutos * 60) + segundos;
+
+            // 3. Actualizar el número en pantalla
+            document.getElementById('contador-segundos').innerText = totalSegundos.toLocaleString();
+
+            // 4. Mostrar la hora normal como referencia secundaria
+            document.getElementById('hora-normal').innerText = 
+                ahora.toLocaleTimeString('es-ES');
+
+            // 5. Calcular el porcentaje del día para el anillo de progreso
+            // Total segundos en un día = 86,400
+            const segundosEnUnDia = 86400;
+            const porcentaje = (totalSegundos / segundosEnUnDia) * 360; // 360 grados
+
+            // 6. Actualizar la variable CSS para mover el gráfico circular
+            const relojElement = document.getElementById('reloj');
+            relojElement.style.setProperty('--progreso', porcentaje + 'deg');
+        }
+
+        // Ejecutar la función cada 1000 milisegundos (1 segundo)
+        setInterval(actualizarReloj, 1000);
+
+        // Ejecutar inmediatamente al cargar para no esperar 1 segundo
+        actualizarReloj();
+    </script>
+
+</body>
+</html>
+
