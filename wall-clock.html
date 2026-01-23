@@ -3,164 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reloj Dual 24h</title>
+    <title>Reloj Escala Segundos</title>
     <style>
-        /* --- Estilos Generales --- */
+        /* --- Estilos Base --- */
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #151515;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d0d0d;
+            font-family: 'Segoe UI', Roboto, monospace;
             color: white;
             overflow: hidden;
         }
 
-        /* --- Esfera Principal --- */
+        /* --- Esfera del Reloj --- */
         .reloj {
             position: relative;
-            width: 380px;
-            height: 380px;
-            border: 8px solid #333;
+            width: 400px;
+            height: 400px;
             border-radius: 50%;
-            background: radial-gradient(circle at center, #222 55%, #000 100%);
-            box-shadow: 
-                0 0 20px rgba(0,0,0,0.8), 
-                inset 0 0 50px rgba(0,0,0,0.9);
+            background: conic-gradient(
+                #1a1a1a 0deg, 
+                #111 360deg
+            );
+            border: 4px solid #333;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* --- Marcas y Números (24h) --- */
+        /* Anillo decorativo interno */
+        .reloj::after {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            border: 1px dashed #333;
+            z-index: 1;
+        }
+
+        /* --- Marcas y Números --- */
         .marca {
             position: absolute;
             width: 2px;
-            height: 12px;
-            background-color: #555;
+            height: 10px;
+            background-color: #444;
             left: 50%;
-            top: 0;
-            transform-origin: 50% 190px; /* Mitad del tamaño del reloj (380/2) */
+            top: 10px; /* Separación del borde */
+            transform-origin: 50% 190px; /* Radio del reloj - margen */
         }
         
         .marca.principal {
-            background-color: #00ffcc;
+            background-color: #ff3366;
             width: 4px;
-            height: 18px;
-            box-shadow: 0 0 5px #00ffcc;
+            height: 15px;
         }
 
         .numero {
             position: absolute;
-            width: 30px;
-            height: 30px;
+            width: 60px; /* Más ancho para caber números grandes */
+            height: 20px;
             left: 50%;
             top: 50%;
             text-align: center;
-            line-height: 30px;
-            font-size: 0.85rem;
-            color: #888;
-            font-weight: 600;
-            margin-left: -15px;
-            margin-top: -15px;
-        }
-
-        /* --- Panel Central de Información (Dual) --- */
-        .panel-info {
-            position: absolute;
-            top: 60%; /* Ubicado en la parte inferior central */
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 5;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            backdrop-filter: blur(2px);
-        }
-
-        .fila-dato {
-            margin: 5px 0;
-        }
-
-        /* Estilo para la hora normal */
-        .hora-standard {
+            font-size: 0.7rem;
+            color: #666;
+            margin-left: -30px;
+            margin-top: -10px;
             font-family: 'Courier New', monospace;
-            font-size: 1.8rem;
+        }
+
+        .numero.destacado {
             color: #fff;
             font-weight: bold;
-            display: block;
-            letter-spacing: 2px;
+            font-size: 0.85rem;
         }
 
-        /* Estilo para los segundos totales */
-        .segundos-totales {
-            font-family: 'Courier New', monospace;
-            font-size: 1.4rem;
-            color: #00ffcc;
-            font-weight: bold;
-            display: block;
-        }
-
-        .etiqueta {
-            font-size: 0.6rem;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: block;
-        }
-
-        .separador {
-            height: 1px;
-            background: #444;
-            width: 100%;
-            margin: 5px 0;
-        }
-
-        /* --- Manecillas --- */
-        .manecilla {
+        /* --- La Manecilla Única (Indicador de Progreso del Día) --- */
+        .manecilla-progreso {
             position: absolute;
             bottom: 50%;
             left: 50%;
-            transform-origin: bottom center;
-            border-radius: 5px;
-            z-index: 10;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-        }
-
-        .hora {
-            width: 8px;
-            height: 100px;
-            background-color: #fff;
-            margin-left: -4px;
-        }
-
-        .minuto {
             width: 4px;
-            height: 140px;
-            background-color: #bbb;
-            margin-left: -2px;
+            height: 160px; /* Largo casi hasta el borde */
+            background: linear-gradient(to top, #ff3366, transparent);
+            transform-origin: bottom center;
+            z-index: 10;
+            border-radius: 4px;
         }
 
-        .segundo {
-            width: 2px;
-            height: 160px;
-            background-color: #00ffcc;
-            margin-left: -1px;
-            z-index: 11;
-        }
-
-        .centro {
+        /* Punta de la manecilla */
+        .manecilla-progreso::before {
+            content: '';
             position: absolute;
-            width: 16px;
-            height: 16px;
-            background-color: #00ffcc;
+            top: 0;
+            left: -3px;
+            width: 10px;
+            height: 10px;
+            background-color: #ff3366;
             border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 12;
-            border: 2px solid #000;
+            box-shadow: 0 0 10px #ff3366;
+        }
+
+        /* --- Panel Central --- */
+        .centro-info {
+            z-index: 20;
+            text-align: center;
+            background: rgba(10, 10, 10, 0.9);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .valor-segundos {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff3366;
+            font-family: 'Courier New', monospace;
+            display: block;
+            text-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
+        }
+
+        .valor-hora {
+            font-size: 1rem;
+            color: #aaa;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            display: block;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+        }
+
+        .titulo {
+            font-size: 0.6rem;
+            color: #555;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
         }
 
     </style>
@@ -168,91 +152,93 @@
 <body>
 
     <div class="reloj" id="reloj">
-        <div class="manecilla hora" id="manecilla-hora"></div>
-        <div class="manecilla minuto" id="manecilla-minuto"></div>
-        <div class="manecilla segundo" id="manecilla-segundo"></div>
-        <div class="centro"></div>
-
-        <div class="panel-info">
-            <div class="fila-dato">
-                <span class="etiqueta">Hora Actual</span>
-                <span class="hora-standard" id="display-hora">00:00:00</span>
-            </div>
-            
-            <div class="separador"></div>
-
-            <div class="fila-dato">
-                <span class="etiqueta">Segundos Totales</span>
-                <span class="segundos-totales" id="display-segundos">0</span>
-            </div>
+        <div class="manecilla-progreso" id="manecilla"></div>
+        
+        <div class="centro-info">
+            <span class="titulo">Progreso (Segundos)</span>
+            <span class="valor-segundos" id="txt-segundos">00000</span>
+            <span class="valor-hora" id="txt-hora">00:00:00</span>
         </div>
     </div>
 
     <script>
         const reloj = document.getElementById('reloj');
+        
+        // Configuración
+        const radioTexto = 165; // Distancia de los números al centro
+        const segundosEnDia = 86400;
 
-        // Función auxiliar para agregar ceros (ej: 9 -> 09)
-        function pad(num) {
-            return num.toString().padStart(2, '0');
-        }
-
-        // 1. Crear esfera de 24h
+        // 1. DIBUJAR LA ESFERA (Escala en Segundos)
+        // Dividiremos el reloj en 24 secciones principales para mantener la referencia horaria,
+        // pero escribiremos el valor en SEGUNDOS.
         function crearEsfera() {
-            const radio = 160; 
             for (let i = 0; i < 24; i++) {
+                
+                // Calcular el equivalente en segundos para esta marca
+                // 1 hora = 3600 segundos.
+                const valorSegundos = i * 3600;
+
+                // Crear marca visual
                 const marca = document.createElement('div');
                 marca.classList.add('marca');
+                const rotacion = i * 15; // 360 grados / 24 horas = 15 grados
+                
+                // Resaltar los cuartos principales (0, 6h, 12h, 18h)
                 if (i % 6 === 0) marca.classList.add('principal');
                 
-                const rotacion = i * 15; // 360 / 24 = 15 grados
                 marca.style.transform = `rotate(${rotacion}deg)`;
                 reloj.appendChild(marca);
 
-                // Números
-                if (i % 2 === 0) { // Mostrar números pares para no saturar
+                // Crear etiqueta de texto (Solo pares para no saturar, o principales)
+                // Mostraremos cada 2 horas (7200 segundos) para limpieza visual
+                if (i % 2 === 0) { 
                     const numero = document.createElement('div');
                     numero.classList.add('numero');
-                    numero.innerText = i;
                     
+                    // Formatear: Si es 0, poner "0". Si es mediodía, "43200", etc.
+                    numero.innerText = valorSegundos;
+                    
+                    // Resaltar esquinas
+                    if (i % 6 === 0) numero.classList.add('destacado');
+
+                    // Posicionar matemáticamente en círculo
                     const anguloRad = (rotacion - 90) * (Math.PI / 180);
-                    const x = radio * Math.cos(anguloRad);
-                    const y = radio * Math.sin(anguloRad);
+                    const x = radioTexto * Math.cos(anguloRad);
+                    const y = radioTexto * Math.sin(anguloRad);
+                    
                     numero.style.transform = `translate(${x}px, ${y}px)`;
                     reloj.appendChild(numero);
                 }
             }
         }
 
-        // 2. Actualizar datos
-        function actualizarReloj() {
+        // 2. ACTUALIZAR RELOJ
+        function actualizar() {
             const ahora = new Date();
             const h = ahora.getHours();
             const m = ahora.getMinutes();
             const s = ahora.getSeconds();
 
-            // --- CÁLCULOS VISUALES (Manecillas) ---
-            const degS = s * 6; 
-            const degM = (m * 6) + (s * 0.1);
-            const degH = (h * 15) + (m * 15 / 60); // 15 grados por hora (formato 24h)
-
-            document.getElementById('manecilla-segundo').style.transform = `rotate(${degS}deg)`;
-            document.getElementById('manecilla-minuto').style.transform = `rotate(${degM}deg)`;
-            document.getElementById('manecilla-hora').style.transform = `rotate(${degH}deg)`;
-
-            // --- CÁLCULOS NUMÉRICOS (Panel) ---
-            
-            // 1. Hora Estándar
-            const textoHora = `${pad(h)}:${pad(m)}:${pad(s)}`;
-            document.getElementById('display-hora').innerText = textoHora;
-
-            // 2. Segundos Totales
+            // Calcular segundos totales actuales
             const totalSegundos = (h * 3600) + (m * 60) + s;
-            document.getElementById('display-segundos').innerText = totalSegundos.toLocaleString();
+
+            // Calcular rotación
+            // Fórmula: (SegundosActuales / 86400) * 360 grados
+            const grados = (totalSegundos / segundosEnDia) * 360;
+
+            // Mover manecilla
+            document.getElementById('manecilla').style.transform = `rotate(${grados}deg)`;
+
+            // Actualizar textos
+            document.getElementById('txt-segundos').innerText = totalSegundos.toLocaleString();
+            document.getElementById('txt-hora').innerText = ahora.toLocaleTimeString();
         }
 
+        // Iniciar
         crearEsfera();
-        setInterval(actualizarReloj, 1000);
-        actualizarReloj();
+        setInterval(actualizar, 1000);
+        actualizar();
+
     </script>
 </body>
 </html>
