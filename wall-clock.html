@@ -3,123 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reloj de Segundos</title>
+    <title>Reloj 24 Horas con Segundos</title>
     <style>
-        /* Estilos Generales */
+        /* --- Estilos Base --- */
         body {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #1a1a1a; /* Fondo oscuro */
-            font-family: 'Courier New', Courier, monospace; /* Fuente tipo digital */
+            background-color: #222;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
+            overflow: hidden;
         }
 
-        /* El contenedor del reloj (El círculo exterior con el gradiente) */
-        .reloj-container {
+        /* --- Esfera del Reloj --- */
+        .reloj {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 350px;
+            height: 350px;
+            border: 10px solid #333;
             border-radius: 50%;
-            /* El gradiente cónico crea el efecto de progreso circular */
-            background: conic-gradient(
-                #00ff88 var(--progreso), 
-                #333 0deg
-            );
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 50px rgba(0, 255, 136, 0.2);
+            background: radial-gradient(circle, #1a1a1a 60%, #000 150%);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.8);
         }
 
-        /* El círculo interior (para ocultar el centro del gradiente y crear el anillo) */
-        .reloj-interior {
-            width: 280px;
-            height: 280px;
-            background-color: #1a1a1a;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            z-index: 2;
+        /* --- Marcas de las Horas (Las 24 divisiones) --- */
+        .marca {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background-color: #666;
+            left: 50%;
+            top: 0;
+            transform-origin: 50% 175px; /* Mitad del ancho/alto del reloj */
+            /* Se rotarán con JS */
+        }
+        
+        /* Destacar las marcas principales (0, 6, 12, 18) */
+        .marca.principal {
+            background-color: #00ff88;
+            width: 4px;
+            height: 20px;
         }
 
-        /* El número grande de segundos */
-        #contador-segundos {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #00ff88;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-        }
-
-        /* La etiqueta de texto debajo */
-        .etiqueta {
+        /* Números de las 24 horas */
+        .numero {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            left: 50%;
+            top: 50%;
+            text-align: center;
+            line-height: 30px;
             font-size: 0.8rem;
             color: #888;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-top: 10px;
+            margin-left: -15px; /* Centrar */
+            margin-top: -15px;  /* Centrar */
         }
 
-        /* Mostrar la hora normal pequeña abajo como referencia */
-        .hora-referencia {
-            font-size: 0.9rem;
-            color: #555;
-            margin-top: 5px;
+        /* --- Manecillas --- */
+        .manecilla {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 4px;
+            z-index: 10;
         }
+
+        /* Hora (Más corta y gruesa) */
+        .hora {
+            width: 6px;
+            height: 90px;
+            background-color: white;
+            margin-left: -3px;
+        }
+
+        /* Minuto (Más larga) */
+        .minuto {
+            width: 4px;
+            height: 120px;
+            background-color: #aaa;
+            margin-left: -2px;
+        }
+
+        /* Segundo (Fina y de color) */
+        .segundo {
+            width: 2px;
+            height: 140px;
+            background-color: #00ff88;
+            margin-left: -1px;
+            z-index: 11;
+        }
+
+        /* Punto central */
+        .centro {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: #00ff88;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 12;
+            box-shadow: 0 0 5px rgba(0,255,136,0.5);
+        }
+
+        /* --- Display Digital Central (Total Segundos) --- */
+        .info-centro {
+            position: absolute;
+            top: 65%;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+        }
+        
+        .total-segundos {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            color: #00ff88;
+            font-weight: bold;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 10px;
+            border-radius: 4px;
+        }
+        
+        .texto-label {
+            display: block;
+            font-size: 0.6rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="reloj-container" id="reloj">
-        <div class="reloj-interior">
-            <div id="contador-segundos">0</div>
-            <div class="etiqueta">Segundos del día</div>
-            <div class="hora-referencia" id="hora-normal">00:00:00</div>
+    <div class="reloj" id="reloj">
+        <div class="manecilla hora" id="manecilla-hora"></div>
+        <div class="manecilla minuto" id="manecilla-minuto"></div>
+        <div class="manecilla segundo" id="manecilla-segundo"></div>
+        <div class="centro"></div>
+
+        <div class="info-centro">
+            <span class="total-segundos" id="display-segundos">0</span>
+            <span class="texto-label">Segundos Totales</span>
         </div>
     </div>
 
     <script>
-        function actualizarReloj() {
-            const ahora = new Date();
-            
-            // 1. Obtener horas, minutos y segundos actuales
-            const horas = ahora.getHours();
-            const minutos = ahora.getMinutes();
-            const segundos = ahora.getSeconds();
+        const reloj = document.getElementById('reloj');
 
-            // 2. Calcular el total de segundos transcurridos desde medianoche
-            // (Horas * 3600) + (Minutos * 60) + Segundos
-            const totalSegundos = (horas * 3600) + (minutos * 60) + segundos;
+        // 1. GENERAR LAS 24 DIVISIONES Y NÚMEROS DINÁMICAMENTE
+        function crearEsfera() {
+            const radioNumeros = 145; // Distancia de los números al centro
 
-            // 3. Actualizar el número en pantalla
-            document.getElementById('contador-segundos').innerText = totalSegundos.toLocaleString();
+            for (let i = 0; i < 24; i++) {
+                // Crear la marca (rayita)
+                const marca = document.createElement('div');
+                marca.classList.add('marca');
+                if (i % 6 === 0) marca.classList.add('principal'); // Resaltar 0, 6, 12, 18
+                
+                // Rotación: 360 grados / 24 horas = 15 grados por hora
+                const rotacion = i * 15; 
+                marca.style.transform = `rotate(${rotacion}deg)`;
+                reloj.appendChild(marca);
 
-            // 4. Mostrar la hora normal como referencia secundaria
-            document.getElementById('hora-normal').innerText = 
-                ahora.toLocaleTimeString('es-ES');
+                // Crear el número
+                const numero = document.createElement('div');
+                numero.classList.add('numero');
+                numero.innerText = i; // 0 a 23
 
-            // 5. Calcular el porcentaje del día para el anillo de progreso
-            // Total segundos en un día = 86,400
-            const segundosEnUnDia = 86400;
-            const porcentaje = (totalSegundos / segundosEnUnDia) * 360; // 360 grados
+                // Matemáticas para posicionar los números en círculo sin rotar el texto
+                // Restamos 90 grados (PI/2) porque 0 grados en CSS es arriba (12h), 
+                // pero en trigonométrica 0 es a la derecha (3h).
+                const anguloRad = (rotacion - 90) * (Math.PI / 180);
+                const x = radioNumeros * Math.cos(anguloRad);
+                const y = radioNumeros * Math.sin(anguloRad);
 
-            // 6. Actualizar la variable CSS para mover el gráfico circular
-            const relojElement = document.getElementById('reloj');
-            relojElement.style.setProperty('--progreso', porcentaje + 'deg');
+                numero.style.transform = `translate(${x}px, ${y}px)`;
+                reloj.appendChild(numero);
+            }
         }
 
-        // Ejecutar la función cada 1000 milisegundos (1 segundo)
+        // 2. ACTUALIZAR MANECILLAS
+        function actualizarReloj() {
+            const ahora = new Date();
+            const h = ahora.getHours();
+            const m = ahora.getMinutes();
+            const s = ahora.getSeconds();
+            const ms = ahora.getMilliseconds();
+
+            // Cálculos de rotación
+            
+            // Segundos: 60s = 360deg -> 6deg por segundo
+            const degS = s * 6;
+            
+            // Minutos: 60m = 360deg -> 6deg por minuto (+ un poco por los segundos)
+            const degM = (m * 6) + (s * 0.1);
+
+            // HORAS (Formato 24h):
+            // En un reloj normal (12h), la hora recorre 360 grados en 12 horas.
+            // En este reloj (24h), la hora recorre 360 grados en 24 horas.
+            // 360 / 24 = 15 grados por hora.
+            const degH = (h * 15) + (m * 15 / 60);
+
+            // Aplicar rotaciones
+            document.getElementById('manecilla-segundo').style.transform = `rotate(${degS}deg)`;
+            document.getElementById('manecilla-minuto').style.transform = `rotate(${degM}deg)`;
+            document.getElementById('manecilla-hora').style.transform = `rotate(${degH}deg)`;
+
+            // Actualizar contador digital de segundos totales
+            const totalSegundos = (h * 3600) + (m * 60) + s;
+            document.getElementById('display-segundos').innerText = totalSegundos.toLocaleString();
+        }
+
+        // Inicializar
+        crearEsfera();
         setInterval(actualizarReloj, 1000);
-
-        // Ejecutar inmediatamente al cargar para no esperar 1 segundo
         actualizarReloj();
-    </script>
 
+    </script>
 </body>
 </html>
-
