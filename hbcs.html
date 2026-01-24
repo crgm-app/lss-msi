@@ -430,12 +430,12 @@
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('btn-sound');
             if (soundEnabled) {
-                btn.innerText = "🔊 ON";
+                btn.innerText = "🔊";
                 btn.classList.add('activo');
                 // Iniciar contexto al primer toque (requisito de navegadores)
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             } else {
-                btn.innerText = "🔇 OFF";
+                btn.innerText = "🔇";
                 btn.classList.remove('activo');
             }
         }
