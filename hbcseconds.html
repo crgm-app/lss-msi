@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Heartbeat Clock Final</title>
+    <style>
+        /* --- Configuración General --- */
+        :root {
+            --bg-color: #050505;
+            --color-borde: #1a1a1a;
+            
+            /* Paleta de Colores Neon */
+            --neon-blue: #00f3ff;  /* Cian */
+            --neon-red: #ff0055;   /* Rojo Intenso */
+            --text-dim: #444;      /* Gris Oscuro */
+            --text-light: #aaa;    /* Gris Claro */
+            
+            /* Colores de Elementos */
+            --manecilla-dia: #00f3ff;
+            --manecilla-seg: #ff0055;
+            --manecilla-min: rgba(255, 255, 255, 0.12); /* Fantasma */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column; /* Organiza verticalmente: Título arriba, Reloj abajo */
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            user-select: none; /* Evita seleccionar texto al tocar */
+        }
+
+        /* --- Título (Ajustado para no chocar) --- */
+        .titulo-principal {
+            position: relative; /* Clave: Ya no es absolute */
+            margin-bottom: 2vmin; /* Espacio entre título y reloj */
+            margin-top: 0;
+            
+            font-family: 'Courier New', monospace;
+            font-size: 3.5vmin;
+            letter-spacing: 0.8vmin;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            z-index: 50;
+            opacity: 0.9;
+            text-align: center;
+        }
+
+        /* --- Botonera --- */
+        .controles {
+            position: fixed;
+            top: 15px;
+            right: 15px; /* Esquina superior derecha */
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .btn {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #888;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            font-family: sans-serif;
+            outline: none;
+            backdrop-filter: blur(4px);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .btn.activo {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+        }
+
+        /* --- El Reloj (Escalado al 98%) --- */
+        .reloj-contenedor {
+            position: relative;
+            /* TAMAÑO MÁXIMO */
+            width: 98vmin; 
+            height: 98vmin;
+            border-radius: 50%;
+            background: radial-gradient(circle, #0e0e0e 30%, #000000 100%);
+            border: 0.2vmin solid var(--color-borde);
+            /* Sombras internas y externas para profundidad */
+            box-shadow: 
+                0 0 4vmin rgba(0,0,0,0.9),
+                inset 0 0 15vmin rgba(0,0,0,1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- 1. CAPA EXTERIOR (Marcas de Tiempo) --- */
+        /* Radio del reloj = 49vmin (98/2). Las marcas parten de ahí hacia adentro */
+
+        /* Hora (La más larga) */
+        .marca-hora {
+            position: absolute;
+            width: 0.3vmin;
+            height: 3vmin;
+            background-color: #666;
+            left: 50%;
+            top: 0;
+            /* Origen ajustado al nuevo radio */
+            transform-origin: 50% 49vmin; 
+        }
+
+        /* Media Hora (Mediana) */
+        .marca-media {
+            position: absolute;
+            width: 0.2vmin;
+            height: 2vmin;
+            background-color: #444;
+            left: 50%;
+            top: 1vmin; /* Un poco más adentro */
+            transform-origin: 50% 48vmin; 
+        }
+
+        /* Cuartos (Pequeña) */
+        .marca-cuarto {
+            position: absolute;
+            width: 0.15vmin;
+            height: 1.2vmin;
+            background-color: #2a2a2a;
+            left: 50%;
+            top: 1.8vmin;
+            transform-origin: 50% 47.2vmin; 
+        }
+
+        /* Texto Perimetral (99.9k) */
+        .etiqueta-outer {
+            position: absolute;
+            width: 12vmin;
+            height: 8vmin;
+            left: 50%;
+            top: 50%;
+            margin-left: -6vmin;
+            margin-top: -4vmin;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: none;
+        }
+        .txt-k {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5vmin; /* Texto más grande y legible */
+            color: var(--neon-blue);
+            font-weight: bold;
+            letter-spacing: -0.1vmin;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+        }
+        .txt-hora-ref {
+            font-size: 1.8vmin;
+            color: var(--text-dim);
+            margin-top: 0.2vmin;
+            font-weight: 500;
+        }
+
+        /* --- 2. CAPA INTERMEDIA (Círculo Minutos Fantasma) --- */
+        /* Radio interno ajustado a 32vmin para mantener proporción */
+        .marca-minuto {
+            position: absolute;
+            width: 0.15vmin;
+            height: 1.2vmin;
+            background-color: #1a1a1a; 
+            left: 50%;
+            top: 50%;
+            margin-left: -0.075vmin;
+            margin-top: -32vmin; /* Radio interno nuevo */
+            transform-origin: 50% 32vmin; 
+        }
+        .marca-minuto.quinto {
+            background-color: #333;
+            height: 2vmin;
+            width: 0.2vmin;
+        }
+
+        /* --- 3. MANECILLAS (Longitudes Recalculadas) --- */
+
+        /* A. Minutera (Opaca) - Llega al círculo interno */
+        .manecilla-minuto {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 1.5vmin;
+            height: 30vmin; /* Casi toca las marcas de minutos */
+            background-color: var(--manecilla-min);
+            transform-origin: bottom center;
+            border-radius: 1vmin;
+            z-index: 9; 
+            backdrop-filter: blur(2px);
+        }
+
+        /* B. Día/Segundos Totales (Azul) - Llega cerca del borde */
+        .manecilla-dia {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 0.6vmin;
+            height: 44vmin; /* Radio 49 - margen */
+            background: var(--manecilla-dia);
+            transform-origin: bottom center;
+            border-radius: 1vmin;
+            z-index: 10;
+            box-shadow: 0 0 2vmin rgba(0, 243, 255, 0.4);
+        }
+
+        /* C. Segundera (Roja) - La más larga */
+        .manecilla-segundera {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 0.25vmin; 
+            height: 47vmin; /* Casi tocando el borde total */
+            background-color: var(--manecilla-seg);
+            transform-origin: bottom center;
+            z-index: 12;
+            box-shadow: 0 0 1.5vmin rgba(255, 0, 85, 0.5);
+        }
+        /* Contrapeso Segundera */
+        .manecilla-segundera::after {
+            content: '';
+            position: absolute;
+            top: 47vmin; /* Parte inferior del eje */
+            left: -0.1vmin;
+            width: 0.45vmin;
+            height: 5vmin;
+            background-color: var(--manecilla-seg);
+        }
+
+        /* Centro Decorativo */
+        .centro {
+            position: absolute;
+            width: 2.5vmin;
+            height: 2.5vmin;
+            background-color: #eee;
+            border-radius: 50%;
+            z-index: 15;
+            box-shadow: 0 0 3vmin rgba(0,0,0,1);
+            border: 0.3vmin solid var(--neon-red);
+        }
+
+        /* --- Panel Digital Central --- */
+        .panel-central {
+            z-index: 5;
+            position: absolute;
+            top: 60%; /* Un poco abajo del centro */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .digital-grande {
+            font-family: 'Courier New', monospace;
+            font-size: 7vmin; /* Enorme */
+            color: white;
+            font-weight: bold;
+            line-height: 1;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.8);
+        }
+        .digital-label {
+            color: #555;
+            font-size: 1.5vmin;
+            text-transform: uppercase;
+            letter-spacing: 0.4vmin;
+            margin-top: 1vmin;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1 class="titulo-principal">HEARTBEAT CLOCK</h1>
+
+    <div class="controles">
+        <button id="btn-sound" class="btn" onclick="toggleSound()">🔇</button>
+        <button id="btn-fullscreen" class="btn" onclick="toggleFullScreen()">⛶</button>
+    </div>
+
+    <div class="reloj-contenedor" id="reloj">
+        
+        <div id="capa-minutos"></div>
+
+        <div id="capa-subdivisiones"></div>
+
+        <div class="manecilla-minuto" id="manecilla-minuto"></div>
+        <div class="manecilla-dia" id="manecilla-dia"></div>
+        <div class="manecilla-segundera" id="manecilla-segundera"></div>
+        <div class="centro"></div>
+
+        <div class="panel-central">
+            <span class="digital-grande" id="display-actual">0</span>
+            <span class="digital-label">Seg.</span>
+        </div>
+
+    </div>
+
+    <script>
+        const reloj = document.getElementById('reloj');
+        const capaMinutos = document.getElementById('capa-minutos');
+        const capaSubdiv = document.getElementById('capa-subdivisiones');
+        
+        // --- CONFIGURACIÓN DE ESCALA ---
+        // Ajustamos la posición del texto para que coincida con el borde de 98vmin
+        // El radio es 49vmin. Ponemos el texto en 40vmin para que quede dentro.
+        const radioTexto = 40; 
+        const segundosEnDia = 86400;
+
+        // Variables de Audio
+        let audioCtx = null;
+        let soundEnabled = false;
+        let lastSecond = -1;
+
+        // Formato compacto (ej: 36000 -> 36.0k)
+        function formatK(num) {
+            if (num === 0) return "0k";
+            const kVal = num / 1000;
+            return kVal.toFixed(1) + 'k';
+        }
+
+        // --- 1. GENERAR LA ESFERA ---
+        function crearEsfera() {
+            
+            // A. Anillo EXTERIOR (Horas y Subdivisiones)
+            for (let i = 0; i < 24; i++) {
+                const rotacionHora = i * 15; // 360 / 24
+
+                // Marca de HORA (Principal)
+                const marca = document.createElement('div');
+                marca.classList.add('marca-hora');
+                marca.style.transform = `rotate(${rotacionHora}deg)`;
+                reloj.appendChild(marca);
+
+                // Marcas de SUB-DIVISIONES (15, 30, 45 min)
+                const sub15 = rotacionHora + 3.75;
+                const sub30 = rotacionHora + 7.5;
+                const sub45 = rotacionHora + 11.25;
+
+                // Crear elementos
+                const m15 = document.createElement('div'); m15.className = 'marca-cuarto';
+                m15.style.transform = `rotate(${sub15}deg)`;
+                capaSubdiv.appendChild(m15);
+
+                const m30 = document.createElement('div'); m30.className = 'marca-media';
+                m30.style.transform = `rotate(${sub30}deg)`;
+                capaSubdiv.appendChild(m30);
+
+                const m45 = document.createElement('div'); m45.className = 'marca-cuarto';
+                m45.style.transform = `rotate(${sub45}deg)`;
+                capaSubdiv.appendChild(m45);
+
+                // ETIQUETAS DE TEXTO (Solo pares)
+                if (i % 2 === 0) {
+                    const etiqueta = document.createElement('div');
+                    etiqueta.classList.add('etiqueta-outer');
+                    
+                    // Trigonometría para ubicar el texto
+                    const anguloRad = (rotacionHora - 90) * (Math.PI / 180);
+                    const x = radioTexto * Math.cos(anguloRad);
+                    const y = radioTexto * Math.sin(anguloRad);
+
+                    const valorRaw = i * 3600;
+                    const valorFormat = formatK(valorRaw);
+
+                    etiqueta.innerHTML = `
+                        <span class="txt-k">${valorFormat}</span>
+                        <span class="txt-hora-ref">${i}h</span>
+                    `;
+                    // Usamos vmin en la transformación
+                    etiqueta.style.transform = `translate(${x}vmin, ${y}vmin)`;
+                    reloj.appendChild(etiqueta);
+                }
+            }
+
+            // B. Anillo INTERNO (Minutos Fantasma)
+            for (let j = 0; j < 60; j++) {
+                const marcaMin = document.createElement('div');
+                marcaMin.classList.add('marca-minuto');
+                if (j % 5 === 0) marcaMin.classList.add('quinto');
+                marcaMin.style.transform = `rotate(${j * 6}deg)`;
+                capaMinutos.appendChild(marcaMin);
+            }
+        }
+
+        // --- 2. SISTEMA DE SONIDO (Tic-Tac Sintetizado) ---
+        function playTick() {
+            if (!soundEnabled) return;
+            
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.type = 'triangle'; // Un sonido un poco más "metálico" que sine
+            // Tono: Alternar entre agudo y grave
+            const isTac = (lastSecond % 2 === 0);
+            osc.frequency.value = isTac ? 1200 : 1600; 
+            
+            // Golpe corto y seco
+            gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime); // Volumen muy bajo
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.04);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('btn-sound');
+            if (soundEnabled) {
+                btn.innerText = "🔊";
+                btn.classList.add('activo');
+                // Iniciar contexto al primer toque (requisito de navegadores)
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } else {
+                btn.innerText = "🔇";
+                btn.classList.remove('activo');
+            }
+        }
+
+        // --- 3. BUCLE DE ACTUALIZACIÓN ---
+        function actualizar() {
+            const ahora = new Date();
+            const h = ahora.getHours();
+            const m = ahora.getMinutes();
+            const s = ahora.getSeconds();
+            const ms = ahora.getMilliseconds();
+
+            // Sonido
+            if (s !== lastSecond) {
+                lastSecond = s;
+                playTick();
+            }
+
+            const totalSegundos = (h * 3600) + (m * 60) + s;
+
+            // Cálculos de Rotación
+            const gradosDia = (totalSegundos / segundosEnDia) * 360;
+            const gradosMin = (m * 6) + (s * 0.1);
+            const gradosSeg = (s * 6) + (ms * 0.006); 
+
+            // Aplicar CSS
+            document.getElementById('manecilla-dia').style.transform = `rotate(${gradosDia}deg)`;
+            document.getElementById('manecilla-minuto').style.transform = `rotate(${gradosMin}deg)`;
+            document.getElementById('manecilla-segundera').style.transform = `rotate(${gradosSeg}deg)`;
+
+            // Actualizar Texto Digital
+            document.getElementById('display-actual').innerText = totalSegundos.toLocaleString();
+        }
+
+        // --- 4. PANTALLA COMPLETA ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => console.log(e));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // Inicialización
+        crearEsfera();
+        
+        function loop() {
+            actualizar();
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+    </script>
+</body>
+</html>
