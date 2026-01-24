@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj Master Segundos</title>
+    <style>
+        /* --- Configuración General --- */
+        :root {
+            --bg-color: #0a0a0a;
+            --color-borde: #2a2a2a;
+            
+            /* Colores de Texto */
+            --txt-segundos-dia: #00f3ff; /* Cian Brillante */
+            --txt-hora: #555;
+
+            /* Colores de Manecillas */
+            --manecilla-dia: #00f3ff;    /* La principal (24h) */
+            --manecilla-seg: #ff0055;    /* La rápida (60s) */
+            --manecilla-min: rgba(200, 200, 200, 0.4); /* La nueva (Opaca/Fantasma) */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Botón Fullscreen */
+        #btn-fullscreen {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        #btn-fullscreen:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* --- El Reloj --- */
+        .reloj-contenedor {
+            position: relative;
+            width: 90vmin; 
+            height: 90vmin;
+            border-radius: 50%;
+            background: radial-gradient(circle, #161616 40%, #050505 100%);
+            border: 1vmin solid var(--color-borde);
+            box-shadow: 0 0 5vmin rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- 1. CAPA EXTERIOR (DÍA / SEGUNDOS TOTALES) --- */
+        
+        /* Marcas Externas (24h) */
+        .marca-dia {
+            position: absolute;
+            width: 0.2vmin;
+            height: 2vmin;
+            background-color: #333;
+            left: 50%;
+            top: 0;
+            transform-origin: 50% 45vmin; /* Radio externo */
+        }
+
+        /* Etiquetas Texto (Segundos Grandes + Hora pequeña) */
+        .etiqueta-outer {
+            position: absolute;
+            width: 12vmin;
+            height: 8vmin;
+            left: 50%;
+            top: 50%;
+            margin-left: -6vmin;
+            margin-top: -4vmin;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: none;
+        }
+        .txt-seg-grande {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2vmin;
+            color: var(--txt-segundos-dia);
+            font-weight: bold;
+            text-shadow: 0 0 1vmin rgba(0, 243, 255, 0.15);
+        }
+        .txt-hora-peque {
+            font-size: 1.4vmin;
+            color: var(--txt-hora);
+            margin-top: 0.4vmin;
+        }
+
+        /* --- 2. CAPA INTERMEDIA (MINUTOS) --- */
+        
+        /* Las 60 marcas del círculo interior */
+        .marca-minuto {
+            position: absolute;
+            width: 0.2vmin; /* Fina */
+            height: 1.5vmin;
+            background-color: #2a2a2a; /* Muy sutil */
+            left: 50%;
+            top: 50%;
+            /* La posición se define en JS con transform-origin */
+            margin-left: -0.1vmin;
+            margin-top: -26.5vmin; /* Radio del círculo de minutos (aprox 25vmin + altura) */
+            transform-origin: 50% 26.5vmin; 
+        }
+        
+        /* Resaltar cada 5 minutos (las 12 marcas principales) */
+        .marca-minuto.quinto {
+            background-color: #555; /* Un poco más visible */
+            width: 0.3vmin;
+            height: 2vmin;
+        }
+
+        /* --- 3. MANECILLAS --- */
+
+        /* A. MINUTERA (Nueva - Opaca y Corta) */
+        .manecilla-minuto {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 1.5vmin; /* Más gordita */
+            height: 24vmin; /* Corta (llega justo a las marcas internas) */
+            background-color: var(--manecilla-min);
+            transform-origin: bottom center;
+            border-radius: 1vmin;
+            z-index: 9; /* Debajo de la principal */
+            backdrop-filter: blur(2px); /* Efecto cristal opaco */
+        }
+
+        /* B. DÍA / SEGUNDOS TOTALES (La Principal - 24h) */
+        .manecilla-dia {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 0.6vmin;
+            height: 38vmin; /* Larga hasta el borde */
+            background: var(--manecilla-dia);
+            transform-origin: bottom center;
+            border-radius: 1vmin;
+            z-index: 10;
+            box-shadow: 0 0 2vmin rgba(0, 243, 255, 0.3);
+        }
+
+        /* C. SEGUNDERA (La Roja - Rápida) */
+        .manecilla-segundera {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            width: 0.25vmin; 
+            height: 42vmin; 
+            background-color: var(--manecilla-seg);
+            transform-origin: bottom center;
+            z-index: 12;
+            box-shadow: 0 0 1.5vmin rgba(255, 0, 85, 0.5);
+        }
+        /* Contrapeso */
+        .manecilla-segundera::after {
+            content: '';
+            position: absolute;
+            top: 42vmin;
+            left: -0.1vmin;
+            width: 0.45vmin;
+            height: 5vmin;
+            background-color: var(--manecilla-seg);
+        }
+
+        /* Centro */
+        .centro {
+            position: absolute;
+            width: 2.5vmin;
+            height: 2.5vmin;
+            background-color: #e0e0e0;
+            border-radius: 50%;
+            z-index: 15;
+            box-shadow: 0 0 1vmin rgba(0,0,0,0.8);
+        }
+
+        /* --- Panel Digital --- */
+        .panel-central {
+            z-index: 5;
+            position: absolute;
+            top: 62%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .digital-grande {
+            font-family: 'Courier New', monospace;
+            font-size: 6vmin;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 5px 10px rgba(0,0,0,0.5);
+        }
+        .digital-label {
+            color: #666;
+            font-size: 1.2vmin;
+            text-transform: uppercase;
+            letter-spacing: 0.3vmin;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button id="btn-fullscreen" onclick="toggleFullScreen()">⛶ Fullscreen</button>
+
+    <div class="reloj-contenedor" id="reloj">
+        
+        <div id="capa-minutos"></div>
+
+        <div class="manecilla-minuto" id="manecilla-minuto"></div> <div class="manecilla-dia" id="manecilla-dia"></div>       <div class="manecilla-segundera" id="manecilla-segundera"></div> <div class="centro"></div>
+
+        <div class="panel-central">
+            <span class="digital-grande" id="display-actual">0</span>
+            <span class="digital-label">Progreso Día</span>
+        </div>
+
+    </div>
+
+    <script>
+        const reloj = document.getElementById('reloj');
+        const capaMinutos = document.getElementById('capa-minutos');
+        const radioTexto = 36; 
+        const segundosEnDia = 86400;
+
+        // --- 1. Generar la Esfera ---
+        function crearEsfera() {
+            
+            // A. Anillo EXTERNO (Horas y Segundos Totales) - 24 Divisiones
+            for (let i = 0; i < 24; i++) {
+                const rotacion = i * 15;
+                
+                // Marca borde
+                const marca = document.createElement('div');
+                marca.classList.add('marca-dia');
+                marca.style.transform = `rotate(${rotacion}deg)`;
+                reloj.appendChild(marca);
+
+                // Texto (Solo pares)
+                if (i % 2 === 0) {
+                    const etiqueta = document.createElement('div');
+                    etiqueta.classList.add('etiqueta-outer');
+                    
+                    const anguloRad = (rotacion - 90) * (Math.PI / 180);
+                    const x = radioTexto * Math.cos(anguloRad);
+                    const y = radioTexto * Math.sin(anguloRad);
+
+                    etiqueta.innerHTML = `
+                        <span class="txt-seg-grande">${i * 3600}</span>
+                        <span class="txt-hora-peque">${i}h</span>
+                    `;
+                    etiqueta.style.transform = `translate(${x}vmin, ${y}vmin)`;
+                    reloj.appendChild(etiqueta);
+                }
+            }
+
+            // B. Anillo INTERNO (Minutos) - 60 Divisiones
+            for (let j = 0; j < 60; j++) {
+                const marcaMin = document.createElement('div');
+                marcaMin.classList.add('marca-minuto');
+                
+                // Si es múltiplo de 5, le damos una clase especial (marca de cuarto/5min)
+                if (j % 5 === 0) {
+                    marcaMin.classList.add('quinto');
+                }
+
+                // Rotación: 6 grados por minuto (360 / 60)
+                marcaMin.style.transform = `rotate(${j * 6}deg)`;
+                
+                // Insertamos en el contenedor (pero detrás de las manecillas gracias al z-index del CSS)
+                capaMinutos.appendChild(marcaMin);
+            }
+        }
+
+        // --- 2. Actualizar Reloj ---
+        function actualizar() {
+            const ahora = new Date();
+            const h = ahora.getHours();
+            const m = ahora.getMinutes();
+            const s = ahora.getSeconds();
+            const ms = ahora.getMilliseconds();
+
+            const totalSegundos = (h * 3600) + (m * 60) + s;
+
+            // 1. Manecilla DÍA (Azul, Larga): 24h
+            const gradosDia = (totalSegundos / segundosEnDia) * 360;
+            document.getElementById('manecilla-dia').style.transform = `rotate(${gradosDia}deg)`;
+
+            // 2. Manecilla MINUTOS (Opaca, Corta): 60m
+            // Lógica estándar de reloj: (Minutos * 6) + un poco por los segundos
+            const gradosMin = (m * 6) + (s * 0.1); 
+            document.getElementById('manecilla-minuto').style.transform = `rotate(${gradosMin}deg)`;
+
+            // 3. Manecilla SEGUNDOS (Roja, Rápida): 60s
+            const gradosSeg = (s * 6) + (ms * 0.006);
+            document.getElementById('manecilla-segundera').style.transform = `rotate(${gradosSeg}deg)`;
+
+            // 4. Panel Digital
+            document.getElementById('display-actual').innerText = totalSegundos.toLocaleString();
+        }
+
+        // --- Pantalla Completa ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        crearEsfera();
+        
+        function loop() {
+            actualizar();
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+    </script>
+</body>
+</html>
+
