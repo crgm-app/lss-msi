@@ -1,30 +1,69 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Generador de Íconos</title>
+</head>
 <body>
-<canvas id="canvas" width="192" height="192"></canvas>
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+    <h2>Generador de Íconos para Mi Organizador</h2>
+    <button onclick="generarIcono512()">Descargar ícono 512x512</button>
+    <button onclick="generarIcono192()">Descargar ícono 192x192</button>
+    
+    <br><br>
+    <canvas id="canvas512" width="512" height="512" style="border:1px solid #ccc;"></canvas>
+    <canvas id="canvas192" width="192" height="192" style="border:1px solid #ccc; margin-left: 20px;"></canvas>
 
-// Fondo azul
-ctx.fillStyle = '#2196F3';
-ctx.fillRect(0, 0, 192, 192);
-
-// Texto blanco
-ctx.fillStyle = '#ffffff';
-ctx.font = 'bold 300px Arial';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'middle';
-ctx.fillText('📋', 32, 32);
-
-// Descargar
-canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'icon-192.png';
-    a.click();
-});
-</script>
+    <script>
+        // Función para dibujar el ícono
+        function dibujarIcono(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Fondo azul
+            ctx.fillStyle = '#2196F3';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Emoji o texto
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.6}px Arial`; // Tamaño proporcional
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📋', size / 2, size / 2);
+        }
+        
+        // Generar ícono 512x512
+        function generarIcono512() {
+            const canvas = document.getElementById('canvas512');
+            dibujarIcono(canvas, 512);
+            
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-512.png';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+        
+        // Generar ícono 192x192
+        function generarIcono192() {
+            const canvas = document.getElementById('canvas192');
+            dibujarIcono(canvas, 192);
+            
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-192.png';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+        
+        // Dibujar previsualizaciones al cargar
+        window.onload = function() {
+            dibujarIcono(document.getElementById('canvas512'), 512);
+            dibujarIcono(document.getElementById('canvas192'), 192);
+        };
+    </script>
 </body>
 </html>
