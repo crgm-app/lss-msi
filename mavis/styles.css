@@ -5,30 +5,43 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    padding: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 15px;
 }
 
 .container {
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     overflow: hidden;
 }
 
 header {
-    background: #2196F3;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     color: white;
-    padding: 20px;
+    padding: 25px 20px;
     text-align: center;
 }
 
+header h1 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.fecha-actual {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Pestañas principales */
 .tabs {
     display: flex;
-    background: #e3f2fd;
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .tab {
@@ -38,12 +51,25 @@ header {
     background: transparent;
     cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+    position: relative;
 }
 
 .tab.active {
     background: white;
-    font-weight: bold;
+    color: #2196F3;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #2196F3;
 }
 
 .tab-content {
@@ -55,6 +81,86 @@ header {
     display: block;
 }
 
+/* Filtros de tareas */
+.filtros {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filtro-btn {
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+    color: #666;
+}
+
+.filtro-btn.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+.filtro-btn:hover {
+    border-color: #2196F3;
+}
+
+/* Vista de calendario */
+.vista-calendario {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.vista-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    color: #666;
+}
+
+.vista-btn.active {
+    background: #2196F3;
+    color: white;
+    border-color: #2196F3;
+}
+
+/* Navegación de fecha */
+.navegacion-fecha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+.navegacion-fecha button {
+    padding: 8px 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.navegacion-fecha h3 {
+    font-size: 18px;
+    color: #333;
+}
+
+/* Grupos de entrada */
 .input-group {
     display: flex;
     gap: 10px;
@@ -65,68 +171,271 @@ header {
 input[type="text"],
 input[type="datetime-local"] {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
     font-size: 14px;
     min-width: 200px;
+    transition: border 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2196F3;
 }
 
 button {
-    padding: 10px 20px;
-    background: #2196F3;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-    background: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
 }
 
-ul {
-    list-style: none;
+button:active {
+    transform: translateY(0);
 }
 
-li {
+/* Estadísticas */
+.estadisticas {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    flex: 1;
     padding: 15px;
-    margin-bottom: 10px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-card.pendiente {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+.stat-card.en_progreso {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.stat-card.completada {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.stat-numero {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Tareas */
+#listaTareas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tarea-item {
+    padding: 15px;
     background: #f9f9f9;
-    border-radius: 5px;
+    border-radius: 12px;
+    border-left: 4px solid #ddd;
+    transition: all 0.3s;
+}
+
+.tarea-item:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateX(5px);
+}
+
+.tarea-item.pendiente {
+    border-left-color: #ff9800;
+    background: linear-gradient(90deg, #fff3e0 0%, #f9f9f9 20%);
+}
+
+.tarea-item.en_progreso {
+    border-left-color: #2196F3;
+    background: linear-gradient(90deg, #e3f2fd 0%, #f9f9f9 20%);
+}
+
+.tarea-item.completada {
+    border-left-color: #4CAF50;
+    background: linear-gradient(90deg, #e8f5e9 0%, #f9f9f9 20%);
+    opacity: 0.8;
+}
+
+.tarea-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    margin-bottom: 10px;
 }
 
-li.completada {
-    text-decoration: line-through;
-    opacity: 0.6;
-    background: #e8f5e9;
-}
-
-.tarea-text {
+.tarea-texto {
     flex: 1;
-    cursor: pointer;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.5;
+}
+
+.tarea-item.completada .tarea-texto {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.estado-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.estado-badge.pendiente {
+    background: #ff9800;
+    color: white;
+}
+
+.estado-badge.en_progreso {
+    background: #2196F3;
+    color: white;
+}
+
+.estado-badge.completada {
+    background: #4CAF50;
+    color: white;
+}
+
+.tarea-acciones {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-accion {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.btn-pendiente {
+    background: #ff9800;
+}
+
+.btn-progreso {
+    background: #2196F3;
+}
+
+.btn-completar {
+    background: #4CAF50;
 }
 
 .btn-eliminar {
     background: #f44336;
-    padding: 5px 10px;
-    font-size: 12px;
+    flex: 0.5;
 }
 
-.btn-eliminar:hover {
-    background: #d32f2f;
+/* Reuniones */
+#listaReuniones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.reunion-info {
-    flex: 1;
+.reunion-item {
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    border-left: 4px solid #2196F3;
+    transition: all 0.3s;
+}
+
+.reunion-item:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.reunion-item.pasada {
+    opacity: 0.6;
+    border-left-color: #999;
+}
+
+.reunion-item.hoy {
+    background: linear-gradient(90deg, #fff3e0 0%, #f9f9f9 20%);
+    border-left-color: #ff9800;
+}
+
+.reunion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.reunion-titulo {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
 }
 
 .reunion-fecha {
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
     color: #666;
-    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.reunion-acciones {
+    display: flex;
+    gap: 8px;
+}
+
+.mensaje-vacio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .filtros, .vista-calendario {
+        gap: 5px;
+    }
+    
+    .filtro-btn, .vista-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .navegacion-fecha h3 {
+        font-size: 16px;
+    }
+    
+    .estadisticas {
+        flex-wrap: wrap;
+    }
+    
+    .stat-card {
+        min-width: calc(50% - 5px);
+    }
 }
