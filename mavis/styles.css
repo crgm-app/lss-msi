@@ -595,3 +595,11 @@ button:active {
         min-width: 70px;
     }
 }
+.btn-exportar {
+    background: #9C27B0;
+    color: white;
+}
+
+.btn-exportar:hover {
+    background: #7B1FA2;
+}
