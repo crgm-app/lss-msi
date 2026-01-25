@@ -1,7 +1,7 @@
 {
-  "name": "Mi Organizador",
+  "name": "Mi Organizador Pro",
   "short_name": "Organizador",
-  "description": "Organizador de tareas y calendario",
+  "description": "Organizador de tareas y calendario profesional",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
