@@ -137,29 +137,39 @@ header h1 {
     border-color: #2196F3;
 }
 
-/* Navegación de fecha */
-.navegacion-fecha {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #f5f5f5;
-    border-radius: 10px;
-}
-
 .navegacion-fecha button {
     padding: 8px 15px;
     background: white;
-    border: 1px solid #ddd;
+    color: #2196F3;
+    border: 2px solid #2196F3;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
 }
 
-.navegacion-fecha h3 {
-    font-size: 18px;
-    color: #333;
+.navegacion-fecha button:hover {
+    background: #2196F3;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+}
+
+.navegacion-fecha button:active {
+    transform: translateY(0);
+}
+
+/* Botón "Hoy" con estilo especial */
+.navegacion-fecha button:last-child {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
+
+.navegacion-fecha button:last-child:hover {
+    background: #f57c00;
+    border-color: #f57c00;
 }
 
 /* Grupos de entrada */
