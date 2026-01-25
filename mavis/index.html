@@ -1,60 +1,82 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Organizador</title>
+    <title>Mi Organizador Pro</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
-    
-    <!-- Íconos para diferentes dispositivos -->
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    
-    <meta name="theme-color" content="#2196F3">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Organizador</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2196F3">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📋 Mi Organizador</h1>
+            <h1>📋 Mi Organizador Pro</h1>
+            <p class="fecha-actual" id="fechaActual"></p>
         </header>
 
-        <!-- Pestañas -->
+        <!-- Pestañas principales -->
         <div class="tabs">
-            <button class="tab active" onclick="showTab('tareas')">Tareas</button>
-            <button class="tab" onclick="showTab('calendario')">Calendario</button>
+            <button class="tab active" onclick="showMainTab('tareas')">Tareas</button>
+            <button class="tab" onclick="showMainTab('calendario')">Calendario</button>
         </div>
 
-        <!-- Sección de Tareas -->
+        <!-- SECCIÓN DE TAREAS -->
         <div id="tareas" class="tab-content active">
+            <!-- Filtros de tareas -->
+            <div class="filtros">
+                <button class="filtro-btn active" onclick="filtrarTareas('todos')">Todos</button>
+                <button class="filtro-btn" onclick="filtrarTareas('pendiente')">Por hacer</button>
+                <button class="filtro-btn" onclick="filtrarTareas('en_progreso')">Haciendo</button>
+                <button class="filtro-btn" onclick="filtrarTareas('completada')">Hechos</button>
+            </div>
+
+            <!-- Agregar nueva tarea -->
             <div class="input-group">
                 <input type="text" id="nuevaTarea" placeholder="Nueva tarea...">
-                <button onclick="agregarTarea()">Agregar</button>
+                <button onclick="agregarTarea()">+ Agregar</button>
             </div>
-            <ul id="listaTareas"></ul>
+
+            <!-- Estadísticas -->
+            <div class="estadisticas" id="estadisticas"></div>
+
+            <!-- Lista de tareas -->
+            <div id="listaTareas"></div>
         </div>
 
-        <!-- Sección de Calendario -->
+        <!-- SECCIÓN DE CALENDARIO -->
         <div id="calendario" class="tab-content">
+            <!-- Vista de calendario -->
+            <div class="vista-calendario">
+                <button class="vista-btn active" onclick="cambiarVista('mes')">Mes</button>
+                <button class="vista-btn" onclick="cambiarVista('semana')">Semana</button>
+                <button class="vista-btn" onclick="cambiarVista('dia')">Día</button>
+            </div>
+
+            <!-- Navegación de fecha -->
+            <div class="navegacion-fecha">
+                <button onclick="cambiarFecha(-1)">◀</button>
+                <h3 id="tituloFecha"></h3>
+                <button onclick="cambiarFecha(1)">▶</button>
+                <button onclick="irHoy()">Hoy</button>
+            </div>
+
+            <!-- Agregar nueva reunión -->
             <div class="input-group">
                 <input type="text" id="tituloReunion" placeholder="Título de la reunión...">
                 <input type="datetime-local" id="fechaReunion">
-                <button onclick="agregarReunion()">Agregar</button>
+                <button onclick="agregarReunion()">+ Agregar</button>
             </div>
-            <ul id="listaReuniones"></ul>
+
+            <!-- Lista de reuniones -->
+            <div id="listaReuniones"></div>
         </div>
     </div>
 
     <script src="app.js"></script>
     <script>
-        // Registrar Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
