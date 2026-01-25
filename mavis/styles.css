@@ -75,13 +75,15 @@ header h1 {
 .tab-content {
     display: none;
     padding: 20px;
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
 }
 
 .tab-content.active {
     display: block;
 }
 
-/* Filtros de tareas */
+/* Filtros */
 .filtros {
     display: flex;
     gap: 8px;
@@ -168,15 +170,30 @@ header h1 {
     flex-wrap: wrap;
 }
 
+.input-group-calendario {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.fecha-hora-group {
+    display: flex;
+    gap: 10px;
+}
+
 input[type="text"],
+input[type="date"],
+input[type="time"],
 input[type="datetime-local"] {
     flex: 1;
     padding: 12px 15px;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 14px;
-    min-width: 200px;
+    min-width: 150px;
     transition: border 0.3s;
+    font-family: inherit;
 }
 
 input:focus {
@@ -205,22 +222,26 @@ button:active {
     transform: translateY(0);
 }
 
+.btn-agregar-reunion {
+    width: 100%;
+}
+
 /* Estadísticas */
 .estadisticas {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
 
 .stat-card {
-    flex: 1;
     padding: 15px;
     background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
     border-radius: 10px;
     text-align: center;
 }
 
-.stat-card.pendiente {
+.stat-card.por_hacer {
     background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
 }
 
@@ -230,6 +251,14 @@ button:active {
 
 .stat-card.completada {
     background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.stat-card.pospuesta {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+}
+
+.stat-card.anulada {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
 }
 
 .stat-numero {
@@ -264,7 +293,7 @@ button:active {
     transform: translateX(5px);
 }
 
-.tarea-item.pendiente {
+.tarea-item.por_hacer {
     border-left-color: #ff9800;
     background: linear-gradient(90deg, #fff3e0 0%, #f9f9f9 20%);
 }
@@ -277,7 +306,17 @@ button:active {
 .tarea-item.completada {
     border-left-color: #4CAF50;
     background: linear-gradient(90deg, #e8f5e9 0%, #f9f9f9 20%);
-    opacity: 0.8;
+}
+
+.tarea-item.pospuesta {
+    border-left-color: #FFC107;
+    background: linear-gradient(90deg, #fff9c4 0%, #f9f9f9 20%);
+}
+
+.tarea-item.anulada {
+    border-left-color: #f44336;
+    background: linear-gradient(90deg, #ffebee 0%, #f9f9f9 20%);
+    opacity: 0.7;
 }
 
 .tarea-header {
@@ -294,7 +333,8 @@ button:active {
     line-height: 1.5;
 }
 
-.tarea-item.completada .tarea-texto {
+.tarea-item.completada .tarea-texto,
+.tarea-item.anulada .tarea-texto {
     text-decoration: line-through;
     color: #999;
 }
@@ -308,7 +348,7 @@ button:active {
     white-space: nowrap;
 }
 
-.estado-badge.pendiente {
+.estado-badge.por_hacer {
     background: #ff9800;
     color: white;
 }
@@ -323,20 +363,32 @@ button:active {
     color: white;
 }
 
+.estado-badge.pospuesta {
+    background: #FFC107;
+    color: white;
+}
+
+.estado-badge.anulada {
+    background: #f44336;
+    color: white;
+}
+
 .tarea-acciones {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-top: 10px;
+    flex-wrap: wrap;
 }
 
 .btn-accion {
     flex: 1;
+    min-width: 80px;
     padding: 8px;
-    font-size: 12px;
+    font-size: 11px;
     border-radius: 6px;
 }
 
-.btn-pendiente {
+.btn-por-hacer {
     background: #ff9800;
 }
 
@@ -348,9 +400,18 @@ button:active {
     background: #4CAF50;
 }
 
-.btn-eliminar {
+.btn-posponer {
+    background: #FFC107;
+}
+
+.btn-anular {
     background: #f44336;
-    flex: 0.5;
+}
+
+.btn-eliminar {
+    background: #9e9e9e;
+    flex: 0.3;
+    min-width: 40px;
 }
 
 /* Reuniones */
@@ -372,9 +433,19 @@ button:active {
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
 
-.reunion-item.pasada {
-    opacity: 0.6;
-    border-left-color: #999;
+.reunion-item.realizada {
+    border-left-color: #4CAF50;
+    background: linear-gradient(90deg, #e8f5e9 0%, #f9f9f9 20%);
+}
+
+.reunion-item.no_asistio {
+    border-left-color: #f44336;
+    background: linear-gradient(90deg, #ffebee 0%, #f9f9f9 20%);
+}
+
+.reunion-item.pospuesta {
+    border-left-color: #FFC107;
+    background: linear-gradient(90deg, #fff9c4 0%, #f9f9f9 20%);
 }
 
 .reunion-item.hoy {
@@ -393,6 +464,7 @@ button:active {
     font-size: 16px;
     font-weight: 600;
     color: #333;
+    flex: 1;
 }
 
 .reunion-fecha {
@@ -406,7 +478,8 @@ button:active {
 
 .reunion-acciones {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .mensaje-vacio {
@@ -418,58 +491,47 @@ button:active {
 
 /* Responsive */
 @media (max-width: 600px) {
+    body {
+        padding: 5px;
+    }
+    
+    .container {
+        border-radius: 10px;
+    }
+    
+    header h1 {
+        font-size: 24px;
+    }
+    
     .filtros, .vista-calendario {
         gap: 5px;
     }
     
     .filtro-btn, .vista-btn {
-        font-size: 12px;
-        padding: 6px 12px;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    
+    .navegacion-fecha {
+        padding: 10px;
     }
     
     .navegacion-fecha h3 {
-        font-size: 16px;
+        font-size: 14px;
     }
     
-    .estadisticas {
-        flex-wrap: wrap;
+    .navegacion-fecha button {
+        padding: 6px 10px;
+        font-size: 12px;
     }
     
-    .stat-card {
-        min-width: calc(50% - 5px);
-    }
-}
-/* Corrección para input de calendario */
-.input-group-calendario {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.fecha-hora-group {
-    display: flex;
-    gap: 10px;
-}
-
-input[type="date"],
-input[type="time"] {
-    flex: 1;
-    padding: 12px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 14px;
-    transition: border 0.3s;
-    font-family: inherit;
-}
-
-.btn-agregar-reunion {
-    width: 100%;
-    padding: 12px 20px;
-}
-
-@media (max-width: 600px) {
     .fecha-hora-group {
         flex-direction: column;
+    }
+    
+    .btn-accion {
+        font-size: 10px;
+        padding: 6px;
+        min-width: 70px;
     }
 }
