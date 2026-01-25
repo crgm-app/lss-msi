@@ -46,7 +46,7 @@
             <div id="listaTareas"></div>
         </div>
 
-        <!-- SECCIÓN DE CALENDARIO -->
+<!-- SECCIÓN DE CALENDARIO -->
         <div id="calendario" class="tab-content">
             <!-- Vista de calendario -->
             <div class="vista-calendario">
@@ -58,16 +58,19 @@
             <!-- Navegación de fecha -->
             <div class="navegacion-fecha">
                 <button onclick="cambiarFecha(-1)">◀</button>
-                <h3 id="tituloFecha"></h3>
+                <h3 id="tituloFecha">Enero de 2026</h3>
                 <button onclick="cambiarFecha(1)">▶</button>
                 <button onclick="irHoy()">Hoy</button>
             </div>
 
             <!-- Agregar nueva reunión -->
-            <div class="input-group">
+            <div class="input-group-calendario">
                 <input type="text" id="tituloReunion" placeholder="Título de la reunión...">
-                <input type="datetime-local" id="fechaReunion">
-                <button onclick="agregarReunion()">+ Agregar</button>
+                <div class="fecha-hora-group">
+                    <input type="date" id="fechaReunion">
+                    <input type="time" id="horaReunion">
+                </div>
+                <button onclick="agregarReunion()" class="btn-agregar-reunion">+ Agregar reunión</button>
             </div>
 
             <!-- Lista de reuniones -->
