@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarFechaHeader();
     cargarTareas();
     cargarReuniones();
-    setInterval(actualizarFechaHeader, 60000); // Actualizar cada minuto
+    setInterval(actualizarFechaHeader, 60000);
 });
 
 // Actualizar fecha en header
@@ -30,7 +30,13 @@ function showMainTab(tabName) {
     tabs.forEach(tab => tab.classList.remove('active'));
     
     document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    
+    // Encontrar y activar el botón correcto
+    tabs.forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(tabName.toLowerCase())) {
+            tab.classList.add('active');
+        }
+    });
     
     if (tabName === 'calendario') {
         actualizarTituloFecha();
@@ -52,7 +58,7 @@ function agregarTarea() {
     tareas.push({
         id: Date.now(),
         texto: texto,
-        estado: 'pendiente', // pendiente, en_progreso, completada
+        estado: 'pendiente',
         fechaCreacion: new Date().toISOString()
     });
     
@@ -64,21 +70,31 @@ function agregarTarea() {
 function filtrarTareas(filtro) {
     filtroActual = filtro;
     
-    // Actualizar botones de filtro
     const botones = document.querySelectorAll('.filtro-btn');
     botones.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    
+    // Buscar el botón que se clickeó
+    botones.forEach(btn => {
+        const btnText = btn.textContent.toLowerCase();
+        if ((filtro === 'todos' && btnText.includes('todos')) ||
+            (filtro === 'pendiente' && btnText.includes('hacer')) ||
+            (filtro === 'en_progreso' && btnText.includes('haciendo')) ||
+            (filtro === 'completada' && btnText.includes('hecho'))) {
+            btn.classList.add('active');
+        }
+    });
     
     cargarTareas();
 }
 
 function cargarTareas() {
     const lista = document.getElementById('listaTareas');
-    let tareas = JSON.parse(localStorage.getItem('tareas') || '[]');
+    let todasTareas = JSON.parse(localStorage.getItem('tareas') || '[]');
     
     // Aplicar filtro
+    let tareas = todasTareas;
     if (filtroActual !== 'todos') {
-        tareas = tareas.filter(t => t.estado === filtroActual);
+        tareas = todasTareas.filter(t => t.estado === filtroActual);
     }
     
     // Actualizar estadísticas
@@ -91,15 +107,28 @@ function cargarTareas() {
         return;
     }
     
+    const estadoTexto = {
+        'pendiente': 'Por hacer',
+        'en_progreso': 'Haciendo',
+        'completada': 'Hecho'
+    };
+    
     tareas.forEach(tarea => {
         const div = document.createElement('div');
         div.className = `tarea-item ${tarea.estado}`;
         
-        const estadoTexto = {
-            'pendiente': 'Por hacer',
-            'en_progreso': 'Haciendo',
-            'completada': 'Hecho'
-        };
+        let botonesHTML = '';
+        
+        if (tarea.estado !== 'pendiente') {
+            botonesHTML += `<button class="btn-accion btn-pendiente" onclick="cambiarEstado(${tarea.id}, 'pendiente')">Por hacer</button>`;
+        }
+        if (tarea.estado !== 'en_progreso') {
+            botonesHTML += `<button class="btn-accion btn-progreso" onclick="cambiarEstado(${tarea.id}, 'en_progreso')">Haciendo</button>`;
+        }
+        if (tarea.estado !== 'completada') {
+            botonesHTML += `<button class="btn-accion btn-completar" onclick="cambiarEstado(${tarea.id}, 'completada')">Completar</button>`;
+        }
+        botonesHTML += `<button class="btn-accion btn-eliminar" onclick="eliminarTarea(${tarea.id})">🗑️</button>`;
         
         div.innerHTML = `
             <div class="tarea-header">
@@ -107,10 +136,7 @@ function cargarTareas() {
                 <span class="estado-badge ${tarea.estado}">${estadoTexto[tarea.estado]}</span>
             </div>
             <div class="tarea-acciones">
-                ${tarea.estado !== 'pendiente' ? '<button class="btn-accion btn-pendiente" onclick="cambiarEstado(' + tarea.id + ', \'pendiente\')">Por hacer</button>' : ''}
-                ${tarea.estado !== 'en_progreso' ? '<button class="btn-accion btn-progreso" onclick="cambiarEstado(' + tarea.id + ', \'en_progreso\')">Haciendo</button>' : ''}
-                ${tarea.estado !== 'completada' ? '<button class="btn-accion btn-completar" onclick="cambiarEstado(' + tarea.id + ', \'completada\')">Completar</button>' : ''}
-                <button class="btn-accion btn-eliminar" onclick="eliminarTarea(' + tarea.id + ')">🗑️</button>
+                ${botonesHTML}
             </div>
         `;
         
@@ -173,7 +199,12 @@ function cambiarVista(vista) {
     
     const botones = document.querySelectorAll('.vista-btn');
     botones.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    
+    botones.forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(vista)) {
+            btn.classList.add('active');
+        }
+    });
     
     actualizarTituloFecha();
     cargarReuniones();
@@ -183,21 +214,19 @@ function actualizarTituloFecha() {
     const titulo = document.getElementById('tituloFecha');
     if (!titulo) return;
     
-    const opciones = {
-        mes: { month: 'long', year: 'numeric' },
-        semana: { day: 'numeric', month: 'long', year: 'numeric' },
-        dia: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
-    };
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     
-    let texto = fechaActual.toLocaleDateString('es-ES', opciones[vistaActual]);
-    
-    if (vistaActual === 'semana') {
+    if (vistaActual === 'mes') {
+        titulo.textContent = `${meses[fechaActual.getMonth()]} de ${fechaActual.getFullYear()}`;
+    } else if (vistaActual === 'semana') {
         const finSemana = new Date(fechaActual);
         finSemana.setDate(finSemana.getDate() + 6);
-        texto = `${fechaActual.getDate()} - ${finSemana.getDate()} de ${fechaActual.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
+        titulo.textContent = `${fechaActual.getDate()} - ${finSemana.getDate()} de ${meses[fechaActual.getMonth()]} ${fechaActual.getFullYear()}`;
+    } else {
+        const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        titulo.textContent = `${dias[fechaActual.getDay()]}, ${fechaActual.getDate()} de ${meses[fechaActual.getMonth()]} ${fechaActual.getFullYear()}`;
     }
-    
-    titulo.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 function cambiarFecha(direccion) {
@@ -260,7 +289,7 @@ function cargarReuniones() {
             const finSemana = new Date(fechaActual);
             finSemana.setDate(finSemana.getDate() + 6);
             return fechaReunion >= inicioSemana && fechaReunion <= finSemana;
-        } else { // mes
+        } else {
             return fechaReunion.getMonth() === fechaActual.getMonth() && 
                    fechaReunion.getFullYear() === fechaActual.getFullYear();
         }
@@ -283,14 +312,23 @@ function cargarReuniones() {
         const div = document.createElement('div');
         div.className = `reunion-item ${esPasada ? 'pasada' : ''} ${esHoy ? 'hoy' : ''}`;
         
-        const fechaFormateada = fechaReunion.toLocaleString('es-ES', {
+        const opciones = {
             weekday: 'short',
             day: '2-digit',
             month: 'short',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
-        });
+        };
+        
+        const fechaFormateada = fechaReunion.toLocaleString('es-ES', opciones);
+        
+        let estadoHTML = '';
+        if (esHoy) {
+            estadoHTML = '<span style="color: #ff9800; font-weight: bold; margin-left: 10px;">• HOY</span>';
+        } else if (esPasada) {
+            estadoHTML = '<span style="color: #999; margin-left: 10px;">• Pasada</span>';
+        }
         
         div.innerHTML = `
             <div class="reunion-header">
@@ -298,8 +336,7 @@ function cargarReuniones() {
             </div>
             <div class="reunion-fecha">
                 📅 ${fechaFormateada}
-                ${esHoy ? '<span style="color: #ff9800; font-weight: bold; margin-left: 10px;">• HOY</span>' : ''}
-                ${esPasada && !esHoy ? '<span style="color: #999; margin-left: 10px;">• Pasada</span>' : ''}
+                ${estadoHTML}
             </div>
             <div class="reunion-acciones">
                 <button class="btn-accion btn-eliminar" onclick="eliminarReunion(${reunion.id})">🗑️ Eliminar</button>
