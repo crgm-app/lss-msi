@@ -344,6 +344,10 @@ function cargarReuniones() {
         if (reunion.estado !== 'pendiente') {
             botonesHTML += '<button class="btn-accion btn-por-hacer" onclick="cambiarEstadoReunion(' + reunion.id + ', \'pendiente\')">Pendiente</button>';
         }
+        
+        // Botón para exportar a Google Calendar
+        botonesHTML += '<button class="btn-accion btn-exportar" onclick="exportarReunionGoogle(' + reunion.id + ')">📅 Exportar</button>';
+        
         botonesHTML += '<button class="btn-accion btn-eliminar" onclick="eliminarReunion(' + reunion.id + ')">🗑️</button>';
         
         div.innerHTML = '<div class="reunion-header"><div class="reunion-titulo">' + reunion.titulo + '</div><span class="estado-badge ' + reunion.estado + '">' + estadoTexto[reunion.estado] + '</span></div><div class="reunion-fecha">📅 ' + fechaFormateada + estadoHTML + '</div><div class="reunion-acciones">' + botonesHTML + '</div>';
