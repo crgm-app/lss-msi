@@ -439,3 +439,37 @@ button:active {
         min-width: calc(50% - 5px);
     }
 }
+/* Corrección para input de calendario */
+.input-group-calendario {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.fecha-hora-group {
+    display: flex;
+    gap: 10px;
+}
+
+input[type="date"],
+input[type="time"] {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border 0.3s;
+    font-family: inherit;
+}
+
+.btn-agregar-reunion {
+    width: 100%;
+    padding: 12px 20px;
+}
+
+@media (max-width: 600px) {
+    .fecha-hora-group {
+        flex-direction: column;
+    }
+}
