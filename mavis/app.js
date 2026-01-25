@@ -355,3 +355,34 @@ function eliminarReunion(id) {
     localStorage.setItem('reuniones', JSON.stringify(reuniones));
     cargarReuniones();
 }
+function agregarReunion() {
+    const titulo = document.getElementById('tituloReunion').value.trim();
+    const fecha = document.getElementById('fechaReunion').value;
+    const hora = document.getElementById('horaReunion').value;
+    
+    if (titulo === '' || fecha === '' || hora === '') {
+        alert('Completa todos los campos');
+        return;
+    }
+    
+    // Combinar fecha y hora
+    const fechaCompleta = `${fecha}T${hora}`;
+    
+    let reuniones = JSON.parse(localStorage.getItem('reuniones') || '[]');
+    
+    reuniones.push({
+        id: Date.now(),
+        titulo: titulo,
+        fecha: fechaCompleta
+    });
+    
+    reuniones.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    
+    localStorage.setItem('reuniones', JSON.stringify(reuniones));
+    
+    document.getElementById('tituloReunion').value = '';
+    document.getElementById('fechaReunion').value = '';
+    document.getElementById('horaReunion').value = '';
+    
+    cargarReuniones();
+}
