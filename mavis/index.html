@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Organizador</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196F3">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Mi Organizador</h1>
+        </header>
+
+        <!-- Pestañas -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('tareas')">Tareas</button>
+            <button class="tab" onclick="showTab('calendario')">Calendario</button>
+        </div>
+
+        <!-- Sección de Tareas -->
+        <div id="tareas" class="tab-content active">
+            <div class="input-group">
+                <input type="text" id="nuevaTarea" placeholder="Nueva tarea...">
+                <button onclick="agregarTarea()">Agregar</button>
+            </div>
+            <ul id="listaTareas"></ul>
+        </div>
+
+        <!-- Sección de Calendario -->
+        <div id="calendario" class="tab-content">
+            <div class="input-group">
+                <input type="text" id="tituloReunion" placeholder="Título de la reunión...">
+                <input type="datetime-local" id="fechaReunion">
+                <button onclick="agregarReunion()">Agregar</button>
+            </div>
+            <ul id="listaReuniones"></ul>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>
