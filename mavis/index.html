@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -28,9 +28,11 @@
             <!-- Filtros de tareas -->
             <div class="filtros">
                 <button class="filtro-btn active" onclick="filtrarTareas('todos')">Todos</button>
-                <button class="filtro-btn" onclick="filtrarTareas('pendiente')">Por hacer</button>
+                <button class="filtro-btn" onclick="filtrarTareas('por_hacer')">Por hacer</button>
                 <button class="filtro-btn" onclick="filtrarTareas('en_progreso')">Haciendo</button>
                 <button class="filtro-btn" onclick="filtrarTareas('completada')">Hechos</button>
+                <button class="filtro-btn" onclick="filtrarTareas('pospuesta')">Pospuestas</button>
+                <button class="filtro-btn" onclick="filtrarTareas('anulada')">Anuladas</button>
             </div>
 
             <!-- Agregar nueva tarea -->
@@ -46,7 +48,7 @@
             <div id="listaTareas"></div>
         </div>
 
-<!-- SECCIÓN DE CALENDARIO -->
+        <!-- SECCIÓN DE CALENDARIO -->
         <div id="calendario" class="tab-content">
             <!-- Vista de calendario -->
             <div class="vista-calendario">
@@ -71,6 +73,15 @@
                     <input type="time" id="horaReunion">
                 </div>
                 <button onclick="agregarReunion()" class="btn-agregar-reunion">+ Agregar reunión</button>
+            </div>
+
+            <!-- Filtros de reuniones -->
+            <div class="filtros">
+                <button class="filtro-btn active" onclick="filtrarReuniones('todas')">Todas</button>
+                <button class="filtro-btn" onclick="filtrarReuniones('pendiente')">Pendientes</button>
+                <button class="filtro-btn" onclick="filtrarReuniones('realizada')">Realizadas</button>
+                <button class="filtro-btn" onclick="filtrarReuniones('no_asistio')">No asistió</button>
+                <button class="filtro-btn" onclick="filtrarReuniones('pospuesta')">Pospuestas</button>
             </div>
 
             <!-- Lista de reuniones -->
