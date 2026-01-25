@@ -374,3 +374,122 @@ function eliminarReunion(id) {
     localStorage.setItem('reuniones', JSON.stringify(reuniones));
     cargarReuniones();
 }
+// ===== EXPORTAR A GOOGLE CALENDAR =====
+
+function exportarReunionGoogle(id) {
+    const reuniones = JSON.parse(localStorage.getItem('reuniones') || '[]');
+    const reunion = reuniones.find(r => r.id === id);
+    
+    if (!reunion) {
+        alert('Reunión no encontrada');
+        return;
+    }
+    
+    const fechaReunion = new Date(reunion.fecha);
+    
+    // Crear evento ICS
+    const icsContent = generarICS(reunion.titulo, fechaReunion);
+    
+    // Descargar archivo
+    descargarICS(icsContent, reunion.titulo);
+}
+
+function exportarTodasReuniones() {
+    const reuniones = JSON.parse(localStorage.getItem('reuniones') || '[]');
+    
+    if (reuniones.length === 0) {
+        alert('No hay reuniones para exportar');
+        return;
+    }
+    
+    // Crear múltiples eventos en un solo archivo ICS
+    let icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Mi Organizador Pro//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Mis Reuniones
+X-WR-TIMEZONE:America/Mexico_City
+`;
+
+    reuniones.forEach(reunion => {
+        const fechaReunion = new Date(reunion.fecha);
+        icsContent += generarEventoICS(reunion.titulo, fechaReunion);
+    });
+    
+    icsContent += 'END:VCALENDAR';
+    
+    descargarICS(icsContent, 'todas-reuniones');
+}
+
+function generarICS(titulo, fecha) {
+    let icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Mi Organizador Pro//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+`;
+    
+    icsContent += generarEventoICS(titulo, fecha);
+    icsContent += 'END:VCALENDAR';
+    
+    return icsContent;
+}
+
+function generarEventoICS(titulo, fecha) {
+    const ahora = new Date();
+    const inicio = new Date(fecha);
+    const fin = new Date(inicio.getTime() + 60 * 60 * 1000); // 1 hora después
+    
+    // Recordatorio 1 día antes a las 8 PM (20:00)
+    const recordatorio1 = new Date(inicio);
+    recordatorio1.setDate(recordatorio1.getDate() - 1);
+    recordatorio1.setHours(20, 0, 0, 0);
+    const minutosAntes1 = Math.floor((inicio - recordatorio1) / 60000);
+    
+    // Recordatorio el mismo día a las 6 AM
+    const recordatorio2 = new Date(inicio);
+    recordatorio2.setHours(6, 0, 0, 0);
+    const minutosAntes2 = Math.floor((inicio - recordatorio2) / 60000);
+    
+    // Formatear fechas para ICS (formato: YYYYMMDDTHHmmss)
+    const formatoICS = (date) => {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+    
+    const uid = 'reunion-' + Date.now() + '@miorganizador.com';
+    
+    return `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${formatoICS(ahora)}
+DTSTART:${formatoICS(inicio)}
+DTEND:${formatoICS(fin)}
+SUMMARY:${titulo}
+DESCRIPTION:Reunión creada desde Mi Organizador Pro
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT${minutosAntes1}M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio: ${titulo} mañana
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT${minutosAntes2}M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio: ${titulo} hoy a las 6 AM
+END:VALARM
+END:VEVENT
+`;
+}
+
+function descargarICS(contenido, nombre) {
+    const blob = new Blob([contenido], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nombre.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
